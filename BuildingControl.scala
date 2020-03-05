@@ -3,7 +3,7 @@ package org.sireum.cli.hamr_runners
 import org.sireum._
 import org.sireum.cli._
 
-object buildingControl_Runner {
+object BuildingControl {
 
   def main(args: Array[Predef.String]): Unit = {
 

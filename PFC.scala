@@ -3,7 +3,7 @@ package org.sireum.cli.hamr_runners
 import org.sireum._
 import org.sireum.cli._
 
-object PFC_Runner {
+object PFC{
 
   def main(args: Array[Predef.String]): Unit = {
     ///home/sireum/devel/sel4/home/CASETeam/examples/ksu-proprietary/producer-splatfilter-consumer/pfc-project/src/aadl/Dec2019/.slang/PFC_PFC_Sys_Impl_Instance.json

@@ -3,7 +3,7 @@ package org.sireum.cli.hamr_runners
 import org.sireum._
 import org.sireum.cli._
 
-object CASEToolEval4 {
+object CaseToolEval4 {
 
   val testDir = Os.home / "devel/sireum/kekinian/hamr/codegen/jvm/src/test/scala/org/sireum/hamr/codegen/test/models/CodegenTest_CASE"
   val rootDir = Os.home / "devel/sel4/home/CASE-Loonwerks/TA5/tool-evaluation-4/HAMR/examples"

@@ -3,7 +3,7 @@ package org.sireum.cli.hamr_runners
 import org.sireum._
 import org.sireum.cli._
 
-object Urgent_Runner {
+object Urgent {
 
   def main(args: Array[Predef.String]): Unit = {
 
