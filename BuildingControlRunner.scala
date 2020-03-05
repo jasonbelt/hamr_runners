@@ -1,4 +1,4 @@
-package org.sireum.cli.hamr
+package org.sireum.cli.hamr_runners
 
 import org.sireum._
 import org.sireum.cli._
@@ -14,18 +14,19 @@ object BuildingControlRunner {
     val rootDir = Os.home / "devel/slang-embedded/slang-embedded-building-control"
 
     val projects: ISZ[(String, String, ISZ[Cli.HamrPlatform.Type])] = ISZ(
-      //("building-control-gen", "BuildingControl_BuildingControlDemo_i_Instance.json",               ISZ(JVM, Linux, MacOS, Cygwin)),
+      ("building-control-gen", "BuildingControl_BuildingControlDemo_i_Instance.json",               ISZ(JVM, Linux, MacOS, Cygwin)),
 
-      //("building-control-gen-alarm-ui", "BuildingControl_BuildingControlDemo_i_Instance.json",      ISZ(JVM)),
+      ("building-control-gen-alarm-ui", "BuildingControl_BuildingControlDemo_i_Instance.json",      ISZ(JVM)),
 
-      //("building-control-gen-mixed-ui", "BuildingControl_BuildingControlDemo_i_Instance.json",          ISZ(JVM)),
+      ("building-control-gen-mixed-ui", "BuildingControl_BuildingControlDemo_i_Instance.json",          ISZ(JVM)),
 
-      //("building-control-gen-shm", "BuildingControl_BuildingControlDemo_i_Instance.json",           ISZ(JVM, Linux, MacOS, Cygwin)),
+      ("building-control-gen-shm", "BuildingControl_BuildingControlDemo_i_Instance.json",           ISZ(JVM, Linux, MacOS, Cygwin)),
 
-      ("building-control-gen-shm-libART", "BuildingControl_BuildingControlDemo_i_Instance.json", ISZ(JVM))
+      ("building-control-gen-shm-libART", "BuildingControl_BuildingControlDemo_i_Instance.json", ISZ(JVM)),
 
-      // ("building-control-gen-mixed", "BuildingControl_BuildingControlDemo_i_Instance.json",             ISZ(JVM, SeL4, Linux, MacOS, Cygwin)),  // FIXME transpiler issue  
-      //("building-control-gen-periodic", "BuildingControl_periodic_BuildingControlDemo_i_Instance.json", ISZ(JVM, Linux, MacOS, Cygwin)), // FIXME transpiler issue
+      ("building-control-gen-mixed", "BuildingControl_BuildingControlDemo_i_Instance.json",             ISZ(JVM, SeL4, Linux, MacOS, Cygwin)),  // FIXME transpiler issue  
+      
+      ("building-control-gen-periodic", "BuildingControl_periodic_BuildingControlDemo_i_Instance.json", ISZ(JVM, Linux, MacOS, Cygwin)), // FIXME transpiler issue
 
       // ("building-control-mixed-excludes", "BuildingControl_BuildingControlDemo_i_Instance.json",    ISZ(JVM, Linux, MacOS, Cygwin)),   // TODO - do we really want to update this one?
     )

@@ -1,4 +1,4 @@
-package org.sireum.cli.hamr
+package org.sireum.cli.hamr_runners
 
 import org.sireum._
 import org.sireum.cli._
