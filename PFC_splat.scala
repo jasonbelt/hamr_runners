@@ -3,11 +3,11 @@ package org.sireum.cli.hamr_runners
 import org.sireum._
 import org.sireum.cli._
 
-object PFC{
+object PFC_splat{
 
   def main(args: Array[Predef.String]): Unit = {
     ///home/sireum/devel/sel4/home/CASETeam/examples/ksu-proprietary/producer-splatfilter-consumer/pfc-project/src/aadl/Dec2019/.slang/PFC_PFC_Sys_Impl_Instance.json
-    val srcDir = Os.home / "devel/sel4/home/CASETeam/examples/ksu-proprietary/producer-splatfilter-consumer/pfc-project/"
+    val srcDir = Os.home / "devel/case/CASETeam/examples/ksu-proprietary/producer-splatfilter-consumer/pfc-project/"
     val aadlDir = srcDir / "src/aadl/Dec2019"
     val cDir = srcDir / "src/c"
     val slang = aadlDir / ".slang/PFC_PFC_Sys_Impl_Instance.json"
