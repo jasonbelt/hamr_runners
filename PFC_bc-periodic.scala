@@ -2,10 +2,10 @@ package org.sireum.cli.hamr_runners
 
 import org.sireum._
 
-object PFC{
+object PFC_Periodic{
 
   def main(args: Array[Predef.String]): Unit = {
-    val projectDir = Os.home / "temp/producer-filter-consumer/sporadic"
+    val projectDir = Os.home / "temp/producer-filter-consumer/periodic"
 
     val aadlDir = projectDir
     val slang = aadlDir / ".slang/PFC_PFC_Sys_Impl_Instance.json"
@@ -35,67 +35,6 @@ object PFC{
 
     var INCLUDE = T
     var ret = 0
-
-    val bitcoded: ST = st"""
- ____  _ _      _____          _
-|  _ \(_) |    / ____|        | |
-| |_) |_| |_  | |     ___   __| | ___  ___
-|  _ <| | __| | |    / _ \ / _` |/ _ \/ __|
-| |_) | | |_  | |___| (_) | (_| |  __/ (__
-|____/|_|\__|  \_____\___/ \__,_|\___|\___|
-"""
-    println(bitcoded.render)
-
-    { // BITCODEC stuff
-
-      val srcDir = projectDir / "slang_embedded_bitcodec"
-      val cDir = srcDir / "src/c"
-      val slangAuxCodeDir = cDir / "ext-c"
-      val slangAuxCodeDirs: ISZ[String] = ISZ(slangAuxCodeDir.value)
-      val camkesOutputDir = cDir / "CAmkES_seL4"
-      val camkesAuxCodeDir = cDir / "camkes_aux_code"
-
-      val o_bitcodec_base = o(
-        outputDir = Some(srcDir.value),
-        slangAuxCodeDirs = slangAuxCodeDirs,
-        slangOutputCDir = Some(cDir.value),
-        camkesOutputDir = Some(camkesOutputDir.value),
-        camkesAuxCodeDirs = ISZ(camkesAuxCodeDir.value)
-      )
-
-      INCLUDE = T
-      if (ret == 0) {
-        // JVM with bitcodec
-
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.JVM))
-      }
-
-      INCLUDE = T
-      if (ret == 0 && INCLUDE) {
-        // C with bitcodec
-
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.Linux))
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.MacOS))
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.Cygwin))
-      }
-
-      INCLUDE = T
-      if (ret == 0 && INCLUDE) {
-        // SeL4 with bitcodec
-
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.SeL4))
-
-        if (ret == 0) {
-          val camkesAppsDir = Os.home / "CASE/camkes/projects/camkes/apps"
-          val camkesProjectAppsDir = camkesAppsDir / s"${projName}_sel4"
-
-          camkesProjectAppsDir.mklink(camkesOutputDir)
-
-          println(s"Symlinked ${camkesOutputDir} to ${camkesProjectAppsDir}")
-        }
-      }
-    }
-
 
     val nonbitcodec: ST = st"""
  _   _                        ____  _ _      _____          _
