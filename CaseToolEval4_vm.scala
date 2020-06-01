@@ -2,7 +2,7 @@ package org.sireum.cli.hamr_runners
 
 import org.sireum._
 
-object CaseToolEval4_receiver_vm {
+object CaseToolEval4_vm {
 
   val rootDir = Os.home / "devel/case/CASE-loonwerks/TA5/tool-evaluation-4/HAMR/examples/test_event_data_port_periodic_domains_VM"
 
@@ -24,6 +24,7 @@ object CaseToolEval4_receiver_vm {
     */
     gen("receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
     gen("sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
+    gen("both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json")
   )
 
   val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(
