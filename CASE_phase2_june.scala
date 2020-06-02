@@ -2,9 +2,10 @@ package org.sireum.cli.hamr_runners
 
 import org.sireum._
 
-object CaseTool_Junaid {
+object CASE_phase2_june {
 
-  val rootDir = Os.home / "devel/case/CASETeam/examples/phase2-integration-examples/component-integration-examples"
+  ///home/vagrant/
+  val rootDir = Os.home / "devel/case/case-ta6-experimental-platform-models"
 
   def gen(name: String, json: String): (String, Os.Path, Os.Path) = {
     val modelDir = rootDir / name
@@ -22,16 +23,13 @@ object CaseTool_Junaid {
     gen("test_event_port", "test_event_port_top_impl_Instance.json"),
     gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json")
     */
-    gen("vm-uxas-wpm-HAMRED", "SysContext_top_Impl_Instance.json"),
+    gen("Phase-2-UAV-Experimental-Platform-June", "SW_SW_Impl_Instance.json"),
   )
 
   val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(
-    Cli.HamrPlatform.Linux,
-    Cli.HamrPlatform.MacOS,
-    Cli.HamrPlatform.SeL4,
     //Cli.HamrPlatform.SeL4_TB,
     //Cli.HamrPlatform.SeL4_Only,
-    //Cli.HamrPlatform.SeL4
+    Cli.HamrPlatform.SeL4
   )
 
   def main(args: Array[Predef.String]): Unit = {
@@ -44,41 +42,31 @@ object CaseTool_Junaid {
         throw new RuntimeException(s"${projectDir} does not exist");
       }
 
-      val excludes: B = T
-      val dir = if(excludes) "hamr_excludes" else "hamr"
-
-      val outputDir = projectDir / dir
+      val outputDir = projectDir / "hamr"
 
       for (platform <- platforms) {
-        val camkesOutputDir: Option[Os.Path] = platform match {
-          case Cli.HamrPlatform.SeL4_TB => Some(outputDir / "src/c/CAmkES_seL4_TB_VM")
-          case Cli.HamrPlatform.SeL4_Only => Some(outputDir / "src/c/CAmkES_seL4_Only_VM")
-          case Cli.HamrPlatform.SeL4 => Some(outputDir / "src/c/CAmkES_seL4_VM")
-          case _ => None()
+        val camkesOutputDir = platform match {
+          case Cli.HamrPlatform.SeL4_TB => outputDir / "src/c/CAmkES_seL4_TB_VM"
+          case Cli.HamrPlatform.SeL4_Only => outputDir / "src/c/CAmkES_seL4_Only_VM"
+          case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4_VM"
+          case _ => throw new RuntimeException("??")
         }
 
-        if(camkesOutputDir.nonEmpty) {
-          camkesOutputDir.get.removeAll()
-        }
+        outputDir.removeAll()
 
         val o = Util.o(
           args = ISZ(slangFile.value),
           platform = platform,
-
-          packageName = Some("base"),
           outputDir = Some(outputDir.value),
-
-          excludeComponentImpl = excludes,
-
-          camkesOutputDir = if(camkesOutputDir.isEmpty) None() else Some(camkesOutputDir.get.value),
+          camkesOutputDir = Some(camkesOutputDir.value),
           aadlRootDir = Some(projectDir.value)
         )
 
         cli.HAMR.codeGen(o)
 
-        if(camkesOutputDir.nonEmpty) {
+        val dot = camkesOutputDir / "graph.dot"
 
-          val dot = camkesOutputDir.get / "graph.dot"
+        if(dot.exists) {
           val parent = dot.up.up
 
           val tool_eval_4_diagrams = parent / "diagrams"
