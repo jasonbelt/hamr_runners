@@ -22,7 +22,7 @@ object CaseTool_Junaid {
     gen("test_event_port", "test_event_port_top_impl_Instance.json"),
     gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json")
     */
-    gen("vm-uxas-wpm-HAMRED", "SysContext_top_Impl_Instance.json"),
+    gen("vm-uxas-wpm-hamr", "SysContext_top_Impl_Instance.json"),
   )
 
   val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(
