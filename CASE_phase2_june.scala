@@ -27,7 +27,7 @@ object CASE_phase2_june {
     gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json")
     */
 
-    // gen("Phase-2-UAV-Experimental-Platform-June-hamr", "SW_SW_Impl_Instance.json"),
+    gen("Phase-2-UAV-Experimental-Platform-June-hamr", "SW_SW_Impl_Instance.json"),
 
     gen("Phase-2-UAV-Experimental-Platform-June-hamr_dataports", "SW_SW_Impl_Instance.json")
   )

@@ -27,6 +27,8 @@ object CaseToolEval4_vm {
     //gen("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
 
     gen("test_data-port-periodic_domains_VM/sender_vm", "test_data_port_periodic_domains_top_impl_Instance.json"),
+    gen("test_data-port-periodic_domains_VM/receiver_vm", "test_data_port_periodic_domains_top_impl_Instance.json"),
+    gen("test_data-port-periodic_domains_VM/both_vm", "test_data_port_periodic_domains_top_impl_Instance.json"),
   )
 
   val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(
