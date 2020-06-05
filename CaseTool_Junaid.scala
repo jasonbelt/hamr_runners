@@ -81,18 +81,20 @@ object CaseTool_Junaid {
           val dot = camkesOutputDir.get / "graph.dot"
           val parent = dot.up.up
 
-          val tool_eval_4_diagrams = parent / "diagrams"
+          val tool_eval_4_diagrams = camkesOutputDir.get / "diagrams"
+
+          tool_eval_4_diagrams.mkdir()
 
           val dotPDFOutput = tool_eval_4_diagrams / s"CAmkES-arch-${platform}.pdf"
           val dotPNGOutput = tool_eval_4_diagrams / s"CAmkES-arch-${platform}.png"
 
           val proc:ISZ[String] = ISZ("dot", "-Tpdf", dot.canon.value, "-o", dotPDFOutput.canon.value)
-          Os.proc(proc).run()
+          Os.proc(proc).console.run()
 
           val proc2:ISZ[String] = ISZ("dot", "-Tpng", dot.canon.value, "-o", dotPNGOutput.canon.value)
-          Os.proc(proc2).run()
+          Os.proc(proc2).console.run()
 
-          val readme = parent / "readme.md"
+          val readme = camkesOutputDir.get / "readme.md"
 
           val aadlArch = "diagrams/aadl-arch.png"
 

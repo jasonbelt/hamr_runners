@@ -5,7 +5,10 @@ import org.sireum._
 object CASE_phase2_june {
 
   ///home/vagrant/
-  val rootDir = Os.home / "devel/case/case-ta6-experimental-platform-models"
+  //val rootDir = Os.home / "devel/case/case-ta6-experimental-platform-models"
+  //val rootDir = Os.home / "devel/case/case-ta6-experimental-platform-models"
+  val rootDir = Os.home / "devel/case/CASETeam/examples/ksu-proprietary"
+  ///Phase-2-UAV-Experimental-Platform-June-hamr_dataports
 
   def gen(name: String, json: String): (String, Os.Path, Os.Path) = {
     val modelDir = rootDir / name
@@ -23,7 +26,10 @@ object CASE_phase2_june {
     gen("test_event_port", "test_event_port_top_impl_Instance.json"),
     gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json")
     */
-    gen("Phase-2-UAV-Experimental-Platform-June", "SW_SW_Impl_Instance.json"),
+
+    // gen("Phase-2-UAV-Experimental-Platform-June-hamr", "SW_SW_Impl_Instance.json"),
+
+    gen("Phase-2-UAV-Experimental-Platform-June-hamr_dataports", "SW_SW_Impl_Instance.json")
   )
 
   val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(
@@ -42,7 +48,7 @@ object CASE_phase2_june {
         throw new RuntimeException(s"${projectDir} does not exist");
       }
 
-      val outputDir = projectDir / "hamr"
+      val outputDir = projectDir / "june"
 
       for (platform <- platforms) {
         val camkesOutputDir = platform match {

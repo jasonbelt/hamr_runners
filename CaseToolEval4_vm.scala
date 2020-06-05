@@ -4,7 +4,7 @@ import org.sireum._
 
 object CaseToolEval4_vm {
 
-  val rootDir = Os.home / "devel/case/CASE-loonwerks/TA5/tool-evaluation-4/HAMR/examples/test_event_data_port_periodic_domains_VM"
+  val rootDir = Os.home / "devel/case/CASE-loonwerks/TA5/tool-evaluation-4/HAMR/examples"
 
   def gen(name: String, json: String): (String, Os.Path, Os.Path) = {
     val modelDir = rootDir / name
@@ -22,9 +22,11 @@ object CaseToolEval4_vm {
     gen("test_event_port", "test_event_port_top_impl_Instance.json"),
     gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json")
     */
-    gen("receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
-    gen("sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
-    gen("both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json")
+    //gen("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
+    //gen("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
+    //gen("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
+
+    gen("test_data-port-periodic_domains_VM/sender_vm", "test_data_port_periodic_domains_top_impl_Instance.json"),
   )
 
   val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(
