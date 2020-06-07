@@ -22,9 +22,10 @@ object CaseToolEval4_vm {
     gen("test_event_port", "test_event_port_top_impl_Instance.json"),
     gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json")
     */
-    //gen("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
-    //gen("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
-    //gen("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
+
+    gen("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
+    gen("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
+    gen("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json"),
 
     gen("test_data-port-periodic_domains_VM/sender_vm", "test_data_port_periodic_domains_top_impl_Instance.json"),
     gen("test_data-port-periodic_domains_VM/receiver_vm", "test_data_port_periodic_domains_top_impl_Instance.json"),
@@ -34,7 +35,7 @@ object CaseToolEval4_vm {
   val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(
     //Cli.HamrPlatform.SeL4_TB,
     Cli.HamrPlatform.SeL4_Only,
-    //Cli.HamrPlatform.SeL4
+    Cli.HamrPlatform.SeL4
   )
 
   def main(args: Array[Predef.String]): Unit = {
@@ -48,18 +49,27 @@ object CaseToolEval4_vm {
       }
 
       for (platform <- platforms) {
-        val camkesOutputDir = platform match {
-          case Cli.HamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB_VM"
+
+        val outputDir = platform match {
           case Cli.HamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only_VM"
           case Cli.HamrPlatform.SeL4 => projectDir / "CAmkES_seL4_VM"
           case _ => throw new RuntimeException("??")
         }
 
-        camkesOutputDir.removeAll()
+        val camkesOutputDir = platform match {
+          case Cli.HamrPlatform.SeL4_Only => outputDir
+          case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4_VM"
+          case _ => throw new RuntimeException("??")
+        }
+
+        outputDir.removeAll()
 
         val o = Util.o(
           args = ISZ(slangFile.value),
           platform = platform,
+
+          outputDir = Some(outputDir.value),
+
           camkesOutputDir = Some(camkesOutputDir.value),
           aadlRootDir = Some(projectDir.value)
         )
