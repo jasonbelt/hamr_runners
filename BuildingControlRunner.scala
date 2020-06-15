@@ -31,11 +31,6 @@ object BuildingControlRunner {
       // ("building-control-mixed-excludes", "BuildingControl_BuildingControlDemo_i_Instance.json",    ISZ(JVM, Linux, MacOS, Cygwin)),   // TODO - do we really want to update this one?
     )
 
-    val custIPCs: Map[org.sireum.String, Cli.HamrIpcMechanism.Type] = org.sireum.Map(ISZ(
-      ("building-control-gen", Cli.HamrIpcMechanism.MessageQueue),
-      ("building-control-gen-periodic", Cli.HamrIpcMechanism.MessageQueue)
-    ))
-
     for (project <- projects) {
       val projectDir = rootDir / project._1
       val cDir = projectDir / "src/c"
@@ -63,7 +58,6 @@ object BuildingControlRunner {
 
           excludeComponentImpl = F,
           devicesAsThreads = T,
-          ipc = custIPCs.getOrElse(project._1, Cli.HamrIpcMechanism.SharedMemory),
 
           //bitWidth = 32,
           //maxStringSize = 125,

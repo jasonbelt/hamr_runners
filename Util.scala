@@ -14,7 +14,6 @@ object Util {
     packageName = None(),
     embedArt = T,
     devicesAsThreads = F,
-    ipc = Cli.HamrIpcMechanism.SharedMemory,
     slangAuxCodeDirs = ISZ(),
     slangOutputCDir = None(),
     excludeComponentImpl = T,
