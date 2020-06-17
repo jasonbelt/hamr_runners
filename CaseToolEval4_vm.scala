@@ -5,6 +5,7 @@ import org.sireum.hamr.codegen.CodeGenPlatform
 
 object CaseToolEval4_vm {
 
+
   val(sel4, sel4_tb, sel4_only) = (Cli.HamrPlatform.SeL4, Cli.HamrPlatform.SeL4_TB, Cli.HamrPlatform.SeL4_Only)
 
   val case_tool_evaluation_dir = Os.home / "devel/case/CASE-loonwerks/TA5/tool-evaluation-4/HAMR/examples"
@@ -42,14 +43,14 @@ object CaseToolEval4_vm {
     gen("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4)),
   )
 
-  def main(args: Array[Predef.String]): Unit = {
+  def run(): Unit = {
 
     for (project <- tests) {
       val projectDir = project._2
       val slangFile = project._3
 
       if(!projectDir.exists) {
-        throw new RuntimeException(s"${projectDir} does not exist");
+        halt(s"${projectDir} does not exist");
       }
 
       var readmeEntries: ISZ[ST] = ISZ()
@@ -60,30 +61,40 @@ object CaseToolEval4_vm {
           case Cli.HamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
           case Cli.HamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
           case Cli.HamrPlatform.SeL4 => projectDir / "CAmkES_seL4"
-          case _ => throw new RuntimeException("??")
+          case _ => halt("??")
         }
 
         val camkesOutputDir = platform match {
           case Cli.HamrPlatform.SeL4_TB => outputDir
           case Cli.HamrPlatform.SeL4_Only => outputDir
           case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
-          case _ => throw new RuntimeException("??")
+          case _ => halt("??")
         }
 
         outputDir.removeAll()
 
-        val o = Util.o(
+        val o = Cli.HamrCodeGenOption(
+          help = "",
           args = ISZ(slangFile.value),
+          json = T,
+          verbose = T,
           platform = platform,
-          packageName = Some(project._1),
 
-          outputDir = Some(outputDir.value),
+          packageName = Some(project._1),
+          embedArt = T,
+          devicesAsThreads = F,
+          excludeComponentImpl = T,
 
           bitWidth = 32,
           maxStringSize = 256,
           maxArraySize = 1,
 
+          slangAuxCodeDirs = ISZ(),
+          slangOutputCDir = None(),
+          outputDir = Some(outputDir.value),
+
           camkesOutputDir = Some(camkesOutputDir.value),
+          camkesAuxCodeDirs = ISZ(),
           aadlRootDir = Some(projectDir.value)
         )
 
