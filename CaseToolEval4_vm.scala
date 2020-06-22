@@ -1,14 +1,17 @@
+// #Sireum
+
 package org.sireum.cli.hamr_runners
 
 import org.sireum._
 import org.sireum.hamr.codegen.CodeGenPlatform
 
-object CaseToolEval4_vm {
+object CaseToolEval4_vm extends App {
 
+  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
+  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
+  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
 
-  val(sel4, sel4_tb, sel4_only) = (Cli.HamrPlatform.SeL4, Cli.HamrPlatform.SeL4_TB, Cli.HamrPlatform.SeL4_Only)
-
-  val case_tool_evaluation_dir = Os.home / "devel/case/CASE-loonwerks/TA5/tool-evaluation-4/HAMR/examples"
+  val case_tool_evaluation_dir: Os.Path = Os.home / "devel/case/CASE-loonwerks/TA5/tool-evaluation-4/HAMR/examples"
 
   def gen(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type]) = {
     val modelDir = case_tool_evaluation_dir / name
@@ -57,14 +60,14 @@ object CaseToolEval4_vm {
 
       for (platform <- project._4) {
 
-        val outputDir = platform match {
+        val outputDir: Os.Path = platform match {
           case Cli.HamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
           case Cli.HamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
           case Cli.HamrPlatform.SeL4 => projectDir / "CAmkES_seL4"
           case _ => halt("??")
         }
 
-        val camkesOutputDir = platform match {
+        val camkesOutputDir: Os.Path = platform match {
           case Cli.HamrPlatform.SeL4_TB => outputDir
           case Cli.HamrPlatform.SeL4_Only => outputDir
           case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
@@ -139,5 +142,10 @@ object CaseToolEval4_vm {
 
       readme.writeOver(readmest.render)
     }
+  }
+
+  override def main(args: _root_.org.sireum.ISZ[String]): Z = {
+    run()
+    return 0
   }
 }
