@@ -101,7 +101,7 @@ object CaseToolEval4_vm extends App {
           aadlRootDir = Some(projectDir.value)
         )
 
-        cli.HAMR.codeGen(o)
+        org.sireum.cli.HAMR.codeGen(o)
 
         val dot = camkesOutputDir / "graph.dot"
 
@@ -144,7 +144,7 @@ object CaseToolEval4_vm extends App {
     }
   }
 
-  override def main(args: _root_.org.sireum.ISZ[String]): Z = {
+  override def main(args: ISZ[String]): Z = {
     run()
     return 0
   }
