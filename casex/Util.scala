@@ -1,7 +1,6 @@
-package org.sireum.cli.hamr_runners
+package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
-import org.sireum.cli._
 
 object Util {
   val o = Cli.HamrCodeGenOption(
@@ -21,7 +20,6 @@ object Util {
     maxStringSize = 256,
     maxArraySize = 16,
     runTranspiler = T,
-
     camkesOutputDir = None(),
     camkesAuxCodeDirs = ISZ(),
     aadlRootDir = None()

@@ -1,7 +1,6 @@
-package org.sireum.cli.hamr_runners
+package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
-import org.sireum.cli._
 
 object PFC_splat{
 

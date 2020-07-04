@@ -1,8 +1,6 @@
-package org.sireum.cli.hamr_runners
+package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
-import org.sireum.cli._
-
 
 case class Dirs (aadlDir: Os.Path,
                  slangFile: Os.Path,
