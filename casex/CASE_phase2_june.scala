@@ -4,11 +4,7 @@ import org.sireum._
 
 object CASE_phase2_june {
 
-  ///home/vagrant/
-  //val rootDir = Os.home / "devel/case/case-ta6-experimental-platform-models"
-  //val rootDir = Os.home / "devel/case/case-ta6-experimental-platform-models"
   val rootDir = Os.home / "devel/case/CASETeam/examples/ksu-proprietary"
-  ///Phase-2-UAV-Experimental-Platform-June-hamr_dataports
 
   def gen(name: String, json: String): (String, Os.Path, Os.Path) = {
     val modelDir = rootDir / name
@@ -19,7 +15,9 @@ object CASE_phase2_june {
 
     gen("Phase-2-UAV-Experimental-Platform-June-hamr", "SW_SW_Impl_Instance.json"),
 
-    gen("Phase-2-UAV-Experimental-Platform-June-hamr_dataports", "SW_SW_Impl_Instance.json")
+    gen("Phase-2-UAV-Experimental-Platform-June-hamr_dataports", "SW_SW_Impl_Instance.json"),
+
+    gen("Phase-2-UAV-Experimental-Platform-Transformed", "UAV_UAV_Impl_Instance.json")
   )
 
   val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(
