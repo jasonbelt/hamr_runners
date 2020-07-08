@@ -6,6 +6,8 @@ object CASE_phase2_june {
 
   val rootDir = Os.home / "devel/case/CASETeam/examples/ksu-proprietary"
 
+  val runTranspiler: B = F
+
   def gen(name: String, json: String): (String, Os.Path, Os.Path) = {
     val modelDir = rootDir / name
     return (name, modelDir, modelDir / ".slang" / json)
@@ -36,6 +38,8 @@ object CASE_phase2_june {
         throw new RuntimeException(s"${projectDir} does not exist");
       }
 
+      var readmeEntries: ISZ[ST] = ISZ()
+
       val outputDir = projectDir / "june"
 
       for (platform <- platforms) {
@@ -57,7 +61,7 @@ object CASE_phase2_june {
           bitWidth = 32,
           maxStringSize = 256,
           maxArraySize = 1,
-          runTranspiler = F,
+          runTranspiler = runTranspiler,
 
           camkesOutputDir = Some(camkesOutputDir.value),
           aadlRootDir = Some(projectDir.value)
@@ -65,7 +69,46 @@ object CASE_phase2_june {
 
         cli.HAMR.codeGen(o)
 
+
+        val dot = camkesOutputDir / "graph.dot"
+
+        if(dot.exists) {
+
+          val tool_eval_4_diagrams = projectDir / "diagrams"
+
+          val png = s"CAmkES-arch-${platform}.png"
+
+          //val dotPDFOutput = tool_eval_4_diagrams / s"CAmkES-arch-${platform}.pdf"
+          val dotPNGOutput = tool_eval_4_diagrams / png
+
+          //val proc:ISZ[String] = ISZ("dot", "-Tpdf", dot.canon.value, "-o", dotPDFOutput.canon.value)
+          //Os.proc(proc).run()
+
+          val proc2:ISZ[String] = ISZ("dot", "-Tpng", dot.canon.value, "-o", dotPNGOutput.canon.value)
+          Os.proc(proc2).run()
+
+          //val sel4OnlyArchPDF = "diagrams/CAmkES-arch-SeL4_Only.pdf"
+          val readmePath = s"diagrams/${png}"
+
+          readmeEntries = readmeEntries :+ st"""## ${platform} Arch
+                                               |  ![${platform}](${readmePath})"""
+
+        }
       }
+
+      val readme = projectDir / "readme_autogen.md"
+
+      val aadlArch = "diagrams/aadl-arch.png"
+
+      val readmest = st"""# ${project._1}
+                         |
+                         |## AADL Arch
+                         |  ![aadl](${aadlArch})
+                         |
+                         |${(readmeEntries, "\n\n")}
+                         |"""
+
+      readme.writeOver(readmest.render)
     }
   }
 }
