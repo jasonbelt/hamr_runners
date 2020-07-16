@@ -76,19 +76,21 @@ object CASE_phase2_june {
 
           val tool_eval_4_diagrams = projectDir / "diagrams"
 
-          val png = s"CAmkES-arch-${platform}.png"
+          //val png = s"CAmkES-arch-${platform}.png"
+          val svg = s"CAmkES-arch-${platform}.svg"
 
           //val dotPDFOutput = tool_eval_4_diagrams / s"CAmkES-arch-${platform}.pdf"
-          val dotPNGOutput = tool_eval_4_diagrams / png
+          //val dotPNGOutput = tool_eval_4_diagrams / png
+          val dotPNGOutput = tool_eval_4_diagrams / svg
 
           //val proc:ISZ[String] = ISZ("dot", "-Tpdf", dot.canon.value, "-o", dotPDFOutput.canon.value)
           //Os.proc(proc).run()
 
-          val proc2:ISZ[String] = ISZ("dot", "-Tpng", dot.canon.value, "-o", dotPNGOutput.canon.value)
+          val proc2:ISZ[String] = ISZ("dot", "-Tsvg", dot.canon.value, "-o", dotPNGOutput.canon.value)
           Os.proc(proc2).run()
 
           //val sel4OnlyArchPDF = "diagrams/CAmkES-arch-SeL4_Only.pdf"
-          val readmePath = s"diagrams/${png}"
+          val readmePath = s"diagrams/${svg}"
 
           readmeEntries = readmeEntries :+ st"""## ${platform} Arch
                                                |  ![${platform}](${readmePath})"""

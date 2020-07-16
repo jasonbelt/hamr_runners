@@ -7,6 +7,8 @@ import org.sireum.hamr.codegen.CodeGenPlatform
 
 object CaseToolEval4_vm extends App {
 
+  val build: B = T
+
   val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
   val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
   val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
@@ -37,7 +39,6 @@ object CaseToolEval4_vm extends App {
     gen("test_event_data_port_periodic_domains", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
     gen("test_event_port_periodic_domains", "test_event_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
 
-
     // VMs
     gen("test_data_port_periodic_domains_VM/both_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4)),
     gen("test_data_port_periodic_domains_VM/receiver_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4)),
@@ -46,6 +47,8 @@ object CaseToolEval4_vm extends App {
     gen("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4)),
     gen("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4)),
     gen("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4)),
+
+    //gen("test_event_data_port_fan_ins_outs_periodic_domains", "test_event_data_port_fan_ins_outs_periodic_domains_top_impl_Instance.json", ISZ(sel4_only))
   )
 
   def run(): Unit = {
@@ -53,6 +56,12 @@ object CaseToolEval4_vm extends App {
     for (project <- tests) {
       val projectDir = project._2
       val slangFile = project._3
+
+      val hasVMs = ops.StringOps(projectDir.name).endsWith("vm")
+
+      println("***************************************")
+      println(projectDir)
+      println("***************************************")
 
       if(!projectDir.exists) {
         halt(s"${projectDir} does not exist");
@@ -76,7 +85,7 @@ object CaseToolEval4_vm extends App {
           case _ => halt("??")
         }
 
-        //outputDir.removeAll()
+        outputDir.removeAll()
 
         val o = Cli.HamrCodeGenOption(
           help = "",
@@ -93,7 +102,7 @@ object CaseToolEval4_vm extends App {
           bitWidth = 32,
           maxStringSize = 256,
           maxArraySize = 1,
-          runTranspiler = F,
+          runTranspiler = build,
 
           slangAuxCodeDirs = ISZ(),
           slangOutputCDir = None(),
@@ -106,44 +115,83 @@ object CaseToolEval4_vm extends App {
 
         org.sireum.cli.HAMR.codeGen(o)
 
+        if(build) {
+          val script = camkesOutputDir / "bin" / "run-camkes.sh"
+
+          val args: ISZ[String] = ISZ(script.value, "-n")
+
+          Os.proc(args).at(camkesOutputDir).console.runCheck()
+        }
+
         val dot = camkesOutputDir / "graph.dot"
+        val tool_eval_4_diagrams = projectDir / "diagrams"
+
+        val dotFormat: String = "svg"
 
         if(dot.exists) {
+          {
+            //val dotPDFOutput = tool_eval_4_diagrams / s"CAmkES-arch-${platform}.pdf"
+            //val sel4OnlyArchPDF = "diagrams/CAmkES-arch-SeL4_Only.pdf"
+            //val proc:ISZ[String] = ISZ("dot", "-Tpdf", dot.canon.value, "-o", dotPDFOutput.canon.value)
+            //Os.proc(proc).run()
+          }
 
-          val tool_eval_4_diagrams = projectDir / "diagrams"
+          {
+            val fname = s"CAmkES-HAMR-arch-${platform}"
+            delStaleDiagrams(tool_eval_4_diagrams, fname)
+            val dotPNGOutput = tool_eval_4_diagrams / s"${fname}.${dotFormat}"
+            val proc2: ISZ[String] = ISZ("dot", s"-T${dotFormat}", dot.canon.value, "-o", dotPNGOutput.canon.value)
+            Os.proc(proc2).console.run()
 
-          val png = s"CAmkES-arch-${platform}.png"
+            val readmePath = s"diagrams/${fname}.${dotFormat}"
 
-          //val dotPDFOutput = tool_eval_4_diagrams / s"CAmkES-arch-${platform}.pdf"
-          val dotPNGOutput = tool_eval_4_diagrams / png
+            readmeEntries = readmeEntries :+ st"""## CAmkES HAMR ${platform} Arch
+                                                 |  ![${platform}](${readmePath})"""
+          }
 
-          //val proc:ISZ[String] = ISZ("dot", "-Tpdf", dot.canon.value, "-o", dotPDFOutput.canon.value)
-          //Os.proc(proc).run()
+          val camkesDir: Os.Path =
+            if(hasVMs)  Os.home / "CASE" / "camkes-arm-vm"
+            else Os.home / "CASE" / "camkes"
 
-          val proc2:ISZ[String] = ISZ("dot", "-Tpng", dot.canon.value, "-o", dotPNGOutput.canon.value)
-          Os.proc(proc2).run()
+          val camkesArch = camkesDir / s"build_${camkesOutputDir.name}" / "graph.dot"
+          if(camkesArch.canon.exists) {
+            val fname = s"CAmkES-arch-${platform}"
+            delStaleDiagrams(tool_eval_4_diagrams, fname)
+            val dotCamkesPNGOutput = tool_eval_4_diagrams / s"${fname}.${dotFormat}"
+            val proc:ISZ[String] = ISZ("dot", s"-T${dotFormat}", camkesArch.canon.value, "-o", dotCamkesPNGOutput.canon.value)
+            Os.proc(proc).console.runCheck()
 
-          //val sel4OnlyArchPDF = "diagrams/CAmkES-arch-SeL4_Only.pdf"
-          val readmePath = s"diagrams/${png}"
+            val readmePath = s"diagrams/${fname}.${dotFormat}"
 
-          readmeEntries = readmeEntries :+ st"""## ${platform} Arch
-                                               |  ![${platform}](${readmePath})"""
+            readmeEntries = readmeEntries :+ st"""## CAmkES ${platform} Arch
+                                                 |  ![${platform}](${readmePath})"""
+          }
         }
+      }
+
+      val aadlArch = projectDir / "diagrams" / "aadl-arch.png"
+      if(aadlArch.exists) {
+        readmeEntries = st"""## AADL Arch
+                            |  ![aadl](diagrams/${aadlArch.name})""" +: readmeEntries
       }
 
       val readme = projectDir / "readme_autogen.md"
 
-      val aadlArch = "diagrams/aadl-arch.png"
-
       val readmest = st"""# ${project._1}
-                         |
-                         |## AADL Arch
-                         |  ![aadl](${aadlArch})
                          |
                          |${(readmeEntries, "\n\n")}
                          |"""
 
       readme.writeOver(readmest.render)
+    }
+  }
+
+  def delStaleDiagrams(tool_eval_4_diagrams: Os.Path, fname: String): Unit = {
+    for(format <- ISZ("png", "gif", "jpg", "svg", "pdf")) {
+      val f = tool_eval_4_diagrams / s"${fname}.${format}"
+      if(f.exists) {
+        f.remove()
+      }
     }
   }
 
