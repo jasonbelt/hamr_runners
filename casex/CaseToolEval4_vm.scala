@@ -2,12 +2,15 @@
 
 package org.sireum.cli.hamr_runners.casex
 
+import org.sireum.Os.Proc
 import org.sireum._
 import org.sireum.hamr.codegen.CodeGenPlatform
 
 object CaseToolEval4_vm extends App {
 
   val build: B = T
+  val simulate: B = T
+  val timeout: Z = 15000
 
   val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
   val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
@@ -68,6 +71,7 @@ object CaseToolEval4_vm extends App {
       }
 
       var readmeEntries: ISZ[ST] = ISZ()
+      var expectedOutputEntries: ISZ[ST] = ISZ()
 
       for (platform <- project._4) {
 
@@ -115,12 +119,32 @@ object CaseToolEval4_vm extends App {
 
         org.sireum.cli.HAMR.codeGen(o)
 
+        var expectedOutput: Option[String] = None()
+
         if(build) {
           val script = camkesOutputDir / "bin" / "run-camkes.sh"
 
           val args: ISZ[String] = ISZ(script.value, "-n")
 
           Os.proc(args).at(camkesOutputDir).console.runCheck()
+
+          if(simulate) {
+            val _camkesDir: String =
+              if(ops.StringOps(projectDir.name).endsWith("vm")) "camkes-arm-vm"
+              else "camkes"
+
+            val simulateScript = Os.home / "CASE" / _camkesDir / s"build_${camkesOutputDir.name}" / "simulate"
+            if(simulateScript.exists) {
+              val p = Proc(ISZ("simulate"), Os.cwd, Map.empty, T, None(), F, F, F, F, F, timeout, F)
+              val results = p.at(simulateScript.up).run()
+              cprint(F, results.out)
+              cprint(T, results.err)
+
+              Os.proc(ISZ("pkill", "qemu")).console.runCheck()
+
+              expectedOutput = parseOutput(results.out)
+            }
+          }
         }
 
         val dot = camkesOutputDir / "graph.dot"
@@ -145,7 +169,7 @@ object CaseToolEval4_vm extends App {
 
             val readmePath = s"diagrams/${fname}.${dotFormat}"
 
-            readmeEntries = readmeEntries :+ st"""## CAmkES HAMR ${platform} Arch
+            readmeEntries = readmeEntries :+ st"""### CAmkES HAMR ${platform} Arch
                                                  |  ![${platform}](${readmePath})"""
           }
 
@@ -163,23 +187,40 @@ object CaseToolEval4_vm extends App {
 
             val readmePath = s"diagrams/${fname}.${dotFormat}"
 
-            readmeEntries = readmeEntries :+ st"""## CAmkES ${platform} Arch
+            readmeEntries = readmeEntries :+ st"""### CAmkES ${platform} Arch
                                                  |  ![${platform}](${readmePath})"""
           }
+        }
+
+        if(expectedOutput.nonEmpty) {
+          expectedOutputEntries = expectedOutputEntries :+
+            st"""### CAmkES ${platform} Expected Output
+                |  ${expectedOutput}"""
         }
       }
 
       val aadlArch = projectDir / "diagrams" / "aadl-arch.png"
       if(aadlArch.exists) {
-        readmeEntries = st"""## AADL Arch
+        readmeEntries = st"""### AADL Arch
                             |  ![aadl](diagrams/${aadlArch.name})""" +: readmeEntries
       }
 
       val readme = projectDir / "readme_autogen.md"
 
+      val expected: Option[ST] = if(expectedOutputEntries.nonEmpty) {
+        val t = timeout / 1000
+        Some(st"""## Expected Output : Timeout = $t seconds
+                 |
+                 |  ${(expectedOutputEntries, "\n\n")}""")
+      } else { None() }
+
       val readmest = st"""# ${project._1}
                          |
+                         |## Diagrams
+                         |
                          |${(readmeEntries, "\n\n")}
+                         |
+                         |${expected}
                          |"""
 
       readme.writeOver(readmest.render)
@@ -192,6 +233,16 @@ object CaseToolEval4_vm extends App {
       if(f.exists) {
         f.remove()
       }
+    }
+  }
+
+  def parseOutput(out: String): Option[String] = {
+    val o = ops.StringOps(out)
+    val pos = o.stringIndexOf("Booting all finished")
+    if(pos > 0) {
+      return Some(o.substring(pos, o.size))
+    } else {
+      return None()
     }
   }
 
