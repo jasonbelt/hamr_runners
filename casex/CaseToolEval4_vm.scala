@@ -2,14 +2,15 @@
 
 package org.sireum.cli.hamr_runners.casex
 
-import org.sireum.Os.Proc
 import org.sireum._
-import org.sireum.hamr.codegen.CodeGenPlatform
+import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
+import org.sireum.message.Reporter
 
 object CaseToolEval4_vm extends App {
 
-  val build: B = T
-  val simulate: B = T
+  val shouldReport: B = T
+  val graphFormat: DotFormat.Type = DotFormat.svg
+  val build: B = F
   val timeout: Z = 15000
 
   val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
@@ -55,25 +56,22 @@ object CaseToolEval4_vm extends App {
   )
 
   def run(): Unit = {
+    val reporter = Reporter.create
 
     for (project <- tests) {
       val projectDir = project._2
       val slangFile = project._3
 
-      val hasVMs = ops.StringOps(projectDir.name).endsWith("vm")
-
-      println("***************************************")
-      println(projectDir)
-      println("***************************************")
+      var reports: HashSMap[Cli.HamrPlatform.Type, Report] = HashSMap.empty
 
       if(!projectDir.exists) {
         halt(s"${projectDir} does not exist");
       }
-
-      var readmeEntries: ISZ[ST] = ISZ()
-      var expectedOutputEntries: ISZ[ST] = ISZ()
-
       for (platform <- project._4) {
+
+        println("***************************************")
+        println(s"${projectDir} -- ${platform})")
+        println("***************************************")
 
         val outputDir: Os.Path = platform match {
           case Cli.HamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
@@ -119,111 +117,37 @@ object CaseToolEval4_vm extends App {
 
         org.sireum.cli.HAMR.codeGen(o)
 
-        var expectedOutput: Option[String] = None()
+        if(shouldReport) {
+          val gen = ReadmeGenerator(o, reporter)
 
-        if(build) {
-          val script = camkesOutputDir / "bin" / "run-camkes.sh"
+          if(gen.build()) {
+            val expectedOutput = gen.simulate(timeout)
 
-          val args: ISZ[String] = ISZ(script.value, "-n")
+            val report = Report(
+              options = o,
+              timeout = timeout,
+              runInstructions = gen.genRunInstructions(case_tool_evaluation_dir),
+              expectedOutput = Some(expectedOutput),
+              aadlArchDiagram = gen.getAadlArchDiagram(),
+              hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
+              camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat)
+            )
 
-          Os.proc(args).at(camkesOutputDir).console.runCheck()
-
-          if(simulate) {
-            val _camkesDir: String =
-              if(ops.StringOps(projectDir.name).endsWith("vm")) "camkes-arm-vm"
-              else "camkes"
-
-            val simulateScript = Os.home / "CASE" / _camkesDir / s"build_${camkesOutputDir.name}" / "simulate"
-            if(simulateScript.exists) {
-              val p = Proc(ISZ("simulate"), Os.cwd, Map.empty, T, None(), F, F, F, F, F, timeout, F)
-              val results = p.at(simulateScript.up).run()
-              cprint(F, results.out)
-              cprint(T, results.err)
-
-              Os.proc(ISZ("pkill", "qemu")).console.runCheck()
-
-              expectedOutput = parseOutput(results.out)
-            }
+            reports = reports + (platform ~> report)
           }
-        }
-
-        val dot = camkesOutputDir / "graph.dot"
-        val tool_eval_4_diagrams = projectDir / "diagrams"
-
-        val dotFormat: String = "svg"
-
-        if(dot.exists) {
-          {
-            //val dotPDFOutput = tool_eval_4_diagrams / s"CAmkES-arch-${platform}.pdf"
-            //val sel4OnlyArchPDF = "diagrams/CAmkES-arch-SeL4_Only.pdf"
-            //val proc:ISZ[String] = ISZ("dot", "-Tpdf", dot.canon.value, "-o", dotPDFOutput.canon.value)
-            //Os.proc(proc).run()
-          }
-
-          {
-            val fname = s"CAmkES-HAMR-arch-${platform}"
-            delStaleDiagrams(tool_eval_4_diagrams, fname)
-            val dotPNGOutput = tool_eval_4_diagrams / s"${fname}.${dotFormat}"
-            val proc2: ISZ[String] = ISZ("dot", s"-T${dotFormat}", dot.canon.value, "-o", dotPNGOutput.canon.value)
-            Os.proc(proc2).console.run()
-
-            val readmePath = s"diagrams/${fname}.${dotFormat}"
-
-            readmeEntries = readmeEntries :+ st"""### CAmkES HAMR ${platform} Arch
-                                                 |  ![${platform}](${readmePath})"""
-          }
-
-          val camkesDir: Os.Path =
-            if(hasVMs)  Os.home / "CASE" / "camkes-arm-vm"
-            else Os.home / "CASE" / "camkes"
-
-          val camkesArch = camkesDir / s"build_${camkesOutputDir.name}" / "graph.dot"
-          if(camkesArch.canon.exists) {
-            val fname = s"CAmkES-arch-${platform}"
-            delStaleDiagrams(tool_eval_4_diagrams, fname)
-            val dotCamkesPNGOutput = tool_eval_4_diagrams / s"${fname}.${dotFormat}"
-            val proc:ISZ[String] = ISZ("dot", s"-T${dotFormat}", camkesArch.canon.value, "-o", dotCamkesPNGOutput.canon.value)
-            Os.proc(proc).console.runCheck()
-
-            val readmePath = s"diagrams/${fname}.${dotFormat}"
-
-            readmeEntries = readmeEntries :+ st"""### CAmkES ${platform} Arch
-                                                 |  ![${platform}](${readmePath})"""
-          }
-        }
-
-        if(expectedOutput.nonEmpty) {
-          expectedOutputEntries = expectedOutputEntries :+
-            st"""### CAmkES ${platform} Expected Output
-                |  ${expectedOutput}"""
         }
       }
 
-      val aadlArch = projectDir / "diagrams" / "aadl-arch.png"
-      if(aadlArch.exists) {
-        readmeEntries = st"""### AADL Arch
-                            |  ![aadl](diagrams/${aadlArch.name})""" +: readmeEntries
+      if(shouldReport) {
+        val readme = projectDir / "readme_autogen.md"
+        val readmest = ReadmeTemplate.generateReport(project._1, reports)
+        readme.writeOver(readmest.render)
       }
+    }
 
-      val readme = projectDir / "readme_autogen.md"
-
-      val expected: Option[ST] = if(expectedOutputEntries.nonEmpty) {
-        val t = timeout / 1000
-        Some(st"""## Expected Output : Timeout = $t seconds
-                 |
-                 |  ${(expectedOutputEntries, "\n\n")}""")
-      } else { None() }
-
-      val readmest = st"""# ${project._1}
-                         |
-                         |## Diagrams
-                         |
-                         |${(readmeEntries, "\n\n")}
-                         |
-                         |${expected}
-                         |"""
-
-      readme.writeOver(readmest.render)
+    if(reporter.hasError) {
+      eprintln(s"Reporter Errors:")
+      reporter.printMessages()
     }
   }
 
@@ -233,16 +157,6 @@ object CaseToolEval4_vm extends App {
       if(f.exists) {
         f.remove()
       }
-    }
-  }
-
-  def parseOutput(out: String): Option[String] = {
-    val o = ops.StringOps(out)
-    val pos = o.stringIndexOf("Booting all finished")
-    if(pos > 0) {
-      return Some(o.substring(pos, o.size))
-    } else {
-      return None()
     }
   }
 

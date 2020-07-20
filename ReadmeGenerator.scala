@@ -11,7 +11,7 @@ import org.sireum.message.Reporter
 import org.sireum.hamr.codegen.common.symbols.{SymbolResolver, SymbolTable}
 import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
-@record class ReadmeGenerator(o: Cli.HamrCodeGenOption) {
+@record class ReadmeGenerator(o: Cli.HamrCodeGenOption, reporter: Reporter) {
 
   val airFile: Os.Path = {
     val path = Os.path(o.args(0))
@@ -26,43 +26,46 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   val camkesOutputDir: Os.Path = Os.path(o.camkesOutputDir.get)
   val slangOutputDir: Os.Path = Os.path(o.outputDir.get)
 
-  def build(): Z = {
+  val OPT_CAKEML_ASSEMBLIES_PRESENT: String = "-DCAKEML_ASSEMBLIES_PRESENT=ON"
+
+  def build(): B = {
 
     val run_camkes: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
 
     assert(run_camkes.exists, "Couldn't find run_camkes.sh")
 
-    var exitCode: Z = 0
+    var continue: B = T
     val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
     if(transpileSel4.exists) {
-      val results = Os.proc(ISZ(transpileSel4.value)).console.run()
-      exitCode = results.exitCode
+      continue = ReadmeGenerator.run(ISZ(transpileSel4.value), reporter)
     }
 
-    if(exitCode == 0) {
+    if(continue) {
       var args: ISZ[String] = ISZ(run_camkes.value, "-n")
 
       if (symbolTable.hasCakeMLComponents()) {
-        args = args :+ "-o" :+ "-DCAKEML_ASSEMBLIES_PRESENT=ON"
+        args = args :+ "-o" :+ OPT_CAKEML_ASSEMBLIES_PRESENT
       }
 
-      val results = Os.proc(args).console.run()
-      exitCode = results.exitCode
+      continue = ReadmeGenerator.run(args, reporter)
     }
 
-    return exitCode
+    return continue
   }
 
   def simulate(timeout: Z): ST = {
     val simulateScript: Os.Path = ReadmeGenerator.getCamkesSimulatePath(o, symbolTable)
     assert(simulateScript.exists, s"${simulateScript} does not exist")
 
+    println(s"Simulating for ${timeout/1000} seconds")
+
     val p = Proc(ISZ(simulateScript.value), Os.cwd, Map.empty, T, None(), F, F, F, F, F, timeout, F)
+
     val results = p.at(simulateScript.up).run()
     cprint(F, results.out)
     cprint(T, results.err)
 
-    Os.proc(ISZ("pkill", "qemu")).console.runCheck()
+    ReadmeGenerator.run(ISZ("pkill", "qemu"), reporter)
 
     val output = ReadmeGenerator.parseOutput(results.out)
     assert(output.nonEmpty, "Expected output missing")
@@ -70,22 +73,36 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     return st"${output.get}"
   }
 
-  def genConfigurationEntry(): ST = {
-    val ret: ST = st"""
-                      |"""
-    return ret
-  }
+  def genRunInstructions(root: Os.Path): ST = {
+    val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
+    val runScript: Os.Path = ReadmeGenerator.getRunCamkesScript(slangOutputDir)
+    val cakeMlScript: Os.Path = transpileSel4.up / "compile-cakeml.sh"
 
-  def genRunInstructions(): ST = {
-    val ret: ST = st"""
-                      |"""
+    val cakeML: Option[ST] =
+      if(cakeMlScript.exists) { Some(st"${root.relativize(cakeMlScript)}") }
+      else { None() }
+
+    val transpile: Option[ST] =
+      if(transpileSel4.exists) { Some(st"${root.relativize(transpileSel4)}") }
+      else { None() }
+
+    var options: ISZ[String] = ISZ("-s")
+    if(symbolTable.hasCakeMLComponents()) {
+      options = options :+ "-o" :+ OPT_CAKEML_ASSEMBLIES_PRESENT
+    }
+
+    val runCamkes: ST = st"${root.relativize(runScript)} ${(options, " ")}"
+
+    val ret: ST = st"""${cakeML}
+                      |${transpile}
+                      |${runCamkes}"""
     return ret
   }
 
   def getCamkesArchDiagram(format: DotFormat.Type): Os.Path = {
     val dot = ReadmeGenerator.getCamkesSimulatePath(o, symbolTable).up / "graph.dot"
     val outputPath = Os.path(o.aadlRootDir.get) / "diagrams" / s"CAmkES-arch-${o.platform.string}.${format.string}"
-    ReadmeGenerator.renderDot(dot, outputPath, format)
+    ReadmeGenerator.renderDot(dot, outputPath, format, reporter)
     assert(outputPath.exists, s"${outputPath} does not exist")
     return outputPath
   }
@@ -93,7 +110,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   def getHamrCamkesArchDiagram(format: DotFormat.Type): Os.Path = {
     val dot = Os.path(o.camkesOutputDir.get) / "graph.dot"
     val outputPath = Os.path(o.aadlRootDir.get) / "diagrams" / s"CAmkES-HAMR-arch-${o.platform.string}.${format.string}"
-    ReadmeGenerator.renderDot(dot, outputPath, format)
+    ReadmeGenerator.renderDot(dot, outputPath, format, reporter)
     assert(outputPath.exists, s"${outputPath} does not exist")
     return outputPath
   }
@@ -123,6 +140,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 }
 
 @datatype  class SubLevel(val title: String,
+                          content: Option[ST],
                           subs: ISZ[Level]) extends Level
 
 @datatype class ContentLevel(val title: String,
@@ -131,19 +149,80 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 object ReadmeTemplate {
 
   def generateDiagramsSection(reports: HashSMap[HamrPlatform.Type, Report]): Level = {
-    var subLevels: ISZ[Level] = ISZ()
+
+    def toLevel(p: Os.Path, title: String) : Option[Level] = {
+      if(p.exists) {
+        val l: ST = createLink(title, s"${p.up.name}/${p.name}")
+        Some(ContentLevel(title, st"!${l}"))
+      } else { None() }
+    }
+
+    var aadlarch: Option[Os.Path] = None()
+
+    var subLevels: ISZ[Level] = reports.entries.map(e => {
+      val platform = e._1
+      val report = e._2
+
+      aadlarch = Some(report.aadlArchDiagram)
+
+      val s: ISZ[Option[Level]] = ISZ(
+        toLevel(report.camkesArchDiagram, s"${platform.string} CAmkES Arch"),
+        toLevel(report.hamrCamkesArchDiagram, s"${platform.string} CAmkES HAMR Arch"))
+
+      SubLevel(
+        title = platform.string,
+        content = None(),
+        subs = s.map(t => t.get)
+      )
+    })
+
+    subLevels = toLevel(aadlarch.get, "AADL Arch").get +: subLevels
 
     return SubLevel(
       title = "Diagrams",
+      content = None(),
       subs = subLevels)
   }
 
   def generateExpectedOutputSection(reports: HashSMap[HamrPlatform.Type, Report]): Level = {
-    var subLevels: ISZ[Level] = ISZ()
+    val subLevels: ISZ[Option[Level]] = reports.entries.map(e => {
+      val platform = e._1
+      val report = e._2
+      report.expectedOutput match {
+        case Some(x) =>
+          val packageNameOption: Option[ST] =
+            if(report.options.packageName.nonEmpty) { Some(st"| package-name | ${report.options.packageName.get} |")}
+            else { None() }
+
+          val config = st"""|HAMR Codegen Configuration| |
+                           ||--|--|
+                           |${packageNameOption}
+                           || exclude-component-impl | ${report.options.excludeComponentImpl} |
+                           || bit-width | ${report.options.bitWidth} |
+                           || max-string-size | ${report.options.maxStringSize} |
+                           || max-array-size | ${report.options.maxArraySize} |
+                           |"""
+
+          Some(ContentLevel(s"${platform.string} Expected Output: Timeout = ${report.timeout / 1000} seconds",
+            st"""
+                |  ${config}
+                |
+                |  **How To Run**
+                |  ```
+                |  ${report.runInstructions}
+                |  ```
+                |
+                |  ```
+                |  ${x}
+                |  ```"""))
+        case _ => None()
+      }
+    })
 
     return SubLevel(
-      title = "Expected Output",
-      subs = subLevels)
+      title = "Example Output",
+      content = Some(st"*NOTE:* actual output may differ due to issues related to thread interleaving"),
+      subs = subLevels.map(s => s.get))
   }
 
   def expand(count: Z, c: C) : String = {
@@ -159,7 +238,12 @@ object ReadmeTemplate {
   def toGithubLink(s: String): String = {
     val lc = StringUtil.toLowerCase(s)
     val d = StringUtil.replaceAll(lc, " ", "-")
-    return s"#${d}"
+    val cis = conversions.String.toCis(d)
+
+    // only keep numbers, lowercase letters, and dash
+    val cis_ = cis.filter(c => (c.value >= 48 && c.value <= 57) || (c == '-') || (c.value >= 97 && c.value <= 122))
+    val d_ = conversions.String.fromCis(cis_)
+    return s"#${d_}"
   }
 
   def generateTOC(levels: ISZ[Level]): Level = {
@@ -189,18 +273,19 @@ object ReadmeTemplate {
   }
 
   def level2ST(level: Level, levelNum: Z): ST = {
-    val spaces = expand(levelNum, ' ')
+    //val spaces = expand(levelNum, ' ')
     val hashes = expand(levelNum, '#')
-    val title = s"${spaces}${hashes} ${level.title}"
+    val title = s"${hashes} ${level.title}"
     val content: ST = level match {
       case s: ContentLevel => s.content
       case s: SubLevel => {
         val x = s.subs.map(sub => level2ST(sub, levelNum + 1))
-        st"${(x, "\n\n")}"
+        st"""${s.content}
+            |${(x, "\n\n")}"""
       }
     }
     val ret: ST = st"""${title}
-                      |${spaces}${content}"""
+                      |${content}"""
     return ret
   }
 
@@ -223,10 +308,21 @@ object ReadmeTemplate {
 }
 
 object ReadmeGenerator {
-  def renderDot(dot: Os.Path, outputPath: Os.Path, format: DotFormat.Type): Z = {
+  def run(args: ISZ[String], reporter: Reporter): B = {
+    val results = Os.proc(args).console.run()
+    if(!results.ok) {
+      reporter.error(None(), "", results.err)
+    }
+    return results.ok
+  }
+
+  def renderDot(dot: Os.Path, outputPath: Os.Path, format: DotFormat.Type, reporter: Reporter): B = {
     val args: ISZ[String] = ISZ("dot", s"-T${format.string}", dot.canon.value, "-o", outputPath.value)
-    val result = Os.proc(args).console.runCheck()
-    return result.exitCode
+    val results = Os.proc(args).console.run()
+    if(!results.ok) {
+      reporter.error(None(), "", results.err)
+    }
+    return results.ok
   }
 
 
@@ -304,8 +400,8 @@ object ReadmeGenerator {
 }
 
 @record class Report (options: Cli.HamrCodeGenOption,
+                      timeout: Z,
 
-                      configuration: ST,
                       runInstructions: ST,
                       expectedOutput: Option[ST],
 
