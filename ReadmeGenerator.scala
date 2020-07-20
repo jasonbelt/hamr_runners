@@ -32,7 +32,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
     val run_camkes: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
 
-    assert(run_camkes.exists, "Couldn't find run_camkes.sh")
+    assert(run_camkes.exists, s"${run_camkes} not found")
 
     var continue: B = T
     val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
@@ -75,7 +75,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
   def genRunInstructions(root: Os.Path): ST = {
     val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
-    val runScript: Os.Path = ReadmeGenerator.getRunCamkesScript(slangOutputDir)
+    val runScript: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
     val cakeMlScript: Os.Path = transpileSel4.up / "compile-cakeml.sh"
 
     val cakeML: Option[ST] =
@@ -91,6 +91,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
       options = options :+ "-o" :+ OPT_CAKEML_ASSEMBLIES_PRESENT
     }
 
+    assert(runScript.exists, s"${runScript} not found")
     val runCamkes: ST = st"${root.relativize(runScript)} ${(options, " ")}"
 
     val ret: ST = st"""${cakeML}
