@@ -4,4 +4,4 @@ git clone git@github.com:jasonbelt/hamr_runners.git $SIREUM_HOME/cli/jvm/src/mai
 
 fun with links
 
-# git - hub__ link --creator!@#$%^&*()_+-={}[]|\:";'<>?,./~`hi
+# start_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~!@#$%^&*()_+`1234567890-=[]\{}|;':",./<>?_end
