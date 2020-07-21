@@ -5,6 +5,7 @@ package org.sireum.cli.hamr_runners
 import org.sireum.Cli.HamrPlatform
 import org.sireum.Os.Proc
 import org.sireum._
+import org.sireum.hamr.act.vm.VM_Template
 import org.sireum.hamr.codegen.common.StringUtil
 import org.sireum.hamr.ir
 import org.sireum.message.Reporter
@@ -74,9 +75,15 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   }
 
   def genRunInstructions(root: Os.Path): ST = {
+
     val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
     val runScript: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
     val cakeMlScript: Os.Path = transpileSel4.up / "compile-cakeml.sh"
+    val caseArmVmSetupScript: Os.Path = runScript.up / VM_Template.setup_camkes_vm_script_filename
+
+    val caseArmVmSetup: Option[ST] =
+      if(caseArmVmSetupScript.exists) { Some(st"${root.relativize(caseArmVmSetupScript)}") }
+      else { None() }
 
     val cakeML: Option[ST] =
       if(cakeMlScript.exists) { Some(st"${root.relativize(cakeMlScript)}") }
@@ -94,7 +101,8 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     assert(runScript.exists, s"${runScript} not found")
     val runCamkes: ST = st"${root.relativize(runScript)} ${(options, " ")}"
 
-    val ret: ST = st"""${cakeML}
+    val ret: ST = st"""${caseArmVmSetup}
+                      |${cakeML}
                       |${transpile}
                       |${runCamkes}"""
     return ret
@@ -241,8 +249,10 @@ object ReadmeTemplate {
     val d = StringUtil.replaceAll(lc, " ", "-")
     val cis = conversions.String.toCis(d)
 
-    // only keep numbers, lowercase letters, and dash
-    val cis_ = cis.filter(c => (c.value >= 48 && c.value <= 57) || (c == '-') || (c.value >= 97 && c.value <= 122))
+    // only keep numbers, lowercase letters, '-' and '_'
+    val cis_ = cis.filter(c =>
+      (c.value >= 48 && c.value <= 57) || (c.value >= 97 && c.value <= 122) ||
+      (c == '-') || (c == '_'))
     val d_ = conversions.String.fromCis(cis_)
     return s"#${d_}"
   }
