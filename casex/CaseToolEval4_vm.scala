@@ -4,6 +4,7 @@ package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
 import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
+import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 
 object CaseToolEval4_vm extends App {
@@ -19,6 +20,8 @@ object CaseToolEval4_vm extends App {
 
   val case_tool_evaluation_dir: Os.Path = Os.home / "devel/case/CASE-loonwerks/TA5/tool-evaluation-4/HAMR/examples"
 
+  var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
+
   def gen(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type]) = {
     val modelDir = case_tool_evaluation_dir / name
     val simpleName = Os.path(name).name // get last dir name
@@ -26,7 +29,7 @@ object CaseToolEval4_vm extends App {
   }
 
   val tests: ISZ[(String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type])] = ISZ(
-
+/*
     gen("simple_uav", "UAV_UAV_Impl_Instance.json", ISZ(sel4_tb, sel4_only)),
 
     gen("test_data_port", "test_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
@@ -51,6 +54,9 @@ object CaseToolEval4_vm extends App {
     gen("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4)),
     gen("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4)),
     gen("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4)),
+ */
+
+    gen("test_event_data_port_periodic_domains_VMx/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only)),
 
     //gen("test_event_data_port_fan_ins_outs_periodic_domains", "test_event_data_port_fan_ins_outs_periodic_domains_top_impl_Instance.json", ISZ(sel4_only))
   )
@@ -87,6 +93,10 @@ object CaseToolEval4_vm extends App {
           case _ => halt("??")
         }
 
+        if(ops.StringOps(project._2.value).contains("VMx")) {
+          experimentalOptions = experimentalOptions :+ ExperimentalOptions.USE_CASE_CONNECTORS
+        }
+
         outputDir.removeAll()
 
         val o = Cli.HamrCodeGenOption(
@@ -112,7 +122,9 @@ object CaseToolEval4_vm extends App {
 
           camkesOutputDir = Some(camkesOutputDir.value),
           camkesAuxCodeDirs = ISZ(),
-          aadlRootDir = Some(projectDir.value)
+          aadlRootDir = Some(projectDir.value),
+
+          experimentalOptions = experimentalOptions
         )
 
         org.sireum.cli.HAMR.codeGen(o)

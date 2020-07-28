@@ -24,6 +24,7 @@ object Util {
 
     camkesOutputDir = None(),
     camkesAuxCodeDirs = ISZ(),
-    aadlRootDir = None()
+    aadlRootDir = None(),
+    experimentalOptions = ISZ()
   )
 }

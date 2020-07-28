@@ -89,7 +89,8 @@ object Attestation_Gate extends App {
 
           camkesOutputDir = Some(camkesOutputDir.value),
           camkesAuxCodeDirs = ISZ(),
-          aadlRootDir = Some(projectDir.value)
+          aadlRootDir = Some(projectDir.value),
+          experimentalOptions = ISZ()
         )
 
         org.sireum.cli.HAMR.codeGen(o)
