@@ -56,7 +56,9 @@ object CaseToolEval4_vm extends App {
     gen("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4)),
  */
 
-    gen("test_event_data_port_periodic_domains_VMx/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only)),
+    //gen("test_event_data_port_periodic_domains_VMx/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only)),
+
+    gen("test_event_data_port_periodic_domains_VMx/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only)),
 
     //gen("test_event_data_port_fan_ins_outs_periodic_domains", "test_event_data_port_fan_ins_outs_periodic_domains_top_impl_Instance.json", ISZ(sel4_only))
   )

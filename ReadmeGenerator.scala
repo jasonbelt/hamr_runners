@@ -404,7 +404,7 @@ object ReadmeGenerator {
 
   def getSymbolTable(model: ir.Aadl): SymbolTable = {
     val reporter = Reporter.create
-    val s = SymbolResolver.resolve(model, None(), reporter)
+    val s = SymbolResolver.resolve(model, None(), T, reporter)
     reporter.printMessages()
     return s
   }
