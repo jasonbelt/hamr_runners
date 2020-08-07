@@ -7,9 +7,11 @@ import org.sireum.Os.Proc
 import org.sireum._
 import org.sireum.hamr.act.vm.VM_Template
 import org.sireum.hamr.codegen.common.StringUtil
+import org.sireum.hamr.codegen.common.properties.PropertyUtil
 import org.sireum.hamr.ir
 import org.sireum.message.Reporter
 import org.sireum.hamr.codegen.common.symbols.{SymbolResolver, SymbolTable}
+import org.sireum.hamr.codegen.common.types.TypeResolver
 import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
 @record class ReadmeGenerator(o: Cli.HamrCodeGenOption, reporter: Reporter) {
@@ -404,7 +406,11 @@ object ReadmeGenerator {
 
   def getSymbolTable(model: ir.Aadl): SymbolTable = {
     val reporter = Reporter.create
-    val s = SymbolResolver.resolve(model, None(), T, reporter)
+
+    val rawConnections: B = PropertyUtil.getUseRawConnection(model.components(0).properties)
+    val aadlTypes = TypeResolver.processDataTypes(model, rawConnections, "")
+
+    val s = SymbolResolver.resolve(model, None(), T, aadlTypes, reporter)
     reporter.printMessages()
     return s
   }
