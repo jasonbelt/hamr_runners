@@ -2,6 +2,7 @@
 
 package org.sireum.cli.hamr_runners.casex
 
+import org.sireum.Cli.HamrPlatform
 import org.sireum._
 import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
@@ -131,7 +132,7 @@ object CaseToolEval4_vm extends App {
 
         org.sireum.cli.HAMR.codeGen(o)
 
-        if(shouldReport) {
+        if(shouldReport && isSel4(platform)) {
           val gen = ReadmeGenerator(o, reporter)
 
           if(gen.build()) {
@@ -178,4 +179,15 @@ object CaseToolEval4_vm extends App {
     run()
     return 0
   }
+
+
+  def isSel4(platform: HamrPlatform.Type): B = {
+    return platform match {
+      case HamrPlatform.SeL4 => T
+      case HamrPlatform.SeL4_TB => T
+      case HamrPlatform.SeL4_Only => T
+      case _ => F
+    }
+  }
+
 }

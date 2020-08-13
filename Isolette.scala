@@ -5,7 +5,9 @@ import org.sireum._
 object Isolette {
 
   def main(args: Array[Predef.String]): Unit = {
-    
+
+    // /home/vagrant/devel/slang-embedded/isolette/isolette/src/aadl/.slang/Isolette_isolette_single_sensor_Instance.json
+
     val rootDir = Os.home / "devel/sel4/home/isolette/isolette"
     val srcDir = rootDir / "src"
     val cDir = srcDir / "c"
