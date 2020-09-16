@@ -2,9 +2,9 @@
 
 package org.sireum.cli.hamr_runners
 
+import org.sireum._
 import org.sireum.Cli.HamrPlatform
 import org.sireum.Os.Proc
-import org.sireum._
 import org.sireum.hamr.act.vm.VM_Template
 import org.sireum.hamr.codegen.common.StringUtil
 import org.sireum.hamr.codegen.common.properties.PropertyUtil
