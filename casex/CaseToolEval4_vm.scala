@@ -17,10 +17,11 @@ import org.sireum.message.Reporter
 
 object CaseToolEval4_vm extends App {
 
-  val shouldReport: B = F
+  val shouldReport: B = T
   val graphFormat: DotFormat.Type = DotFormat.svg
   val build: B = F
   val defTimeout: Z = 15000
+  val vmTimeout: Z = 90000
 
   val linux: Cli.HamrPlatform.Type = Cli.HamrPlatform.Linux
   val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
@@ -63,17 +64,17 @@ object CaseToolEval4_vm extends App {
 
   val vmProjects: ISZ[Project] = ISZ(
     // VMs
-    genFull("test_data_port_periodic_domains_VM/both_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, defTimeout),
-    genFull("test_data_port_periodic_domains_VM/receiver_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, defTimeout),
-    genFull("test_data_port_periodic_domains_VM/sender_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, defTimeout),
+    genFull("test_data_port_periodic_domains_VM/both_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
+    genFull("test_data_port_periodic_domains_VM/receiver_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
+    genFull("test_data_port_periodic_domains_VM/sender_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
 
-    genFull("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, defTimeout),
-    genFull("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, defTimeout),
-    genFull("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, defTimeout),
+    genFull("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
+    genFull("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
+    genFull("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
 
     // VMs with Kent's connector
-    genFull("test_event_data_port_periodic_domains_VMx/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only), F, defTimeout),
-    genFull("test_event_data_port_periodic_domains_VMx/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only), F, defTimeout)
+    genFull("test_event_data_port_periodic_domains_VMx/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only), T, vmTimeout),
+    genFull("test_event_data_port_periodic_domains_VMx/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only), T, vmTimeout)
   )
 
   //val tests: ISZ[Project] = nonVmProjects
@@ -155,8 +156,10 @@ object CaseToolEval4_vm extends App {
           val gen = ReadmeGenerator(o, reporter)
 
           if(gen.build()) {
+            val timeout: Z = if(platform == Cli.HamrPlatform.SeL4) defTimeout else project.timeout
+
             val expectedOutput: ST =
-              if(project.shouldSimulate) gen.simulate(project.timeout)
+              if(project.shouldSimulate) gen.simulate(timeout)
               else st"NEED TO MANUALLY UPDATE EXPECTED OUTPUT"
 
             val report = Report(
