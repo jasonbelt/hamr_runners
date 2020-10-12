@@ -32,7 +32,7 @@ object iccps20 extends App {
   val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
   val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
 
-  val case_tool_evaluation_dir: Os.Path = Os.home / "devel/slang-embedded/paper-examples"
+  val case_tool_evaluation_dir: Os.Path = Os.home / "devel/slang-embedded/iccps20-case-studies"
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
