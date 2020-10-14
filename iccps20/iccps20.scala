@@ -20,7 +20,7 @@ import org.sireum.message.Reporter
 
 object iccps20 extends App {
 
-  val shouldReport: B = T
+  val shouldReport: B = F
   val graphFormat: DotFormat.Type = DotFormat.svg
   val build: B = F
   val defTimeout: Z = 15000
@@ -58,6 +58,10 @@ object iccps20 extends App {
   }
 
   val nonVmProjects: ISZ[Project] = ISZ(
+
+    gen("building-control-mixed", "aadl", "BuildingControl_BuildingControlDemo_i_Instance.json", ISZ(jvm, linux, sel4)),
+
+    gen("isolette", "aadl", "Isolette_isolette_single_sensor_Instance.json", ISZ(jvm, linux, sel4)),
 
     gen("pca-pump", "aadl/pca", "PCA_System_wrap_pca_imp_Instance.json", ISZ(jvm)),
 
