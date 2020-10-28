@@ -4,11 +4,11 @@ package org.sireum.cli.hamr_runners.iccps20
 
 import org.sireum._
 import org.sireum.Cli.HamrPlatform
-import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 
 @datatype class Project (simpleName: String,
+                         basePackageName: String,
                          projectDir: Os.Path,
                          aadlDir: Os.Path,
                          hamrDir: Os.Path,
@@ -16,14 +16,19 @@ import org.sireum.message.Reporter
                          slangFile: Os.Path,
                          platforms: ISZ[Cli.HamrPlatform.Type],
                          shouldSimulate: B,
-                         timeout: Z)
+                         excludeComponentImplementation: B,
+                         timeout: Z,
+
+                        readmeName: Option[String])
 
 object iccps20 extends App {
 
-  val shouldReport: B = F
+  val shouldReport: B = T
+  val shouldRebuild: B = F
+  val shouldRunTranspiler: B = F
+
   val graphFormat: DotFormat.Type = DotFormat.svg
-  val build: B = F
-  val defTimeout: Z = 15000
+  val defTimeout: Z = 1
   val vmTimeout: Z = 90000
 
   val jvm: Cli.HamrPlatform.Type = Cli.HamrPlatform.JVM
@@ -36,38 +41,155 @@ object iccps20 extends App {
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
-  def genFull(name: String, rootAadlDir: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type], shouldSimulate: B, timeout: Z): Project = {
+  def genFull(name: String, basePackageName: String,
+              rootAadlDir: String, outputDir: String, json: String,
+              platforms: ISZ[Cli.HamrPlatform.Type],
+              excludeComponentImplementation: B, shouldSimulate: B, timeout: Z,
+              readmeName: Option[String]): Project = {
     val projectDir = case_tool_evaluation_dir / name
     val aadlDir = projectDir / rootAadlDir
-    val hamrDir = projectDir / "hamr"
+
+    val hamrDir: Os.Path = projectDir / outputDir
+
     val simpleName = Os.path(name).name // get last dir name
 
     return Project(
       simpleName = simpleName,
+      basePackageName = basePackageName,
       projectDir = projectDir,
       aadlDir = aadlDir,
       hamrDir = hamrDir,
       slangFile = aadlDir / ".slang" / json,
       platforms = platforms,
       shouldSimulate = shouldSimulate,
-      timeout = timeout)
+      excludeComponentImplementation = excludeComponentImplementation,
+      timeout = timeout,
+      readmeName = readmeName
+    )
   }
 
-  def gen(name: String, rootAadlDir: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
-    return genFull(name, rootAadlDir, json, platforms, T, defTimeout)
+  val tempControl_Periodic_Excludes: Project = {
+  // Periodic Dispatcher Excludes
+  // Purpose: Periodic Dispatching
+    genFull(
+      name = "temperature-control",
+      basePackageName = "b",
+      rootAadlDir = "aadl",
+      outputDir = "hamr",
+      json = "TemperatureControl_TempControlSystem_i_Instance.json",
+      platforms = ISZ(jvm, linux, sel4),
+      excludeComponentImplementation = T,
+      shouldSimulate = T,
+      timeout = defTimeout,
+      readmeName = None())
   }
 
-  val nonVmProjects: ISZ[Project] = ISZ(
+  val tempControl_Periodic_Just_Camkes: Project = {
+    // Periodic Dispatcher - Sel4 Only, Sel4 TB
+    // Purpose: TB vs SB camkes connectors (i.e. monitors)
+    genFull(
+      name = "temperature-control",
+      basePackageName = "b",
+      rootAadlDir = "aadl",
+      outputDir = "camkes",
+      json = "TemperatureControl_TempControlSystem_i_Instance.json",
+      platforms = ISZ(sel4_tb, sel4_only),
+      excludeComponentImplementation = F,
+      shouldSimulate = T,
+      timeout = defTimeout,
+      readmeName = Some("readme_camkes.md"))
+  }
 
-    gen("building-control-mixed", "aadl", "BuildingControl_BuildingControlDemo_i_Instance.json", ISZ(jvm, linux, sel4)),
+  val tempControl_DS_Excludes: Project = {
+    // Domain scheduling - Excludes
+    // Purpose: Illustrates C level behavior code
+    genFull(
+      name = "temperature-control-ds",
+      basePackageName = "b",
+      rootAadlDir = "aadl",
+      outputDir = "hamr",
+      json = "TemperatureControl_TempControlSystem_i_Instance.json",
+      platforms = ISZ(jvm, linux, sel4),
+      excludeComponentImplementation = T,
+      shouldSimulate = T,
+      timeout = defTimeout,
+      readmeName = None())
+  }
 
-    gen("isolette", "aadl", "Isolette_isolette_single_sensor_Instance.json", ISZ(jvm, linux, sel4)),
+  val tempControl_DS_NonExcludes: Project = {
+    // Domain scheduling - Non-Excludes
+    // Purpose: Illustrates use of Slang extension mechanisms
+    genFull(
+      name = "temperature-control-ds",
+      basePackageName = "b",
+      rootAadlDir = "aadl",
+      outputDir = "hamr-nonExcludes",
+      json = "TemperatureControl_TempControlSystem_i_Instance.json",
+      platforms = ISZ(jvm, linux, sel4),
+      excludeComponentImplementation = F,
+      shouldSimulate = T,
+      timeout = defTimeout,
+      readmeName = Some("readme_nonExcludes.md"))
+  }
 
-    gen("pca-pump", "aadl/pca", "PCA_System_wrap_pca_imp_Instance.json", ISZ(jvm)),
+  val isolette: Project = {
 
+    genFull(
+      name = "isolette",
+      basePackageName = "isolette",
+      rootAadlDir = "aadl",
+      outputDir = "hamr",
+      json = "Isolette_isolette_single_sensor_Instance.json",
+      platforms = ISZ(jvm, linux, sel4),
+      excludeComponentImplementation = F,
+      shouldSimulate = T,
+      timeout = defTimeout,
+      readmeName= None()
+    )
+  }
+
+  val pcaPump: Project = {
+
+    genFull(
+      name = "pca-pump",
+      basePackageName= "pca_pump",
+      rootAadlDir = "aadl/pca",
+      outputDir = "hamr",
+      json = "PCA_System_wrap_pca_imp_Instance.json",
+      platforms = ISZ(jvm),
+      excludeComponentImplementation = F,
+      shouldSimulate = T,
+      timeout = defTimeout,
+      readmeName = None()
+    )
+  }
+
+  ///home/vagrant/devel/slang-embedded/iccps20-case-studies/Phase-2-UAV-Experimental-Platform-Transformed/.slang/UAV_UAV_Impl_Instance.json
+  val uav: Project = {
+    genFull(
+      name = "Phase-2-UAV-Experimental-Platform-Transformed",
+      basePackageName = "uav",
+      rootAadlDir = "aadl",
+      outputDir = "hamr",
+      json = "UAV_UAV_Impl_Instance.json",
+      platforms = ISZ(sel4),
+      excludeComponentImplementation = F,
+      shouldSimulate = T,
+      timeout = defTimeout,
+      readmeName = None()
+    )
+  }
+  val tests: ISZ[Project] = ISZ(
+    /*
+    tempControl_Periodic_Excludes,
+    tempControl_Periodic_Just_Camkes,
+    tempControl_DS_Excludes,
+    tempControl_DS_NonExcludes,
+    isolette,
+    pcaPump
+    */
+    uav
   )
-
-  val tests: ISZ[Project] = nonVmProjects
 
   def run(): Unit = {
     val reporter = Reporter.create
@@ -82,38 +204,21 @@ object iccps20 extends App {
       if(!project.projectDir.exists) {
         halt(s"${project.projectDir} does not exist");
       }
+
       for (platform <- project.platforms) {
 
         println("***************************************")
         println(s"${project.projectDir} -- ${platform})")
         println("***************************************")
 
-        /*
-        val outputDir: Os.Path = platform match {
-          case Cli.HamrPlatform.Linux => project.hamrDir / "Linux"
-          case Cli.HamrPlatform.SeL4_TB => project.hamrDir / "CAmkES_seL4_TB"
-          case Cli.HamrPlatform.SeL4_Only => project.hamrDir / "CAmkES_seL4_Only"
-          case Cli.HamrPlatform.SeL4 => project.hamrDir / "CAmkES_seL4"
-          case _ => halt("??")
-        }
-        */
-
         val outputDir: Os.Path = project.hamrDir
 
         val camkesOutputDir: Option[Os.Path] = platform match {
-          case Cli.HamrPlatform.SeL4_TB => Some(outputDir)
-          case Cli.HamrPlatform.SeL4_Only => Some(outputDir)
+          case Cli.HamrPlatform.SeL4_TB => Some(outputDir / "CAkES_seL4_tb")
+          case Cli.HamrPlatform.SeL4_Only => Some(outputDir / "CAmkES_seL4_only")
           case Cli.HamrPlatform.SeL4 => Some(outputDir / "src/c/CAmkES_seL4")
           case _ => None()
         }
-
-        //outputDir.removeAll()
-        val dirs = ISZ("architecture", "art", "bridge").map(m => project.hamrDir / "src" / "main" / m)
-        for(d <- dirs) {
-          assert(d.exists, d)
-          d.removeAll()
-        }
-        (project.hamrDir / "src" / "test").removeAll()
 
         val o = Cli.HamrCodeGenOption(
           help = "",
@@ -122,15 +227,15 @@ object iccps20 extends App {
           verbose = T,
           platform = platform,
 
-          packageName = Some(project.simpleName),
+          packageName = Some(project.basePackageName),
           embedArt = T,
-          devicesAsThreads = T,
-          excludeComponentImpl = F,
+          devicesAsThreads =F ,
+          excludeComponentImpl = project.excludeComponentImplementation,
 
           bitWidth = 32,
           maxStringSize = 256,
           maxArraySize = 1,
-          runTranspiler = build,
+          runTranspiler = shouldRunTranspiler,
 
           slangAuxCodeDirs = ISZ(),
           slangOutputCDir = None(),
@@ -145,29 +250,50 @@ object iccps20 extends App {
 
         org.sireum.cli.HAMR.codeGen(o)
 
-        if(ops.StringOps(outputDir.value).contains("_VM")) {
-          replaceVM()
-        }
+        if(shouldReport) {
+          val gen = IccpsReadmeGenerator(o, project, reporter)
 
-        if(shouldReport && isSel4(platform)) {
-          val gen = ReadmeGenerator(o, reporter)
+          if(gen.build(shouldRebuild)) {
+            val expectedOutput: Option[ST] =
+              if(project.shouldSimulate && (isJVM(o.platform) || isSel4(o.platform))) Some(gen.simulate(project.timeout))
+              else None()
 
-          if(gen.build()) {
-            val timeout: Z = if(platform == Cli.HamrPlatform.SeL4) defTimeout else project.timeout
+            val aadlMetrics: ST = gen.getAadlMetrics()
 
-            val expectedOutput: ST =
-              if(project.shouldSimulate) gen.simulate(timeout)
-              else st"NEED TO MANUALLY UPDATE EXPECTED OUTPUT"
-
-            val report = Report(
-              options = o,
-              timeout = project.timeout,
-              runInstructions = gen.genRunInstructions(case_tool_evaluation_dir),
-              expectedOutput = Some(expectedOutput),
-              aadlArchDiagram = gen.getAadlArchDiagram(),
-              hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
-              camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat)
-            )
+            val report: Report =
+              if(isJVM(o.platform)) {
+                JvmReport(
+                  options = o,
+                  timeout = project.timeout,
+                  runInstructions = gen.genRunInstructions(case_tool_evaluation_dir),
+                  expectedOutput = expectedOutput,
+                  aadlArchDiagram = gen.getAadlArchDiagram(),
+                  aadlMetrics = aadlMetrics,
+                  codeMetrics = gen.getCodeMetrics()
+                )
+              } else if(isSel4(o.platform)) {
+                CamkesReport(
+                  options = o,
+                  timeout = project.timeout,
+                  runInstructions = gen.genRunInstructions(case_tool_evaluation_dir),
+                  expectedOutput = expectedOutput,
+                  aadlArchDiagram = gen.getAadlArchDiagram(),
+                  hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
+                  camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat),
+                  aadlMetrics = aadlMetrics,
+                  codeMetrics = gen.getCodeMetrics()
+                )
+              } else {
+                NixReport(
+                  options = o,
+                  timeout = project.timeout,
+                  runInstructions = gen.genRunInstructions(case_tool_evaluation_dir),
+                  expectedOutput = expectedOutput,
+                  aadlArchDiagram = gen.getAadlArchDiagram(),
+                  aadlMetrics = aadlMetrics,
+                  codeMetrics = gen.getCodeMetrics()
+                )
+              }
 
             reports = reports + (platform ~> report)
           }
@@ -175,8 +301,9 @@ object iccps20 extends App {
       }
 
       if(shouldReport) {
-        val readme = project.projectDir / "readme_autogen.md"
-        val readmest = ReadmeTemplate.generateReport(project.simpleName, reports)
+        val fname: String = if(project.readmeName.isEmpty) "readme.md" else project.readmeName.get
+        val readme = project.projectDir / fname
+        val readmest = IccpsReadmeTemplate.generateReport(project.simpleName, project.projectDir, reports)
         readme.writeOver(readmest.render)
       }
     }
@@ -201,40 +328,15 @@ object iccps20 extends App {
     return 0
   }
 
+  def isJVM(platform: HamrPlatform.Type): B = {return platform == HamrPlatform.JVM}
 
   def isSel4(platform: HamrPlatform.Type): B = {
-    return platform match {
+    val ret: B = platform match {
       case HamrPlatform.SeL4 => T
       case HamrPlatform.SeL4_TB => T
       case HamrPlatform.SeL4_Only => T
       case _ => F
     }
-  }
-
-  def replaceVM(): Unit = {
-
-    val dirs: ISZ[String] = ISZ(
-      "test_data_port_periodic_domains_VM/both_vm",
-      "test_data_port_periodic_domains_VM/receiver_vm",
-      "test_data_port_periodic_domains_VM/sender_vm",
-
-      "test_event_data_port_periodic_domains_VM/both_vm",
-      "test_event_data_port_periodic_domains_VM/receiver_vm",
-      "test_event_data_port_periodic_domains_VM/sender_vm",
-
-      "test_event_data_port_periodic_domains_VMx/receiver_vm",
-      "test_event_data_port_periodic_domains_VMx/sender_vm"
-
-    ).flatMap(m => ISZ(
-      s"${m}/CAmkES_seL4_Only/components/VM/apps",
-      s"${m}/CAmkES_seL4_Only/components/VM/overlay_files"))
-
-    for(d <- dirs) {
-      val path = case_tool_evaluation_dir / d
-      assert(path.exists, s"$path does not exist")
-
-      val comm: ISZ[String] = ISZ("git", "checkout", d)
-      Os.proc(comm).at(case_tool_evaluation_dir).console.runCheck()
-    }
+    return ret
   }
 }
