@@ -62,7 +62,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
     println(s"Simulating for ${timeout/1000} seconds")
 
-    val p = Proc(ISZ(simulateScript.value), Os.cwd, Map.empty, T, None(), F, F, F, F, F, timeout, F)
+    val p = Os.proc(ISZ(simulateScript.value)).timeout(timeout)
 
     val results = p.at(simulateScript.up).run()
     cprint(F, results.out)

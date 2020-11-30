@@ -110,7 +110,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
     println(s"Simulating for ${timeout/1000} seconds")
 
-    val p = Proc(ISZ("sbt", "run"), slangOutputDir, Map.empty, F, Some("hi"), F, F, F, F, F, timeout, F)
+    val p = Os.proc(ISZ("sbt", "run")).at(slangOutputDir).timeout(timeout).input("hi")
 
     val results = p.at(buildsbt.up).run()
     cprint(F, results.out)
@@ -128,7 +128,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
     println(s"Simulating for ${timeout/1000} seconds")
 
-    val p = Proc(ISZ(simulateScript.value), Os.cwd, Map.empty, T, None(), F, F, F, F, F, timeout, F)
+    val p = Os.proc(ISZ(simulateScript.value)).timeout(timeout)
 
     val results = p.at(simulateScript.up).run()
     cprint(F, results.out)
@@ -366,11 +366,11 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   }
 
   def getCodeMetricsCamkes(): ST = {
-    return st"Not sure what to measure here -- Camkes ADL cloc, glue-code cloc, generated seL4 code?.  Notable is that developer had to write 0 additional LOC for the CAmkES/seL4 profile."
+    return st"Not counting CAmkES/seL4 code.  Notable is that the developer did not have to write any additional LOC for this profile."
   }
 
   def runCloc(dirs: ISZ[Os.Path]): ST = {
-    dirs.foreach(d => assert(d.exists && d.isDir))
+    //dirs.foreach(d => assert(d.exists && d.isDir, s"$d"))
 
     val args: ISZ[String] = ISZ[String](
       "cloc",
@@ -618,10 +618,9 @@ object IccpsReadmeTemplate {
     return ret
   }
 
-  def generateReport(title: String,
-                    projectRoot: Os.Path,
-                    reports: HashSMap[Cli.HamrPlatform.Type, Report]): ST = {
-    val platformsDiagrams: Level = generateDiagramsSection(projectRoot, reports)
+  def generateReport(project: Project,
+                     reports: HashSMap[Cli.HamrPlatform.Type, Report]): ST = {
+    val platformsDiagrams: Level = generateDiagramsSection(project.projectDir, reports)
 
     val platformMetrics: Level = generateMetricsSection(reports)
 
@@ -629,7 +628,7 @@ object IccpsReadmeTemplate {
 
     val toc: Level = generateTOC(ISZ(platformsDiagrams, platformMetrics, platformExpectedOutput))
 
-    val ret: ST = st"""# ${title}
+    val ret: ST = st"""# ${project.title}
                       |
                       |${level2ST(toc, 0)}
                       |
@@ -747,7 +746,16 @@ object IccpsReadmeGenerator {
     val aadlTypes = TypeResolver.processDataTypes(_model, rawConnections, basePackageName)
 
     val s = SymbolResolver.resolve(_model, None(), T, aadlTypes, reporter)
-    reporter.printMessages()
+    if(reporter.hasError) {
+      println("**********************************************")
+      println("***  Messages from ICCPS Readme Gen")
+      println("**********************************************")
+      reporter.printMessages()
+      println("**********************************************")
+      println("***  END OF Messages from ICCPS Readme Gen")
+      println("**********************************************")
+
+    }
     return s
   }
 }
