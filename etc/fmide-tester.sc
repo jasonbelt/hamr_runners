@@ -29,6 +29,7 @@ val fmideInstall = SIREUM_HOME / "bin" / "install" / "fmide.cmd"
 assert(fmideInstall.exists, "Missing fmide installer")
 
 val AWAS_UPDATE_SITE="https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/"
+//val AWAS_UPDATE_SITE="file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.awas.update.site"
 val AWAS_FEATURE_ID="org.sireum.aadl.osate.awas.feature.feature.group"
 
 def normal(): Unit = {
