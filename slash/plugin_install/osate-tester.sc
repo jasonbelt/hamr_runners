@@ -48,7 +48,7 @@ if(!tgzPath.exists) {
 assert(tgzPath.exists, s"${tgz} doesn't exist")
 
 
-val installDir = Os.cwd / osateVer
+val installDir = Os.cwd / s"osate_${osateVer}"
 
 if(installDir.exists) {
   installDir.removeAll()
