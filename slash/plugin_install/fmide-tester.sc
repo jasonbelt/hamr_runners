@@ -28,9 +28,27 @@ assert(sireum.exists, "Where's sireum?")
 val fmideInstall = SIREUM_HOME / "bin" / "install" / "fmide.cmd"
 assert(fmideInstall.exists, "Missing fmide installer")
 
-val AWAS_UPDATE_SITE="https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/"
-//val AWAS_UPDATE_SITE="file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.awas.update.site"
+val localUpdateSites: B = T
+
+//val OSATE_UPDATE_SITE=="http://osate-build.sei.cmu.edu/download/osate/stable/2.9.0/updates/"
+val OSATE_UPDATE_SITE="https://osate-build.sei.cmu.edu/download/osate/stable/2.8.0/updates/"
+val BA_FEATURE_ID="org.osate.ba.feature.feature.group"
+
+val AWAS_UPDATE_SITE="https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/org.sireum.aadl.osate.awas.update.site"
+val AWAS_LOCAL_UPDATE_SITE="file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.awas.update.site"
 val AWAS_FEATURE_ID="org.sireum.aadl.osate.awas.feature.feature.group"
+
+val BASE_UPDATE_SITE="https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/org.sireum.aadl.osate.update.site"
+val BASE_LOCAL_UPDATE_SITE="file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.update.site"
+val BASE_FEATURE_ID="org.sireum.aadl.osate.feature.feature.group"
+
+val HAMR_UPDATE_SITE="https://raw.githubusercontent.com/sireum/hamr-plugin-update-site/master/org.sireum.aadl.osate.hamr.update.site"
+val HAMR_LOCAL_UPDATE_SITE="file:///home/vagrant/devel/sireum/hamr-plugin-update-site/org.sireum.aadl.osate.hamr.update.site"
+val HAMR_FEATURE_ID="org.sireum.aadl.osate.hamr.feature.feature.group"
+
+val (aus, bus, hus): (String, String, String) =
+  if(localUpdateSites) (AWAS_LOCAL_UPDATE_SITE, BASE_LOCAL_UPDATE_SITE, HAMR_LOCAL_UPDATE_SITE)
+  else (AWAS_UPDATE_SITE, BASE_UPDATE_SITE, HAMR_UPDATE_SITE)
 
 def normal(): Unit = {
   println("Running FMIDE install script")
@@ -43,23 +61,27 @@ def normal(): Unit = {
   }
   assert(exeLoc.exists, s"${exeLoc} doesn't exist")
 
-  println("Installing AWAS plugin")
-  proc"${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${AWAS_UPDATE_SITE} -installIU ${AWAS_FEATURE_ID}".console.runCheck()
+  println(s"Installing AWAS plugin from ${aus}")
+  proc"${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${aus} -installIU ${AWAS_FEATURE_ID}".console.runCheck()
 
   println(s"\n\nExecute the following to to launch FMIDE:\n")
   println(s"${exeLoc}&")
 }
 
 def abnormal(): Unit = {
-  val timestamp = "202101050141"
+  // https://github.com/loonwerks/formal-methods-workbench/releases
+
+  // https://github.com/loonwerks/formal-methods-workbench/releases/download/untagged-2cfc2900d02714a260fb/com.collins.trustedsystems.fmw.ide-2.4.2-202101130129-linux.gtk.x86_64.tar.gz
+  val tag = "2cfc2900d02714a260fb"
+  val timestamp = "2.4.2-202101130129"
   val (ver, exeLoc): (String, String) = Os.kind match {
     case Os.Kind.Linux => (s"${timestamp}-linux.gtk.x86_64", "fmide")
     case Os.Kind.Mac => (s"${timestamp}-macosx.cocoa.x86_64", "com.collins.trustedsystems.fmw.ide.app/Contents/MacOS/fmide")
     case x => halt(s"Not handling ${x}")
   }
 
-  val TGZ = Os.cwd / s"com.collins.trustedsystems.fmw.ide-2.4.0-${ver}.tar.gz"
-  val FMIDE_URL = s"https://github.com/loonwerks/formal-methods-workbench/releases/download/untagged-b6b5ab038c0bb0bf9bf1/${TGZ.name}"
+  val TGZ = Os.cwd / s"com.collins.trustedsystems.fmw.ide-${ver}.tar.gz"
+  val FMIDE_URL = s"https://github.com/loonwerks/formal-methods-workbench/releases/download/untagged-${tag}/${TGZ.name}"
 
   if(!TGZ.exists) {
     println(s"Fetching FMIDE ${ver}")
@@ -78,14 +100,17 @@ def abnormal(): Unit = {
 
   proc"tar xvfz ${TGZ} -C ${installDir}".console.runCheck()
 
-  val HAMR_UPDATE_SITE="https://raw.githubusercontent.com/sireum/hamr-plugin-update-site/master/"
-  val HAMR_FEATURE_ID="org.sireum.aadl.osate.hamr.feature.feature.group"
+  println(s"Uninstalling HAMR plugin")
+  proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -uninstallIU ${HAMR_FEATURE_ID}".console.runCheck()
 
-  println("Updating HAMR plugin")
-  proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${HAMR_UPDATE_SITE} -installIU ${HAMR_FEATURE_ID} -uninstallIU ${HAMR_FEATURE_ID}".console.runCheck()
+  println(s"Installing BASE plugin from ${bus},${OSATE_UPDATE_SITE}")
+  proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${bus},${OSATE_UPDATE_SITE} -installIU ${BASE_FEATURE_ID}".console.runCheck()
 
-  println("Installing AWAS plugin")
-  proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${AWAS_UPDATE_SITE} -installIU ${AWAS_FEATURE_ID}".console.runCheck()
+  println(s"Installing HAMR plugin from ${hus}")
+  proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${hus} -installIU ${HAMR_FEATURE_ID}".console.runCheck()
+
+  println(s"Installing AWAS plugin from ${aus}")
+  proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${aus} -installIU ${AWAS_FEATURE_ID}".console.runCheck()
 
   println(s"\n\nExecute the following to to launch FMIDE ${ver}:\n")
   println(s"${installDir}/${exeLoc}&")

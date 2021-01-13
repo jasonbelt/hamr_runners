@@ -21,14 +21,26 @@ exit /B %errorlevel%
 
 import org.sireum._
 
-val AWAS_UPDATE_SITE="https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/"
+val localUpdateSites: B = T
+
+val AWAS_UPDATE_SITE="https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/org.sireum.aadl.osate.awas.update.site"
+val AWAS_LOCAL_UPDATE_SITE="file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.awas.update.site"
 val AWAS_FEATURE_ID="org.sireum.aadl.osate.awas.feature.feature.group"
 
-val HAMR_UPDATE_SITE="https://raw.githubusercontent.com/sireum/hamr-plugin-update-site/master/"
+val BASE_UPDATE_SITE="https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/org.sireum.aadl.osate.update.site"
+val BASE_LOCAL_UPDATE_SITE="file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.update.site"
+val BASE_FEATURE_ID="org.sireum.aadl.osate.feature.feature.group"
+
+val HAMR_UPDATE_SITE="https://raw.githubusercontent.com/sireum/hamr-plugin-update-site/master/org.sireum.aadl.osate.hamr.update.site"
+val HAMR_LOCAL_UPDATE_SITE="file:///home/vagrant/devel/sireum/hamr-plugin-update-site/org.sireum.aadl.osate.hamr.update.site"
 val HAMR_FEATURE_ID="org.sireum.aadl.osate.hamr.feature.feature.group"
 
 val osateVer= "2.9.0-vfinal"
 val OSATE_PRODUCTS_URL=s"https://osate-build.sei.cmu.edu/download/osate/stable/${osateVer}/products/"
+
+val (aus, bus, hus): (String, String, String) =
+  if(localUpdateSites) (AWAS_LOCAL_UPDATE_SITE, BASE_LOCAL_UPDATE_SITE, HAMR_LOCAL_UPDATE_SITE)
+  else (AWAS_UPDATE_SITE, BASE_UPDATE_SITE, HAMR_UPDATE_SITE)
 
 val (tgz, exeLoc) : (String, String) = Os.kind match {
   case Os.Kind.Linux =>
@@ -58,11 +70,14 @@ assert(installDir.exists, s"${installDir} doesn't exist")
 
 proc"tar xvfz ${tgzPath} -C ${installDir}".console.runCheck()
 
-println("Installing HAMR plugin")
-proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${HAMR_UPDATE_SITE} -installIU ${HAMR_FEATURE_ID}".console.runCheck()
+println(s"Installing BASE plugin from ${bus}")
+proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${bus} -installIU ${BASE_FEATURE_ID}".console.runCheck()
 
-println("Installing AWAS plugin")
-proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${AWAS_UPDATE_SITE} -installIU ${AWAS_FEATURE_ID}".console.runCheck()
+println(s"Installing HAMR plugin from ${hus}")
+proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${hus} -installIU ${HAMR_FEATURE_ID}".console.runCheck()
+
+println(s"Installing AWAS plugin from ${aus}")
+proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${aus} -installIU ${AWAS_FEATURE_ID}".console.runCheck()
 
 println(s"\n\nExecute the following to to launch OSATE ${osateVer}:\n")
 println(s"${installDir}/${exeLoc}&")
