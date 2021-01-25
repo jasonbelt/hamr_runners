@@ -103,6 +103,9 @@ def abnormal(): Unit = {
   println(s"Uninstalling HAMR plugin")
   proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -uninstallIU ${HAMR_FEATURE_ID}".console.runCheck()
 
+  println(s"Installing BA plugin from ${OSATE_UPDATE_SITE}")
+  proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${OSATE_UPDATE_SITE} -installIU ${BA_FEATURE_ID}".console.runCheck()
+
   println(s"Installing BASE plugin from ${bus},${OSATE_UPDATE_SITE}")
   proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${bus},${OSATE_UPDATE_SITE} -installIU ${BASE_FEATURE_ID}".console.runCheck()
 
