@@ -21,7 +21,7 @@ exit /B %errorlevel%
 
 import org.sireum._
 
-val localUpdateSites: B = T
+val localUpdateSites: B = F
 
 val AWAS_UPDATE_SITE="https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/org.sireum.aadl.osate.awas.update.site"
 val AWAS_LOCAL_UPDATE_SITE="file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.awas.update.site"
