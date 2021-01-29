@@ -86,5 +86,4 @@ proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.ecl
 //println(s"Installing AWAS plugin from ${aus}")
 //proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${aus} -installIU ${AWAS_FEATURE_ID}".console.runCheck()
 
-println(s"\n\nExecute the following to to launch OSATE ${osateVer}:\n")
-println(s"${installDir}/${exeLoc}&")
+println(s"\n\nalias phantom='/home/vagrant/CASE/Sireum/cli/jvm/src/main/scala/org/sireum/cli/hamr_runners/slash/phantom/osate_2.9.0-vfinal/osate -nosplash -console -consoleLog -application org.sireum.aadl.osate.cli'\n")
