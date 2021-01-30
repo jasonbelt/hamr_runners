@@ -71,6 +71,8 @@ def normal(): Unit = {
 def abnormal(): Unit = {
   // https://github.com/loonwerks/formal-methods-workbench/releases
 
+  val fmideInstallDir: Os.Path = Os.home / "temp" / "fmide_plugin_test"
+
   // https://github.com/loonwerks/formal-methods-workbench/releases/download/untagged-2cfc2900d02714a260fb/com.collins.trustedsystems.fmw.ide-2.4.2-202101130129-linux.gtk.x86_64.tar.gz
   val tag = "2cfc2900d02714a260fb"
   val timestamp = "2.4.2-202101130129"
@@ -80,7 +82,7 @@ def abnormal(): Unit = {
     case x => halt(s"Not handling ${x}")
   }
 
-  val TGZ = Os.cwd / s"com.collins.trustedsystems.fmw.ide-${ver}.tar.gz"
+  val TGZ = fmideInstallDir / s"com.collins.trustedsystems.fmw.ide-${ver}.tar.gz"
   val FMIDE_URL = s"https://github.com/loonwerks/formal-methods-workbench/releases/download/untagged-${tag}/${TGZ.name}"
 
   if(!TGZ.exists) {
@@ -90,7 +92,7 @@ def abnormal(): Unit = {
   }
   assert(TGZ.exists, s"${TGZ} doesn't exist")
 
-  val installDir = Os.cwd / "fmide_abnormal"
+  val installDir = fmideInstallDir / "fmide_abnormal"
 
   if(installDir.exists) {
     installDir.removeAll()

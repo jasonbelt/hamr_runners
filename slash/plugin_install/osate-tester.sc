@@ -23,6 +23,8 @@ import org.sireum._
 
 val localUpdateSites: B = F
 
+val osateInstallDir: Os.Path = Os.home / "temp" / "osate_plugin_test"
+
 val AWAS_UPDATE_SITE="https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/org.sireum.aadl.osate.awas.update.site"
 val AWAS_LOCAL_UPDATE_SITE="file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.awas.update.site"
 val AWAS_FEATURE_ID="org.sireum.aadl.osate.awas.feature.feature.group"
@@ -50,7 +52,7 @@ val (tgz, exeLoc) : (String, String) = Os.kind match {
   case x => halt(s"not supporting ${x}")
 }
 
-val tgzPath = Os.cwd / tgz
+val tgzPath = osateInstallDir / tgz
 
 if(!tgzPath.exists) {
   println(s"Fetching OSATE ${osateVer}")
@@ -60,7 +62,7 @@ if(!tgzPath.exists) {
 assert(tgzPath.exists, s"${tgz} doesn't exist")
 
 
-val installDir = Os.cwd / s"osate_${osateVer}"
+val installDir = osateInstallDir / s"osate_${osateVer}"
 
 if(installDir.exists) {
   installDir.removeAll()

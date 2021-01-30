@@ -23,6 +23,8 @@ import org.sireum._
 
 val localUpdateSites: B = T
 
+val phantomInstallDir: Os.Path = Os.home / "temp" / "phantom_plugin_test"
+
 val AWAS_UPDATE_SITE="https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/org.sireum.aadl.osate.awas.update.site"
 val AWAS_LOCAL_UPDATE_SITE="file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.awas.update.site"
 val AWAS_FEATURE_ID="org.sireum.aadl.osate.awas.feature.feature.group"
@@ -54,7 +56,7 @@ val (tgz, exeLoc) : (String, String) = Os.kind match {
   case x => halt(s"not supporting ${x}")
 }
 
-val tgzPath = Os.cwd / tgz
+val tgzPath = phantomInstallDir / tgz
 
 if(!tgzPath.exists) {
   println(s"Fetching OSATE ${osateVer}")
@@ -64,7 +66,7 @@ if(!tgzPath.exists) {
 assert(tgzPath.exists, s"${tgz} doesn't exist")
 
 
-val installDir = Os.cwd / s"osate_${osateVer}"
+val installDir = phantomInstallDir / s"osate_${osateVer}"
 
 if(installDir.exists) {
   installDir.removeAll()
@@ -86,4 +88,4 @@ proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.ecl
 //println(s"Installing AWAS plugin from ${aus}")
 //proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${aus} -installIU ${AWAS_FEATURE_ID}".console.runCheck()
 
-println(s"\n\nalias phantom='/home/vagrant/CASE/Sireum/cli/jvm/src/main/scala/org/sireum/cli/hamr_runners/slash/phantom/osate_2.9.0-vfinal/osate -nosplash -console -consoleLog -application org.sireum.aadl.osate.cli'\n")
+println(s"\n\nalias phantom='${installDir}/osate -nosplash -console -consoleLog -application org.sireum.aadl.osate.cli'\n")
