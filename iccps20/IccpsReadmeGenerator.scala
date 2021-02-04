@@ -4,6 +4,7 @@ package org.sireum.cli.hamr_runners.iccps20
 import org.sireum._
 import org.sireum.Cli.HamrPlatform
 import org.sireum.Os.Proc
+import org.sireum.hamr.act.util.PathUtil
 import org.sireum.hamr.act.vm.VM_Template
 import org.sireum.hamr.codegen.common.{CommonUtil, StringUtil}
 import org.sireum.hamr.codegen.common.properties.PropertyUtil
@@ -202,7 +203,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     val transpileSel4: Os.Path = IccpsReadmeGenerator.getTranspileSel4Script(slangOutputDir)
     val runScript: Os.Path = IccpsReadmeGenerator.getRunCamkesScript(camkesOutputDir.get)
     val cakeMlScript: Os.Path = transpileSel4.up / "compile-cakeml.sh"
-    val caseArmVmSetupScript: Os.Path = runScript.up / VM_Template.setup_camkes_vm_script_filename
+    val caseArmVmSetupScript: Os.Path = runScript.up / Os.path(PathUtil.CAMKES_ARM_VM_SCRIPT_PATH).name
 
     val caseArmVmSetup: Option[ST] =
       if(caseArmVmSetupScript.exists) { Some(st"${root.relativize(caseArmVmSetupScript)}") }
