@@ -41,7 +41,7 @@ val HAMR_UPDATE_SITE="https://raw.githubusercontent.com/sireum/hamr-plugin-updat
 val HAMR_LOCAL_UPDATE_SITE="file:///home/vagrant/devel/sireum/hamr-plugin-update-site/org.sireum.aadl.osate.hamr.update.site"
 val HAMR_FEATURE_ID="org.sireum.aadl.osate.hamr.feature.feature.group"
 
-val osateVer= "2.9.0-vfinal"
+val osateVer= "2.9.1-vfinal"
 val OSATE_PRODUCTS_URL=s"https://osate-build.sei.cmu.edu/download/osate/stable/${osateVer}/products/"
 
 val (aus, bus, cus, hus): (String, String, String, String) =
@@ -61,7 +61,7 @@ val tgzPath = phantomInstallDir / tgz
 if(!tgzPath.exists) {
   println(s"Fetching OSATE ${osateVer}")
 
-  proc"wget ${OSATE_PRODUCTS_URL}${tgz}".console.runCheck()
+  proc"wget -P ${phantomInstallDir} ${OSATE_PRODUCTS_URL}${tgz}".console.runCheck()
 }
 assert(tgzPath.exists, s"${tgz} doesn't exist")
 
