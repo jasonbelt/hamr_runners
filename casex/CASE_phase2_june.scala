@@ -1,53 +1,89 @@
+// #Sireum
 package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
+import org.sireum.cli.hamr_runners.DotFormat
 
 object CASE_phase2_june {
 
-  val rootDir = Os.home / "devel/case/CASETeam/examples/ksu-proprietary"
+  @datatype class Project (simpleName: String,
+                           projectDir: Os.Path,
+                           aadlDir: Os.Path,
+                           slangFile: Os.Path,
+                           platforms: ISZ[Cli.HamrPlatform.Type],
+                           shouldSimulate: B,
+                           timeout: Z)
+
+  val shouldReport: B = T
+  val graphFormat: DotFormat.Type = DotFormat.svg
+  val build: B = F
+  val defTimeout: Z = 15000
+  val vmTimeout: Z = 90000
+
+  val linux: Cli.HamrPlatform.Type = Cli.HamrPlatform.Linux
+  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
+  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
+  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
+
+  val rootDir: Os.Path = Os.home / "devel" / "case" / "case-ku" / "examples" / "ksu-proprietary"
+
+  val tempDir: Os.Path = Os.home / "temp" / "Phase-2-UAV-Experimental-Platform-June-v2"
 
   val runTranspiler: B = F
 
-  def gen(name: String, json: String): (String, Os.Path, Os.Path) = {
-    val modelDir = rootDir / name
-    return (name, modelDir, modelDir / ".slang" / json)
+  def genFull(rDir: Os.Path, name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type],
+              shouldSimulate: B, timeout: Z): Project = {
+    val projectDir = rDir / name
+    val aadlDir = projectDir / "aadl"
+    val jsonFile = aadlDir / ".slang" / json
+
+    assert(aadlDir.exists, aadlDir.value)
+    assert(jsonFile.exists, jsonFile.value)
+
+    return Project(name, projectDir, aadlDir, jsonFile, platforms, shouldSimulate, timeout)
   }
 
-  val projectsDirs: ISZ[(String, Os.Path, Os.Path)] = ISZ(
+  def gen(rDir: Os.Path, name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
+    return genFull(rDir, name, json, platforms, T, defTimeout)
+  }
 
-    gen("Phase-2-UAV-Experimental-Platform-June-hamr", "SW_SW_Impl_Instance.json"),
+  val projectsDirs: ISZ[Project] = ISZ(
 
-    gen("Phase-2-UAV-Experimental-Platform-June-hamr_dataports", "SW_SW_Impl_Instance.json"),
+    //gen("Phase-2-UAV-Experimental-Platform-June-hamr", "SW_SW_Impl_Instance.json"),
 
-    gen("Phase-2-UAV-Experimental-Platform-Transformed", "UAV_UAV_Impl_Instance.json")
-  )
+    //gen("Phase-2-UAV-Experimental-Platform-June-hamr_dataports", "SW_SW_Impl_Instance.json"),
 
-  val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(
-    //Cli.HamrPlatform.SeL4_TB,
-    //Cli.HamrPlatform.SeL4_Only,
-    Cli.HamrPlatform.SeL4
+    //gen("Phase-2-UAV-Experimental-Platform-Transformed", "UAV_UAV_Impl_Instance.json")
+
+    gen(tempDir, "v1", "UAV_UAV_Impl_Instance.json", ISZ(linux, sel4))
   )
 
   def main(args: Array[Predef.String]): Unit = {
 
     for (project <- projectsDirs) {
-      val projectDir = project._2
-      val slangFile = project._3
-
-      if(!projectDir.exists) {
-        throw new RuntimeException(s"${projectDir} does not exist");
-      }
+      val projectDir = project.projectDir
+      val slangFile = project.slangFile
 
       var readmeEntries: ISZ[ST] = ISZ()
 
-      val outputDir = projectDir / "june"
+      val outputDir = projectDir / "hamr"
 
-      for (platform <- platforms) {
-        val camkesOutputDir = platform match {
-          case Cli.HamrPlatform.SeL4_TB => outputDir / "src/c/CAmkES_seL4_TB_VM"
-          case Cli.HamrPlatform.SeL4_Only => outputDir / "src/c/CAmkES_seL4_Only_VM"
-          case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4_VM"
-          case _ => throw new RuntimeException("??")
+      var slangAuxCodeDirs:ISZ[String] = ISZ()
+
+      if((project.aadlDir / "c_libraries").exists){
+        slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "c_libraries").canon.value
+      }
+
+      //if((project.aadlDir / "hexdump").exists) {
+      //  slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "hexdump").canon.value
+      //}
+
+      for (platform <- project.platforms) {
+        val camkesOutputDir: Option[Os.Path] = platform match {
+          case Cli.HamrPlatform.SeL4_TB => Some(outputDir / "src" / "c" / "CAmkES_seL4_TB_VM")
+          case Cli.HamrPlatform.SeL4_Only => Some(outputDir / "src" / "c" / "CAmkES_seL4_Only_VM")
+          case Cli.HamrPlatform.SeL4 => Some(outputDir / "src" / "c" / "CAmkES_seL4_VM")
+          case _ => None()
         }
 
         //outputDir.removeAll()
@@ -63,16 +99,19 @@ object CASE_phase2_june {
           maxArraySize = 1,
           runTranspiler = runTranspiler,
 
-          camkesOutputDir = Some(camkesOutputDir.value),
-          aadlRootDir = Some(projectDir.value)
+          slangAuxCodeDirs = slangAuxCodeDirs,
+
+          camkesOutputDir = camkesOutputDir.map(m => m.value),
+          aadlRootDir = Some(project.aadlDir.value)
         )
 
         cli.HAMR.codeGen(o)
 
 
-        val dot = camkesOutputDir / "graph.dot"
+        val _dot: Option[Os.Path] = camkesOutputDir.map(m => m / "graph.dot")
 
-        if(dot.exists) {
+        if(_dot.nonEmpty) {
+          val dot = _dot.get
 
           val tool_eval_4_diagrams = projectDir / "diagrams"
 
@@ -102,7 +141,7 @@ object CASE_phase2_june {
 
       val aadlArch = "diagrams/aadl-arch.png"
 
-      val readmest = st"""# ${project._1}
+      val readmest = st"""# ${project.simpleName}
                          |
                          |## AADL Arch
                          |  ![aadl](${aadlArch})

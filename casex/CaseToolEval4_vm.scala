@@ -8,14 +8,14 @@ import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, 
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 
-@datatype class Project (simpleName: String,
-                        modelDir: Os.Path,
-                        slangFile: Os.Path,
-                        platforms: ISZ[Cli.HamrPlatform.Type],
-                        shouldSimulate: B,
-                        timeout: Z)
-
 object CaseToolEval4_vm extends App {
+
+  @datatype class Project (simpleName: String,
+                           modelDir: Os.Path,
+                           slangFile: Os.Path,
+                           platforms: ISZ[Cli.HamrPlatform.Type],
+                           shouldSimulate: B,
+                           timeout: Z)
 
   val shouldReport: B = T
   val graphFormat: DotFormat.Type = DotFormat.svg
