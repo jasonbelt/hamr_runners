@@ -27,7 +27,7 @@ object CASE_phase2_june {
 
   val rootDir: Os.Path = Os.home / "devel" / "case" / "case-ku" / "examples" / "ksu-proprietary"
 
-  val tempDir: Os.Path = Os.home / "temp" / "Phase-2-UAV-Experimental-Platform-June-v2"
+  val tempDir: Os.Path = Os.home / "temp" / "case-phase2-june"
 
   val runTranspiler: B = F
 

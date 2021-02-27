@@ -25,7 +25,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     path
   }
 
-  val model: ir.Aadl = IccpsReadmeGenerator.getModel(airFile, o.json)
+  val model: ir.Aadl = IccpsReadmeGenerator.getModel(airFile, o.msgpack)
 
   val symbolTable: SymbolTable = IccpsReadmeGenerator.getSymbolTable(model, o.packageName.get)
 
@@ -706,21 +706,14 @@ object IccpsReadmeGenerator {
   }
 
 
-  def getModel(inputFile: Os.Path, isJson: B): ir.Aadl = {
+  def getModel(inputFile: Os.Path, isMsgpack: B): ir.Aadl = {
     val input: String = if (inputFile.exists && inputFile.isFile) {
       inputFile.read
     } else {
       halt(s"AIR input file ${inputFile} not found")
     }
 
-    val model: ir.Aadl = if (isJson) {
-      irJSON.toAadl(input) match {
-        case Either.Left(m) => m
-        case Either.Right(m) =>
-          halt(s"Json deserialization error at (${m.line}, ${m.column}): ${m.message}")
-      }
-    }
-    else {
+    val model: ir.Aadl = if (isMsgpack) {
       org.sireum.conversions.String.fromBase64(input) match {
         case Either.Left(u) =>
           irMsgPack.toAadl(u) match {
@@ -730,6 +723,13 @@ object IccpsReadmeGenerator {
           }
         case Either.Right(m) =>
           halt(m)
+      }
+    }
+    else {
+      irJSON.toAadl(input) match {
+        case Either.Left(m) => m
+        case Either.Right(m) =>
+          halt(s"Json deserialization error at (${m.line}, ${m.column}): ${m.message}")
       }
     }
     return model

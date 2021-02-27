@@ -74,7 +74,7 @@ object BuildingControlRunner {
           //maxStringSize = 125,
           //maxArraySize = 16,
 
-          embedArt = if(project.name == string"building-control-gen-shm-libART") F else T,
+          noEmbedArt = if(project.name == string"building-control-gen-shm-libART") T else F,
 
           camkesOutputDir = camkesOutputDir.map(m => m.value),
           camkesAuxCodeDirs = ISZ((cDir / "camkes_aux_code").value),

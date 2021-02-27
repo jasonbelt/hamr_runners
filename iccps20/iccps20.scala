@@ -319,12 +319,12 @@ object iccps20 extends App {
         val o = Cli.HamrCodeGenOption(
           help = "",
           args = ISZ(project.slangFile.value),
-          json = T,
+          msgpack = F,
           verbose = T,
           platform = platform,
 
           packageName = Some(project.basePackageName),
-          embedArt = T,
+          noEmbedArt = F,
           devicesAsThreads = project.devicesAsThreads,
           excludeComponentImpl = project.excludeComponentImplementation,
 

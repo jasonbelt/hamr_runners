@@ -66,7 +66,7 @@ object BTSBuildingControl {
           //maxStringSize = 125,
           //maxArraySize = 16,
 
-          embedArt = T,
+          noEmbedArt = F,
 
           camkesOutputDir = camkesOutputDir.map(m => m.value),
           camkesAuxCodeDirs = ISZ((cDir / "camkes_aux_code").value),

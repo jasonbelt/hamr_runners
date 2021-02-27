@@ -77,12 +77,12 @@ object Hatcliff extends App {
         val o = Cli.HamrCodeGenOption(
           help = "",
           args = ISZ(slangFile.value),
-          json = T,
+          msgpack = F,
           verbose = T,
           platform = platform,
 
           packageName = Some(project._1),
-          embedArt = T,
+          noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = T,
 

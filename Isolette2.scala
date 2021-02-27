@@ -66,12 +66,12 @@ object Isolette2 extends App {
         val o = HamrCodeGenOption(
           help = "",
           args = ISZ(slangFile.value),
-          json = T,
+          msgpack = F,
           verbose = T,
           platform = platform,
 
           packageName = Some("isolette"),
-          embedArt = T,
+          noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = F,
 

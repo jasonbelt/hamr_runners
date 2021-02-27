@@ -121,12 +121,12 @@ object CaseToolEval4_vm extends App {
         val o = Cli.HamrCodeGenOption(
           help = "",
           args = ISZ(project.slangFile.value),
-          json = T,
+          msgpack = F,
           verbose = T,
           platform = platform,
 
           packageName = Some(project.simpleName),
-          embedArt = T,
+          noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = T,
 
