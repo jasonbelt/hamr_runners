@@ -82,10 +82,10 @@ proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.ecl
 println(s"Installing CLI plugin from ${cus}")
 proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${cus} -installIU ${CLI_FEATURE_ID}".console.runCheck()
 
-//println(s"Installing HAMR plugin from ${hus}")
-//proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${hus} -installIU ${HAMR_FEATURE_ID}".console.runCheck()
+println(s"Installing HAMR plugin from ${hus}")
+proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${hus} -installIU ${HAMR_FEATURE_ID}".console.runCheck()
 
-//println(s"Installing AWAS plugin from ${aus}")
-//proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${aus} -installIU ${AWAS_FEATURE_ID}".console.runCheck()
+println(s"Installing AWAS plugin from ${aus}")
+proc"${installDir}/${exeLoc} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.director -repository ${aus} -installIU ${AWAS_FEATURE_ID}".console.runCheck()
 
 println(s"\n\nalias phantom='${installDir}/osate -nosplash -console -consoleLog -application org.sireum.aadl.osate.cli'\n")
