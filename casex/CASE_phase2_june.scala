@@ -25,9 +25,7 @@ object CASE_phase2_june {
   val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
   val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
 
-  val rootDir: Os.Path = Os.home / "devel" / "case" / "case-ku" / "examples" / "ksu-proprietary"
-
-  val tempDir: Os.Path = Os.home / "temp" / "case-phase2-june"
+  val rootDir: Os.Path = Os.home / "devel" / "case" / "case-ku" / "examples" / "ksu-proprietary" / "Phase-2-UAV-Experimental-Platform-June-step6-hamr"
 
   val runTranspiler: B = F
 
@@ -55,7 +53,9 @@ object CASE_phase2_june {
 
     //gen("Phase-2-UAV-Experimental-Platform-Transformed", "UAV_UAV_Impl_Instance.json")
 
-    gen(tempDir, "v1", "UAV_UAV_Impl_Instance.json", ISZ(linux, sel4))
+   // gen(rootDir,"cakeml", "UAV_UAV_Impl_Instance.json", ISZ(linux)),
+
+    gen(rootDir, "vm", "UAV_UAV_Impl_Instance.json", ISZ(sel4))
   )
 
   def main(args: Array[Predef.String]): Unit = {
@@ -70,13 +70,17 @@ object CASE_phase2_june {
 
       var slangAuxCodeDirs:ISZ[String] = ISZ()
 
-      if((project.aadlDir / "c_libraries").exists){
-        slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "c_libraries").canon.value
+      if((project.aadlDir / "c_libraries" / "CMASI").exists){
+        slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "c_libraries" / "CMASI" ).canon.value
       }
 
-      //if((project.aadlDir / "hexdump").exists) {
-      //  slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "hexdump").canon.value
-      //}
+      if((project.aadlDir / "c_libraries" / "hexdump").exists){
+        slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "c_libraries" / "hexdump" ).canon.value
+      }
+
+      if((project.aadlDir / "hexdump" / "dummy_serial_server" ).exists) {
+        slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "hexdump" / "dummy_serial_server" ).canon.value
+      }
 
       for (platform <- project.platforms) {
         val camkesOutputDir: Option[Os.Path] = platform match {
@@ -91,6 +95,8 @@ object CASE_phase2_june {
         val o = Util.o(
           args = ISZ(slangFile.value),
           platform = platform,
+          packageName = Some("hamr"),
+          excludeComponentImpl = T,
 
           outputDir = Some(outputDir.value),
 
@@ -101,7 +107,6 @@ object CASE_phase2_june {
 
           slangAuxCodeDirs = slangAuxCodeDirs,
 
-          camkesOutputDir = camkesOutputDir.map(m => m.value),
           aadlRootDir = Some(project.aadlDir.value)
         )
 
