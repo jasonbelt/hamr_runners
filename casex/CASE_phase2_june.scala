@@ -55,6 +55,8 @@ object CASE_phase2_june {
 
    // gen(rootDir,"cakeml", "UAV_UAV_Impl_Instance.json", ISZ(linux)),
 
+    gen(rootDir, "cakeml", "UAV_UAV_Impl_Instance.json", ISZ(linux)),
+
     gen(rootDir, "vm", "UAV_UAV_Impl_Instance.json", ISZ(linux, sel4))
   )
 
@@ -70,16 +72,18 @@ object CASE_phase2_june {
 
       var slangAuxCodeDirs:ISZ[String] = ISZ()
 
-      if((project.aadlDir / "c_libraries" / "CMASI").exists){
-        slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "c_libraries" / "CMASI" ).canon.value
+      val clib = project.aadlDir / "c_libraries"
+
+      if((clib / "CMASI").exists){
+        slangAuxCodeDirs = slangAuxCodeDirs :+ (clib / "CMASI" ).canon.value
       }
 
-      if((project.aadlDir / "c_libraries" / "hexdump").exists){
-        slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "c_libraries" / "hexdump" ).canon.value
+      if((clib / "hexdump").exists){
+        slangAuxCodeDirs = slangAuxCodeDirs :+ (clib / "hexdump" ).canon.value
       }
 
-      if((project.aadlDir / "c_libraries" / "dummy_serial_server" ).exists) {
-        slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "c_libraries" / "dummy_serial_server" ).canon.value
+      if((clib / "dummy_serial_server" ).exists) {
+        slangAuxCodeDirs = slangAuxCodeDirs :+ (clib / "dummy_serial_server" ).canon.value
       }
 
       for (platform <- project.platforms) {
