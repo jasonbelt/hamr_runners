@@ -55,7 +55,7 @@ object CASE_phase2_june {
 
    // gen(rootDir,"cakeml", "UAV_UAV_Impl_Instance.json", ISZ(linux)),
 
-    gen(rootDir, "vm", "UAV_UAV_Impl_Instance.json", ISZ(sel4))
+    gen(rootDir, "vm", "UAV_UAV_Impl_Instance.json", ISZ(linux, sel4))
   )
 
   def main(args: Array[Predef.String]): Unit = {
@@ -78,8 +78,8 @@ object CASE_phase2_june {
         slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "c_libraries" / "hexdump" ).canon.value
       }
 
-      if((project.aadlDir / "hexdump" / "dummy_serial_server" ).exists) {
-        slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "hexdump" / "dummy_serial_server" ).canon.value
+      if((project.aadlDir / "c_libraries" / "dummy_serial_server" ).exists) {
+        slangAuxCodeDirs = slangAuxCodeDirs :+ (project.aadlDir / "c_libraries" / "dummy_serial_server" ).canon.value
       }
 
       for (platform <- project.platforms) {
