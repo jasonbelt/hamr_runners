@@ -55,7 +55,7 @@ object CASE_phase2_june {
 
    // gen(rootDir,"cakeml", "UAV_UAV_Impl_Instance.json", ISZ(linux)),
 
-    gen(rootDir, "cakeml", "UAV_UAV_Impl_Instance.json", ISZ(linux)),
+    gen(rootDir, "cakeml", "UAV_UAV_Impl_Instance.json", ISZ(linux, sel4)),
 
     gen(rootDir, "vm", "UAV_UAV_Impl_Instance.json", ISZ(linux, sel4))
   )
