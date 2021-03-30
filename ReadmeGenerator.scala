@@ -75,7 +75,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     return st"${output.get}"
   }
 
-  def genRunInstructions(root: Os.Path): ST = {
+  def genRunInstructions(root: Os.Path, osierumScript: Option[Os.Path]): ST = {
 
     val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
     val runScript: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
@@ -83,15 +83,15 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     val caseArmVmSetupScript: Os.Path = runScript.up / Os.path(PathUtil.CAMKES_ARM_VM_SCRIPT_PATH).name
 
     val caseArmVmSetup: Option[ST] =
-      if(caseArmVmSetupScript.exists) { Some(st"${root.relativize(caseArmVmSetupScript)}") }
+      if(caseArmVmSetupScript.exists) { Some(st"./${root.relativize(caseArmVmSetupScript)}") }
       else { None() }
 
     val cakeML: Option[ST] =
-      if(cakeMlScript.exists) { Some(st"${root.relativize(cakeMlScript)}") }
+      if(cakeMlScript.exists) { Some(st"./${root.relativize(cakeMlScript)}") }
       else { None() }
 
     val transpile: Option[ST] =
-      if(transpileSel4.exists) { Some(st"${root.relativize(transpileSel4)}") }
+      if(transpileSel4.exists) { Some(st"./${root.relativize(transpileSel4)}") }
       else { None() }
 
     var options: ISZ[String] = ISZ("-s")
@@ -100,9 +100,14 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     }
 
     assert(runScript.exists, s"${runScript} not found")
-    val runCamkes: ST = st"${root.relativize(runScript)} ${(options, " ")}"
+    val runCamkes: ST = st"./${root.relativize(runScript)} ${(options, " ")}"
 
-    val ret: ST = st"""${caseArmVmSetup}
+    val osireum: Option[ST] =
+      if(osierumScript.nonEmpty) Some(st"./${root.relativize(osierumScript.get)}")
+      else None()
+
+    val ret: ST = st"""${osireum}
+                      |${caseArmVmSetup}
                       |${cakeML}
                       |${transpile}
                       |${runCamkes}"""
@@ -204,14 +209,22 @@ object ReadmeTemplate {
             if(report.options.packageName.nonEmpty) { Some(st"| package-name | ${report.options.packageName.get} |")}
             else { None() }
 
-          val config = st"""|HAMR Codegen Configuration| |
-                           ||--|--|
-                           |${packageNameOption}
-                           || exclude-component-impl | ${report.options.excludeComponentImpl} |
-                           || bit-width | ${report.options.bitWidth} |
-                           || max-string-size | ${report.options.maxStringSize} |
-                           || max-array-size | ${report.options.maxArraySize} |
-                           |"""
+          var config = st"""|HAMR Codegen Configuration| |
+                           ||--|--|"""
+          if(report.runHamrScript.nonEmpty) {
+            config = st"""${config}
+                         || refer to [${report.runHamrScript.get.value}](${report.runHamrScript.get.value}) |
+                         |"""
+          }
+          else {
+            config = st"""${config}
+                         ||${packageNameOption}
+                         || exclude-component-impl | ${report.options.excludeComponentImpl} |
+                         || bit-width | ${report.options.bitWidth} |
+                         || max-string-size | ${report.options.maxStringSize} |
+                         || max-array-size | ${report.options.maxArraySize} |
+                         |"""
+          }
 
           Some(ContentLevel(s"${platform.string} Expected Output: Timeout = ${report.timeout / 1000} seconds",
             st"""
@@ -416,6 +429,7 @@ object ReadmeGenerator {
 }
 
 @record class Report (options: Cli.HamrCodeGenOption,
+                      runHamrScript: Option[Os.Path],
                       timeout: Z,
 
                       runInstructions: ST,

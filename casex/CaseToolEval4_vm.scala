@@ -19,7 +19,7 @@ object CaseToolEval4_vm extends App {
 
   val shouldReport: B = T
   val graphFormat: DotFormat.Type = DotFormat.svg
-  val build: B = F
+  val runTranspiler: B = F
   val defTimeout: Z = 15000
   val vmTimeout: Z = 90000
 
@@ -28,7 +28,7 @@ object CaseToolEval4_vm extends App {
   val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
   val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
 
-  val case_tool_evaluation_dir: Os.Path = Os.home / "devel/case/CASE-loonwerks/TA5/tool-evaluation-4/HAMR/examples"
+  val case_tool_evaluation_dir: Os.Path = Os.home / "devel/case/case-loonwerks/TA5/tool-evaluation-4/HAMR/examples"
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
@@ -44,20 +44,19 @@ object CaseToolEval4_vm extends App {
 
   val nonVmProjects: ISZ[Project] = ISZ(
 
-    gen("simple_uav", "UAV_UAV_Impl_Instance.json", ISZ(sel4_tb, sel4_only)),
+    //gen("simple_uav", "UAV_UAV_Impl_Instance.json", ISZ(sel4_tb, sel4_only)),
 
-    gen("test_data_port", "test_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
+    //gen("test_data_port", "test_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
+    //gen("test_data_port_periodic", "test_data_port_periodic_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
+    //gen("test_data_port_periodic_fan_out", "test_data_port_periodic_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
+    //gen("test_event_data_port", "test_event_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
+    //gen("test_event_data_port_fan_out", "test_event_data_port_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
 
-    gen("test_data_port_periodic", "test_data_port_periodic_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-    gen("test_data_port_periodic_fan_out", "test_data_port_periodic_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-    gen("test_event_data_port", "test_event_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-    gen("test_event_data_port_fan_out", "test_event_data_port_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
+    //gen("test_event_port", "test_event_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
+    //gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
 
-    gen("test_event_port", "test_event_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-    gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-
-    gen("test_data_port_periodic_domains", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
-    gen("test_event_data_port_periodic_domains", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
+    //gen("test_data_port_periodic_domains", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
+    //gen("test_event_data_port_periodic_domains", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
 
     gen("test_event_port_periodic_domains", "test_event_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
   )
@@ -77,9 +76,95 @@ object CaseToolEval4_vm extends App {
     genFull("test_event_data_port_periodic_domains_VMx/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only), T, vmTimeout)
   )
 
-  //val tests: ISZ[Project] = nonVmProjects
-  val tests: ISZ[Project] = nonVmProjects ++ vmProjects
+  val tests: ISZ[Project] = nonVmProjects
+  //val tests: ISZ[Project] = nonVmProjects ++ vmProjects
   //val tests: ISZ[Project] = vmProjects
+
+  def generateRunScript(o: Cli.HamrCodeGenOption): Os.Path = {
+    o.aadlRootDir match {
+      case Some(d) =>
+        val aadlDir = Os.path(d)
+        val oDir = Os.path(o.outputDir.get)
+        val camkesDir = Os.path(o.camkesOutputDir.get)
+
+        val project: Os.Path = if((aadlDir / ".system").exists) aadlDir / ".system" else aadlDir / ".project"
+        if(!project.exists) {
+          halt(s"${project} doesn't exist")
+        }
+
+        val rOutputDir = aadlDir.relativize(oDir).value
+        val rCamkesOutputDir = aadlDir.relativize(camkesDir).value
+
+        val sel4Options: Option[ST] =
+          if(o.platform == Cli.HamrPlatform.SeL4) {
+            Some(st"""--exclude-component-impl \
+                     |--bit-width ${o.bitWidth} \
+                     |--max-string-size ${o.maxStringSize} \
+                     |--max-array-size ${o.maxArraySize} \
+                     |--run-transpiler \""")
+          }
+          else { None() }
+
+        val eOptions: Option[ST] = if(o.experimentalOptions.nonEmpty)
+           Some(st"""--experimental-options \"${(o.experimentalOptions, ";")}\" \""")
+        else None()
+
+        val rProject = aadlDir.relativize(project)
+
+        val platform: String = o.platform match {
+          case Cli.HamrPlatform.JVM => "JVM"
+          case Cli.HamrPlatform.Linux => "Linux"
+          case Cli.HamrPlatform.Cygwin => "Cygwin"
+          case Cli.HamrPlatform.MacOS => "MacOs"
+          case Cli.HamrPlatform.SeL4 => "seL4"
+          case Cli.HamrPlatform.SeL4_Only => "seL4_Only"
+          case Cli.HamrPlatform.SeL4_TB => "seL4_TB"
+        }
+
+        val s =
+          st"""#!/bin/bash -ei
+              |
+              |SCRIPT_DIR=$$( cd "$$( dirname "$$0" )" &> /dev/null && pwd )
+              |AADL_DIR=$$SCRIPT_DIR/..
+              |
+              |OSIREUM=osireum
+              |if [ -f "$$1" ]; then
+              |  OSIREUM="$$1 -nosplash -console -consoleLog -data @user.home/.sireum -application org.sireum.aadl.osate.cli"
+              |elif command -v $$OSIREUM &> /dev/null ; then
+              |  OSIREUM=$$OSIREUM
+              |elif [ -n "$${OSIREUM_EXE}" ] && [ -f "$${OSIREUM_EXE}" ]; then
+              |  OSIREUM="$$OSIREUM_EXE -nosplash -console -consoleLog -data @user.home/.sireum -application org.sireum.aadl.osate.cli"
+              |else
+              |  echo "osireum not found.  Run '$$SIREUM_HOME/bin/sireum hamr phantom -h' for instructions on"
+              |  echo "how to install the Sireum plugins into OSATE/FMIDE.  Then do one of the following:"
+              |  echo "  - Pass in the location of the OSATE/FMIDE executable that contains the Sireum plugins"
+              |  echo "  - Add the 'osireum' alias to your .bashrc file"
+              |  echo "  - Set the environment variable OSIREUM_EXE to point to the location of"
+              |  echo "      the OSATE/FMIDE executable that contains the Sireum plugins"
+              |  exit
+              |fi
+              |
+              |eval "$$OSIREUM hamr codegen \
+              |  --verbose \
+              |  --platform $platform \
+              |  --output-dir $$AADL_DIR/${rOutputDir.value} \
+              |  --package-name ${o.packageName.get} \
+              |  ${sel4Options}
+              |  --camkes-output-dir $$AADL_DIR/${rCamkesOutputDir.value} \
+              |  --aadl-root-dir $$AADL_DIR \
+              |  $eOptions
+              |  $$AADL_DIR/${rProject.value}"
+              |"""
+
+        val script = aadlDir / "bin" / s"run-hamr-${o.platform.toString}.sh"
+        script.writeOver(s.render)
+        script.chmod("700")
+        println(s"Wrote ${script}")
+
+        return script
+      case _ => halt(o)
+    }
+  }
 
   def run(): Unit = {
     val reporter = Reporter.create
@@ -116,8 +201,6 @@ object CaseToolEval4_vm extends App {
           experimentalOptions = experimentalOptions :+ ExperimentalOptions.USE_CASE_CONNECTORS
         }
 
-        outputDir.removeAll()
-
         val o = Cli.HamrCodeGenOption(
           help = "",
           args = ISZ(project.slangFile.value),
@@ -133,7 +216,7 @@ object CaseToolEval4_vm extends App {
           bitWidth = 32,
           maxStringSize = 256,
           maxArraySize = 1,
-          runTranspiler = build,
+          runTranspiler = runTranspiler,
 
           slangAuxCodeDirs = ISZ(),
           slangOutputCDir = None(),
@@ -146,7 +229,16 @@ object CaseToolEval4_vm extends App {
           experimentalOptions = experimentalOptions
         )
 
-        org.sireum.cli.HAMR.codeGen(o)
+        outputDir.removeAll()
+
+        val runHamrScript = generateRunScript(o)
+
+        //val result = Z(org.sireum.cli.HAMR.codeGen(o).intValue)
+        val result = Os.procs(runHamrScript.canon.value).console.runCheck()
+
+        if(result.exitCode != 0) {
+          halt(s"${project.simpleName} completed with ${result}")
+        }
 
         if(ops.StringOps(outputDir.value).contains("_VM")) {
           replaceVM()
@@ -164,8 +256,9 @@ object CaseToolEval4_vm extends App {
 
             val report = Report(
               options = o,
+              runHamrScript = Some(project.modelDir.relativize(runHamrScript)),
               timeout = project.timeout,
-              runInstructions = gen.genRunInstructions(case_tool_evaluation_dir),
+              runInstructions = gen.genRunInstructions(project.modelDir, Some(runHamrScript)),
               expectedOutput = Some(expectedOutput),
               aadlArchDiagram = gen.getAadlArchDiagram(),
               hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),

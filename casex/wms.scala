@@ -133,8 +133,9 @@ object WMS extends App {
 
             val report = Report(
               options = o,
+              runHamrScript = None(),
               timeout = project.timeout,
-              runInstructions = gen.genRunInstructions(root_dir),
+              runInstructions = gen.genRunInstructions(root_dir, None()),
               expectedOutput = Some(expectedOutput),
               aadlArchDiagram = gen.getAadlArchDiagram(),
               hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),

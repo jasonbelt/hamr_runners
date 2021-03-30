@@ -104,8 +104,9 @@ object Attestation_Gate extends App {
 
             val report = Report(
               options = o,
+              runHamrScript = None(),
               timeout = timeout,
-              runInstructions = gen.genRunInstructions(case_tool_evaluation_dir),
+              runInstructions = gen.genRunInstructions(case_tool_evaluation_dir, None()),
               expectedOutput = Some(expectedOutput),
               aadlArchDiagram = gen.getAadlArchDiagram(),
               hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),

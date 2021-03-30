@@ -101,8 +101,9 @@ object Isolette2 extends App {
 
             val report = Report(
               options = o,
+              runHamrScript = None(),
               timeout = timeout,
-              runInstructions = gen.genRunInstructions(evaluation_dir),
+              runInstructions = gen.genRunInstructions(evaluation_dir, None()),
               expectedOutput = Some(expectedOutput),
               aadlArchDiagram = gen.getAadlArchDiagram(),
               hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
