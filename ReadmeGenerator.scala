@@ -90,9 +90,9 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
       if(cakeMlScript.exists) { Some(st"./${root.relativize(cakeMlScript)}") }
       else { None() }
 
-    val transpile: Option[ST] =
-      if(transpileSel4.exists) { Some(st"./${root.relativize(transpileSel4)}") }
-      else { None() }
+    //val transpile: Option[ST] =
+    //  if(transpileSel4.exists) { Some(st"./${root.relativize(transpileSel4)}") }
+    //  else { None() }
 
     var options: ISZ[String] = ISZ("-s")
     if(symbolTable.hasCakeMLComponents()) {
@@ -109,7 +109,6 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     val ret: ST = st"""${osireum}
                       |${caseArmVmSetup}
                       |${cakeML}
-                      |${transpile}
                       |${runCamkes}"""
     return ret
   }
