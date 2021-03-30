@@ -29,6 +29,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   val slangOutputDir: Os.Path = Os.path(o.outputDir.get)
 
   val OPT_CAKEML_ASSEMBLIES_PRESENT: String = "-DCAKEML_ASSEMBLIES_PRESENT=ON"
+  val OPT_USE_PRECONFIGURED_ROOTFS: String = "-DUSE_PRECONFIGURED_ROOTFS=ON"
 
   def build(): B = {
 
@@ -45,8 +46,15 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     if(continue) {
       var args: ISZ[String] = ISZ(run_camkes.value, "-n")
 
+      var camkesOptions: ISZ[String] = ISZ()
       if (symbolTable.hasCakeMLComponents()) {
-        args = args :+ "-o" :+ OPT_CAKEML_ASSEMBLIES_PRESENT
+        camkesOptions = camkesOptions :+ OPT_CAKEML_ASSEMBLIES_PRESENT
+      }
+      if(symbolTable.hasVM()) {
+        camkesOptions = camkesOptions :+ OPT_USE_PRECONFIGURED_ROOTFS
+      }
+      if(camkesOptions.nonEmpty){
+        args = args :+ "-o" :+ st"""${(camkesOptions, ";")}""".render
       }
 
       continue = ReadmeGenerator.run(args, reporter)
@@ -75,7 +83,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     return st"${output.get}"
   }
 
-  def genRunInstructions(root: Os.Path, osierumScript: Option[Os.Path]): ST = {
+  def genRunInstructions(root: Os.Path, osireumScript: Option[Os.Path]): ST = {
 
     val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
     val runScript: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
@@ -90,25 +98,32 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
       if(cakeMlScript.exists) { Some(st"./${root.relativize(cakeMlScript)}") }
       else { None() }
 
-    //val transpile: Option[ST] =
-    //  if(transpileSel4.exists) { Some(st"./${root.relativize(transpileSel4)}") }
-    //  else { None() }
+    val transpile: Option[ST] =
+      if(transpileSel4.exists && osireumScript.isEmpty) { Some(st"./${root.relativize(transpileSel4)}") }
+      else { None() }
 
-    var options: ISZ[String] = ISZ("-s")
+    var camkesOptions: ISZ[String] = ISZ()
     if(symbolTable.hasCakeMLComponents()) {
-      options = options :+ "-o" :+ OPT_CAKEML_ASSEMBLIES_PRESENT
+      camkesOptions = camkesOptions :+ OPT_CAKEML_ASSEMBLIES_PRESENT
     }
+    if(symbolTable.hasVM()) {
+      camkesOptions = camkesOptions :+ OPT_USE_PRECONFIGURED_ROOTFS
+    }
+    val _camkesOptions: Option[ST] =
+      if(camkesOptions.nonEmpty) Some(st"""-o "${(camkesOptions, ";")}"""")
+      else None()
 
     assert(runScript.exists, s"${runScript} not found")
-    val runCamkes: ST = st"./${root.relativize(runScript)} ${(options, " ")}"
+    val runCamkes: ST = st"./${root.relativize(runScript)} ${_camkesOptions} -s"
 
     val osireum: Option[ST] =
-      if(osierumScript.nonEmpty) Some(st"./${root.relativize(osierumScript.get)}")
+      if(osireumScript.nonEmpty) Some(st"./${root.relativize(osireumScript.get)}")
       else None()
 
     val ret: ST = st"""${osireum}
                       |${caseArmVmSetup}
                       |${cakeML}
+                      |${transpile}
                       |${runCamkes}"""
     return ret
   }
