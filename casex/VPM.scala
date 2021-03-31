@@ -8,7 +8,7 @@ import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, 
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 
-object CaseToolEval4_vm extends App {
+object VPM extends App {
 
   @datatype class Project (simpleName: String,
                            modelDir: Os.Path,
@@ -28,12 +28,12 @@ object CaseToolEval4_vm extends App {
   val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
   val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
 
-  val case_tool_evaluation_dir: Os.Path = Os.home / "devel/case/case-loonwerks/TA5/tool-evaluation-4/HAMR/examples"
+  val vpm_dir: Os.Path = Os.home / "devel/case/case-ku/examples/ksu-proprietary/vpm"
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
   def genFull(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type], shouldSimulate: B, timeout: Z): Project = {
-    val modelDir = case_tool_evaluation_dir / name
+    val modelDir = vpm_dir / name
     val simpleName = Os.path(name).name // get last dir name
     return Project(simpleName, modelDir, modelDir / ".slang" / json, platforms, shouldSimulate, timeout)
   }
@@ -42,42 +42,16 @@ object CaseToolEval4_vm extends App {
     return genFull(name, json, platforms, T, defTimeout)
   }
 
+  // /home/vagrant/temp/vpm_ben/VPM_0/.slang/VPM_VPM_8600B_Ext_impl_Instance.json
+
   val nonVmProjects: ISZ[Project] = ISZ(
 
-    gen("simple_uav", "UAV_UAV_Impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-
-    gen("test_data_port", "test_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-    gen("test_data_port_periodic", "test_data_port_periodic_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-    gen("test_data_port_periodic_fan_out", "test_data_port_periodic_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-    gen("test_event_data_port", "test_event_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-    gen("test_event_data_port_fan_out", "test_event_data_port_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-
-    gen("test_event_port", "test_event_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-    gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-    gen("test_data_port_periodic_domains", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
-    gen("test_event_data_port_periodic_domains", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
-
-    gen("test_event_port_periodic_domains", "test_event_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
+    gen("VPM_0_ben", "VPM_VPM_8600B_Ext_impl_Instance.json", ISZ(sel4)),
   )
 
-  val vmProjects: ISZ[Project] = ISZ(
-    // VMs
-    //genFull("test_data_port_periodic_domains_VM/both_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
-    //genFull("test_data_port_periodic_domains_VM/receiver_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
-    //genFull("test_data_port_periodic_domains_VM/sender_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
-
-    //genFull("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
-    //genFull("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
-    //genFull("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
-
-    // VMs with Kent's connector
-    genFull("test_event_data_port_periodic_domains_VMx/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only), T, vmTimeout),
     //genFull("test_event_data_port_periodic_domains_VMx/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only), T, vmTimeout)
-  )
 
-  //val tests: ISZ[Project] = nonVmProjects
-  //val tests: ISZ[Project] = nonVmProjects ++ vmProjects
-  val tests: ISZ[Project] = vmProjects
+  val tests: ISZ[Project] = nonVmProjects
 
   def generateRunScript(o: Cli.HamrCodeGenOption): Os.Path = {
     o.aadlRootDir match {
@@ -232,15 +206,12 @@ object CaseToolEval4_vm extends App {
 
         val runHamrScript = generateRunScript(o)
 
-        //val result = Z(org.sireum.cli.HAMR.codeGen(o).intValue)
-        val result = Os.procs(runHamrScript.canon.value).console.runCheck()
+        val resultx = Z(org.sireum.cli.HAMR.codeGen(o).intValue)
+        //val result = Os.procs(runHamrScript.canon.value).console.runCheck()
+        //val resultx = result.exitCode
 
-        if(result.exitCode != 0) {
-          halt(s"${project.simpleName} completed with ${result}")
-        }
-
-        if(ops.StringOps(outputDir.value).contains("_VM")) {
-          replaceVM()
+        if(resultx != 0) {
+          halt(s"${project.simpleName} completed with ${resultx}")
         }
 
         if(shouldReport && isSel4(platform)) {
@@ -303,33 +274,6 @@ object CaseToolEval4_vm extends App {
       case HamrPlatform.SeL4_TB => T
       case HamrPlatform.SeL4_Only => T
       case _ => F
-    }
-  }
-
-  def replaceVM(): Unit = {
-
-    val dirs: ISZ[String] = ISZ(
-      "test_data_port_periodic_domains_VM/both_vm",
-      "test_data_port_periodic_domains_VM/receiver_vm",
-      "test_data_port_periodic_domains_VM/sender_vm",
-
-      "test_event_data_port_periodic_domains_VM/both_vm",
-      "test_event_data_port_periodic_domains_VM/receiver_vm",
-      "test_event_data_port_periodic_domains_VM/sender_vm",
-
-      "test_event_data_port_periodic_domains_VMx/receiver_vm",
-      "test_event_data_port_periodic_domains_VMx/sender_vm"
-
-    ).flatMap(m => ISZ(
-      s"${m}/CAmkES_seL4_Only/components/VM/apps",
-      s"${m}/CAmkES_seL4_Only/components/VM/overlay_files"))
-
-    for(d <- dirs) {
-      val path = case_tool_evaluation_dir / d
-      assert(path.exists, s"$path does not exist")
-
-      val comm: ISZ[String] = ISZ("git", "checkout", d)
-      Os.proc(comm).at(case_tool_evaluation_dir).console.runCheck()
     }
   }
 }

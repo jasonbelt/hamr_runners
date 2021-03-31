@@ -139,6 +139,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   def getHamrCamkesArchDiagram(format: DotFormat.Type): Os.Path = {
     val dot = Os.path(o.camkesOutputDir.get) / "graph.dot"
     val outputPath = Os.path(o.aadlRootDir.get) / "diagrams" / s"CAmkES-HAMR-arch-${o.platform.string}.${format.string}"
+    assert(dot.exists, s"${dot} does not exist")
     ReadmeGenerator.renderDot(dot, outputPath, format, reporter)
     assert(outputPath.exists, s"${outputPath} does not exist")
     return outputPath
