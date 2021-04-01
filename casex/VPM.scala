@@ -53,6 +53,14 @@ object VPM extends App {
 
   val tests: ISZ[Project] = nonVmProjects
 
+  def getSystemOrProject(aadlDir: Os.Path): Os.Path = {
+    val project: Os.Path = if((aadlDir / ".system").exists) aadlDir / ".system" else aadlDir / ".project"
+    if(!project.exists) {
+      halt(s"${project} doesn't exist")
+    }
+    return project
+  }
+
   def generateRunScript(o: Cli.HamrCodeGenOption): Os.Path = {
     o.aadlRootDir match {
       case Some(d) =>
@@ -60,10 +68,6 @@ object VPM extends App {
         val oDir = Os.path(o.outputDir.get)
         val camkesDir = Os.path(o.camkesOutputDir.get)
 
-        val project: Os.Path = if((aadlDir / ".system").exists) aadlDir / ".system" else aadlDir / ".project"
-        if(!project.exists) {
-          halt(s"${project} doesn't exist")
-        }
 
         val rOutputDir = aadlDir.relativize(oDir).value
         val rCamkesOutputDir = aadlDir.relativize(camkesDir).value
@@ -82,6 +86,7 @@ object VPM extends App {
            Some(st"""--experimental-options \"${(o.experimentalOptions, ";")}\" \""")
         else None()
 
+        val project = getSystemOrProject(aadlDir)
         val rProject = aadlDir.relativize(project)
 
         val platform: String = o.platform match {
@@ -138,6 +143,12 @@ object VPM extends App {
       case _ => halt(o)
     }
   }
+
+  def regenSlangFile(aadlDir: Os.Path): B = {
+    val results = Os.procs(s"sireum hamr phantom ${aadlDir}").console.runCheck()
+    return results.ok
+  }
+
 
   def run(): Unit = {
     val reporter = Reporter.create
@@ -206,13 +217,15 @@ object VPM extends App {
 
         val runHamrScript = generateRunScript(o)
 
-        val resultx = Z(org.sireum.cli.HAMR.codeGen(o).intValue)
-        //val result = Os.procs(runHamrScript.canon.value).console.runCheck()
-        //val resultx = result.exitCode
+        //val resultx = Z(org.sireum.cli.HAMR.codeGen(o).intValue)
+        val result = Os.procs(runHamrScript.canon.value).console.runCheck()
+        val resultx = result.exitCode
 
         if(resultx != 0) {
           halt(s"${project.simpleName} completed with ${resultx}")
         }
+
+        regenSlangFile(project.modelDir)
 
         if(shouldReport && isSel4(platform)) {
           val gen = ReadmeGenerator(o, reporter)
