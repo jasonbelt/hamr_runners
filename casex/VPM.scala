@@ -17,6 +17,8 @@ object VPM extends App {
                            shouldSimulate: B,
                            timeout: Z)
 
+  val USE_OSIREUM: B = F
+
   val shouldReport: B = T
   val graphFormat: DotFormat.Type = DotFormat.svg
   val runTranspiler: B = F
@@ -146,6 +148,9 @@ object VPM extends App {
 
   def regenSlangFile(aadlDir: Os.Path): B = {
     val results = Os.procs(s"sireum hamr phantom ${aadlDir}").console.runCheck()
+    if(!results.ok) {
+      halt("Regenerating AIR failed")
+    }
     return results.ok
   }
 
@@ -216,16 +221,18 @@ object VPM extends App {
         outputDir.removeAll()
 
         val runHamrScript = generateRunScript(o)
+        regenSlangFile(project.modelDir)
 
-        //val resultx = Z(org.sireum.cli.HAMR.codeGen(o).intValue)
-        val result = Os.procs(runHamrScript.canon.value).console.runCheck()
-        val resultx = result.exitCode
-
-        if(resultx != 0) {
-          halt(s"${project.simpleName} completed with ${resultx}")
+        val result: Z = if(USE_OSIREUM) {
+          val _result = Os.procs(runHamrScript.canon.value).console.runCheck()
+          _result.exitCode
+        } else {
+          Z(org.sireum.cli.HAMR.codeGen(o).intValue)
         }
 
-        regenSlangFile(project.modelDir)
+        if(result != 0) {
+          halt(s"${project.simpleName} completed with ${result}")
+        }
 
         if(shouldReport && isSel4(platform)) {
           val gen = ReadmeGenerator(o, reporter)

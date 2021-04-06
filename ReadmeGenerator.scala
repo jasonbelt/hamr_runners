@@ -182,7 +182,7 @@ object ReadmeTemplate {
 
     def toLevel(p: Os.Path, title: String) : Option[Level] = {
       if(p.exists) {
-        val l: ST = createLink(title, s"${p.up.name}/${p.name}")
+        val l: ST = createHyperLink(title, s"${p.up.name}/${p.name}")
         Some(ContentLevel(title, st"!${l}"))
       } else { None() }
     }
@@ -269,7 +269,7 @@ object ReadmeTemplate {
     return ret.render
   }
 
-  def createLink(title: String, target: String): ST = {
+  def createHyperLink(title: String, target: String): ST = {
     return st"[${title}](${target})"
   }
 
@@ -291,7 +291,7 @@ object ReadmeTemplate {
     def gen(level: Level, levelNum: Z): ST = {
       val spaces = expand(levelNum, ' ')
 
-      var ret = st"${spaces}* ${createLink(level.title, toGithubLink(level.title))}"
+      var ret = st"${spaces}* ${createHyperLink(level.title, toGithubLink(level.title))}"
 
       level match {
         case s: SubLevel =>
