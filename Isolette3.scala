@@ -44,14 +44,12 @@ object Isolette3 extends App {
     return genFull(name, json, platforms, T, defTimeout)
   }
 
-  // /home/vagrant/temp/vpm_ben/VPM_0/.slang/VPM_VPM_8600B_Ext_impl_Instance.json
-
   val nonVmProjects: ISZ[Project] = ISZ(
 
     gen("isolette_v2/aadl", "Isolette_isolette_single_sensor_Instance.json", ISZ(
-      //jvm,
+      jvm,
       linux,
-      //sel4
+      sel4
     )),
   )
 
