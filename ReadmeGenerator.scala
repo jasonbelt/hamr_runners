@@ -39,21 +39,21 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
     var continue: B = T
     val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
-    if(transpileSel4.exists) {
+    if (transpileSel4.exists) {
       continue = ReadmeGenerator.run(ISZ(transpileSel4.value), reporter)
     }
 
-    if(continue) {
+    if (continue) {
       var args: ISZ[String] = ISZ(run_camkes.value, "-n")
 
       var camkesOptions: ISZ[String] = ISZ()
       if (symbolTable.hasCakeMLComponents()) {
         camkesOptions = camkesOptions :+ OPT_CAKEML_ASSEMBLIES_PRESENT
       }
-      if(symbolTable.hasVM()) {
+      if (symbolTable.hasVM()) {
         camkesOptions = camkesOptions :+ OPT_USE_PRECONFIGURED_ROOTFS
       }
-      if(camkesOptions.nonEmpty){
+      if (camkesOptions.nonEmpty) {
         args = args :+ "-o" :+ st"""${(camkesOptions, ";")}""".render
       }
 
@@ -67,7 +67,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     val simulateScript: Os.Path = ReadmeGenerator.getCamkesSimulatePath(o, symbolTable)
     assert(simulateScript.exists, s"${simulateScript} does not exist")
 
-    println(s"Simulating for ${timeout/1000} seconds")
+    println(s"Simulating for ${timeout / 1000} seconds")
 
     val p = Os.proc(ISZ(simulateScript.value)).timeout(timeout)
 
@@ -91,64 +91,93 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     val caseArmVmSetupScript: Os.Path = runScript.up / Os.path(PathUtil.CAMKES_ARM_VM_SCRIPT_PATH).name
 
     val caseArmVmSetup: Option[ST] =
-      if(caseArmVmSetupScript.exists) { Some(st"./${root.relativize(caseArmVmSetupScript)}") }
-      else { None() }
+      if (caseArmVmSetupScript.exists) {
+        Some(st"./${root.relativize(caseArmVmSetupScript)}")
+      }
+      else {
+        None()
+      }
 
     val cakeML: Option[ST] =
-      if(cakeMlScript.exists) { Some(st"./${root.relativize(cakeMlScript)}") }
-      else { None() }
+      if (cakeMlScript.exists) {
+        Some(st"./${root.relativize(cakeMlScript)}")
+      }
+      else {
+        None()
+      }
 
     val transpile: Option[ST] =
-      if(transpileSel4.exists && osireumScript.isEmpty) { Some(st"./${root.relativize(transpileSel4)}") }
-      else { None() }
+      if (transpileSel4.exists && osireumScript.isEmpty) {
+        Some(st"./${root.relativize(transpileSel4)}")
+      }
+      else {
+        None()
+      }
 
     var camkesOptions: ISZ[String] = ISZ()
-    if(symbolTable.hasCakeMLComponents()) {
+    if (symbolTable.hasCakeMLComponents()) {
       camkesOptions = camkesOptions :+ OPT_CAKEML_ASSEMBLIES_PRESENT
     }
-    if(symbolTable.hasVM()) {
+    if (symbolTable.hasVM()) {
       camkesOptions = camkesOptions :+ OPT_USE_PRECONFIGURED_ROOTFS
     }
     val _camkesOptions: Option[ST] =
-      if(camkesOptions.nonEmpty) Some(st"""-o "${(camkesOptions, ";")}"""")
+      if (camkesOptions.nonEmpty) Some(st"""-o "${(camkesOptions, ";")}"""")
       else None()
 
     assert(runScript.exists, s"${runScript} not found")
     val runCamkes: ST = st"./${root.relativize(runScript)} ${_camkesOptions} -s"
 
     val osireum: Option[ST] =
-      if(osireumScript.nonEmpty) Some(st"./${root.relativize(osireumScript.get)}")
+      if (osireumScript.nonEmpty) Some(st"./${root.relativize(osireumScript.get)}")
       else None()
 
-    val ret: ST = st"""${osireum}
-                      |${caseArmVmSetup}
-                      |${cakeML}
-                      |${transpile}
+    val ret: ST =
+      st"""${osireum}
+
+          |${caseArmVmSetup}
+
+          |${cakeML}
+
+          |${transpile}
                       |${runCamkes}"""
     return ret
   }
 
-  def getCamkesArchDiagram(format: DotFormat.Type): Os.Path = {
+  def getCamkesArchDiagram(format: DotFormat.Type): Option[Os.Path] = {
     val dot = ReadmeGenerator.getCamkesSimulatePath(o, symbolTable).up / "graph.dot"
     val outputPath = Os.path(o.aadlRootDir.get) / "diagrams" / s"CAmkES-arch-${o.platform.string}.${format.string}"
     ReadmeGenerator.renderDot(dot, outputPath, format, reporter)
-    assert(outputPath.exists, s"${outputPath} does not exist")
-    return outputPath
+
+    if(outputPath.exists) {
+      return Some(outputPath)
+    } else {
+      cprintln(T, s"${outputPath} does not exist")
+      return None()
+    }
   }
 
-  def getHamrCamkesArchDiagram(format: DotFormat.Type): Os.Path = {
+  def getHamrCamkesArchDiagram(format: DotFormat.Type): Option[Os.Path] = {
     val dot = Os.path(o.camkesOutputDir.get) / "graph.dot"
     val outputPath = Os.path(o.aadlRootDir.get) / "diagrams" / s"CAmkES-HAMR-arch-${o.platform.string}.${format.string}"
     assert(dot.exists, s"${dot} does not exist")
     ReadmeGenerator.renderDot(dot, outputPath, format, reporter)
-    assert(outputPath.exists, s"${outputPath} does not exist")
-    return outputPath
+    if(outputPath.exists) {
+      return Some(outputPath)
+    } else {
+      cprintln(T, s"${outputPath} does not exist")
+      return None()
+    }
   }
 
-  def getAadlArchDiagram(): Os.Path = {
+  def getAadlArchDiagram(): Option[Os.Path] = {
     val x = Os.path(o.aadlRootDir.get) / "diagrams" / "aadl-arch.png"
-    assert(x.exists, s"${x} does not exist")
-    return x
+    if (x.exists) {
+      return Some(x)
+    } else {
+      cprintln(T, s"${x} does not exist")
+      return None()
+    }
   }
 }
 
@@ -191,13 +220,20 @@ object ReadmeTemplate {
 
     var subLevels: ISZ[Level] = reports.entries.map(e => {
       val platform = e._1
-      val report = e._2
+      val report: Report = e._2
 
-      aadlarch = Some(report.aadlArchDiagram)
+      if(report.aadlArchDiagram.nonEmpty) {
+        aadlarch = report.aadlArchDiagram
+      }
 
-      val s: ISZ[Option[Level]] = ISZ(
-        toLevel(report.camkesArchDiagram, s"${platform.string} CAmkES Arch"),
-        toLevel(report.hamrCamkesArchDiagram, s"${platform.string} CAmkES HAMR Arch"))
+      var s: ISZ[Option[Level]] = ISZ()
+
+      if(report.camkesArchDiagram.nonEmpty) {
+        s = s :+ toLevel(report.camkesArchDiagram.get, s"${platform.string} CAmkES Arch")
+      }
+      if(report.hamrCamkesArchDiagram.nonEmpty) {
+        s = s :+ toLevel(report.hamrCamkesArchDiagram.get, s"${platform.string} CAmkES HAMR Arch")
+      }
 
       SubLevel(
         title = platform.string,
@@ -206,7 +242,9 @@ object ReadmeTemplate {
       )
     })
 
-    subLevels = toLevel(aadlarch.get, "AADL Arch").get +: subLevels
+    if(aadlarch.nonEmpty) {
+      subLevels = toLevel(aadlarch.get, "AADL Arch").get +: subLevels
+    }
 
     return SubLevel(
       title = "Diagrams",
@@ -257,10 +295,17 @@ object ReadmeTemplate {
       }
     })
 
+    var _subLevels: ISZ[Level] = ISZ()
+    for(s <- subLevels) {
+      if(s.nonEmpty) {
+        _subLevels = _subLevels :+ s.get
+      }
+    }
+
     return SubLevel(
       title = "Example Output",
       content = Some(st"*NOTE:* actual output may differ due to issues related to thread interleaving"),
-      subs = subLevels.map(s => s.get))
+      subs = _subLevels) //subLevels.map(s => s.get))
   }
 
   def expand(count: Z, c: C) : String = {
@@ -349,7 +394,7 @@ object ReadmeTemplate {
 
 object ReadmeGenerator {
   def run(args: ISZ[String], reporter: Reporter): B = {
-    val results = Os.proc(args).console.run()
+    val results = Os.proc(args).console.runCheck()
     if(!results.ok) {
       reporter.error(None(), "", results.err)
     }
@@ -450,6 +495,9 @@ object ReadmeGenerator {
                       runInstructions: ST,
                       expectedOutput: Option[ST],
 
-                      aadlArchDiagram: Os.Path,
-                      hamrCamkesArchDiagram: Os.Path,
-                      camkesArchDiagram: Os.Path)
+                      aadlArchDiagram: Option[Os.Path],
+
+                      hamrCamkesArchDiagram: Option[Os.Path],
+
+                      camkesArchDiagram: Option[Os.Path]
+                     )
