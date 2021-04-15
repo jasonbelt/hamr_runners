@@ -17,13 +17,13 @@ object Attestation_Gate2 extends App {
                            shouldSimulate: B,
                            timeout: Z)
 
-  val USE_OSIREUM: B = T
+  val USE_OSIREUM: B = F // if using osireum then may need to rebuild sireum.jar
 
   val shouldReport: B = T
   val runTranspiler: B = T
 
   val graphFormat: DotFormat.Type = DotFormat.svg
-  val defTimeout: Z = 15000
+  val defTimeout: Z = 20000
   val vmTimeout: Z = 90000
 
   val jvm: Cli.HamrPlatform.Type = Cli.HamrPlatform.JVM
@@ -31,8 +31,6 @@ object Attestation_Gate2 extends App {
   val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
   val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
   val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
-
-  ///home/vagrant/devel/case/case-ku/examples/ksu-proprietary/attestation-gate
 
   val proj_dir: Os.Path = Os.home / "devel/case/case-ku/examples/ksu-proprietary"
 
