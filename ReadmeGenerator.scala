@@ -4,6 +4,7 @@ package org.sireum.cli.hamr_runners
 
 import org.sireum._
 import org.sireum.Cli.HamrPlatform
+import org.sireum.cli.HAMR
 import org.sireum.hamr.act.util.PathUtil
 import org.sireum.hamr.codegen.common.StringUtil
 import org.sireum.hamr.codegen.common.properties.PropertyUtil
@@ -11,6 +12,7 @@ import org.sireum.hamr.ir
 import org.sireum.message.Reporter
 import org.sireum.hamr.codegen.common.symbols.{SymbolResolver, SymbolTable}
 import org.sireum.hamr.codegen.common.types.TypeResolver
+import org.sireum.hamr.codegen.common.util.CodeGenConfig
 import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
 @record class ReadmeGenerator(o: Cli.HamrCodeGenOption, reporter: Reporter) {
@@ -23,7 +25,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
   val model: ir.Aadl = ReadmeGenerator.getModel(airFile, o.msgpack)
 
-  val symbolTable: SymbolTable = ReadmeGenerator.getSymbolTable(model)
+  val symbolTable: SymbolTable = ReadmeGenerator.getSymbolTable(model, HAMR.toCodeGenOptions(o))
 
   val camkesOutputDir: Os.Path = Os.path(o.camkesOutputDir.get)
   val slangOutputDir: Os.Path = Os.path(o.outputDir.get)
@@ -134,13 +136,10 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
     val ret: ST =
       st"""${osireum}
-
           |${caseArmVmSetup}
-
           |${cakeML}
-
           |${transpile}
-                      |${runCamkes}"""
+          |${runCamkes}"""
     return ret
   }
 
@@ -476,13 +475,13 @@ object ReadmeGenerator {
     return model
   }
 
-  def getSymbolTable(model: ir.Aadl): SymbolTable = {
+  def getSymbolTable(model: ir.Aadl, options: CodeGenConfig): SymbolTable = {
     val reporter = Reporter.create
 
     val rawConnections: B = PropertyUtil.getUseRawConnection(model.components(0).properties)
-    val aadlTypes = TypeResolver.processDataTypes(model, rawConnections, "")
+    val aadlTypes = TypeResolver.processDataTypes(model, rawConnections, 256, 32, "")
 
-    val s = SymbolResolver.resolve(model, None(), T, aadlTypes, reporter)
+    val s = SymbolResolver.resolve(model, aadlTypes, options, reporter)
     reporter.printMessages()
     return s
   }

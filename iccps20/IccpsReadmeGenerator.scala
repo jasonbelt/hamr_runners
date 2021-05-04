@@ -4,6 +4,7 @@ package org.sireum.cli.hamr_runners.iccps20
 import org.sireum._
 import org.sireum.Cli.HamrPlatform
 import org.sireum.Os.Proc
+import org.sireum.cli.HAMR
 import org.sireum.hamr.act.util.PathUtil
 import org.sireum.hamr.act.vm.VM_Template
 import org.sireum.hamr.codegen.common.{CommonUtil, StringUtil}
@@ -27,7 +28,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
   val model: ir.Aadl = IccpsReadmeGenerator.getModel(airFile, o.msgpack)
 
-  val symbolTable: SymbolTable = IccpsReadmeGenerator.getSymbolTable(model, o.packageName.get)
+  val symbolTable: SymbolTable = IccpsReadmeGenerator.getSymbolTable(model, o.packageName.get, o)
 
   val camkesOutputDir: Option[Os.Path] = if(o.camkesOutputDir.nonEmpty) Some(Os.path(o.camkesOutputDir.get)) else None()
   val slangOutputDir: Os.Path = Os.path(o.outputDir.get)
@@ -735,7 +736,7 @@ object IccpsReadmeGenerator {
     return model
   }
 
-  def getSymbolTable(model: ir.Aadl, basePackageName: String): SymbolTable = {
+  def getSymbolTable(model: ir.Aadl, basePackageName: String, o: Cli.HamrCodeGenOption): SymbolTable = {
     val reporter = Reporter.create
 
     var _model = model
@@ -744,9 +745,9 @@ object IccpsReadmeGenerator {
     _model = if (result.resultOpt.nonEmpty) result.resultOpt.get else model
 
     val rawConnections: B = PropertyUtil.getUseRawConnection(_model.components(0).properties)
-    val aadlTypes = TypeResolver.processDataTypes(_model, rawConnections, basePackageName)
+    val aadlTypes = TypeResolver.processDataTypes(_model, rawConnections, o.maxStringSize, o.bitWidth, basePackageName)
 
-    val s = SymbolResolver.resolve(_model, None(), T, aadlTypes, reporter)
+    val s = SymbolResolver.resolve(_model, aadlTypes, HAMR.toCodeGenOptions(o), reporter)
     if(reporter.hasError) {
       println("**********************************************")
       println("***  Messages from ICCPS Readme Gen")
