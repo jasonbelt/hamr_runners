@@ -124,11 +124,11 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
       camkesOptions = camkesOptions :+ OPT_USE_PRECONFIGURED_ROOTFS
     }
     val _camkesOptions: Option[ST] =
-      if (camkesOptions.nonEmpty) Some(st"""-o "${(camkesOptions, ";")}"""")
+      if (camkesOptions.nonEmpty) Some(st"""-o "${(camkesOptions, ";")}" """)
       else None()
 
     assert(runScript.exists, s"${runScript} not found")
-    val runCamkes: ST = st"./${root.relativize(runScript)} ${_camkesOptions} -s"
+    val runCamkes: ST = st"./${root.relativize(runScript)} ${_camkesOptions}-s"
 
     val osireum: Option[ST] =
       if (osireumScript.nonEmpty) Some(st"./${root.relativize(osireumScript.get)}")
