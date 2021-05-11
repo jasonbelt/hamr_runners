@@ -741,7 +741,7 @@ object IccpsReadmeGenerator {
 
     var _model = model
 
-    val result = ir.Transformer(Transformers.MissingTypeRewriter(reporter)).transformAadl(Transformers.CTX(F, F), _model)
+    val result = ir.Transformer(Transformers.MissingTypeRewriter(reporter)).transformAadl(Transformers.CTX(F), _model)
     _model = if (result.resultOpt.nonEmpty) result.resultOpt.get else model
 
     val rawConnections: B = PropertyUtil.getUseRawConnection(_model.components(0).properties)
