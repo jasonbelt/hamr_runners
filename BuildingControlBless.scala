@@ -18,9 +18,8 @@ object BuildingControlBless {
   val SeL4 = Cli.HamrPlatform.SeL4
 
   def main(args: Array[Predef.String]): Unit = {
-    ///home/vagrant/temp/building-control-bless/aadl/.slang/BuildingControl_BuildingControlDemo_i_Instance.json
-    ///home/vagrant/temp/gumbo-models/building-control/building-control-ba-mixed/aadl/.slang/BuildingControl_BuildingControlDemo_i_Instance.json
-    val rootDir = Os.home / "temp" / "gumbo-models"
+
+    val rootDir = Os.home / "devel" / "gumbo" / "gumbo-models"
 
     var projects: ISZ[Project] = ISZ(
       Project("building-control/building-control-ba-mixed", "BuildingControl_BuildingControlDemo_i_Instance.json", None(), ISZ(JVM)),
@@ -29,7 +28,7 @@ object BuildingControlBless {
     for (project <- projects) {
       val projectDir = rootDir / project.name
 
-      val outputDir = projectDir / "hamrx"
+      val outputDir = projectDir / "hamr"
 
       val cDir = outputDir / "src/c"
       val aadlDir = projectDir / "aadl"
