@@ -4,12 +4,14 @@ import org.sireum._
 import org.sireum.cli._
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 
-object BuildingControlBless {
+object Gumbo {
 
-  case class Project (name: String,
-                      json: String,
-                      basePackage: Option[String],
-                      platforms: ISZ[Cli.HamrPlatform.Type])
+  case class Project (basePackage: Option[String],
+                      platforms: ISZ[Cli.HamrPlatform.Type],
+
+                      projectDir: Os.Path,
+                      aadlDir: Option[String],
+                      json: String)
 
   val JVM = Cli.HamrPlatform.JVM
   val Linux = Cli.HamrPlatform.Linux
@@ -19,23 +21,27 @@ object BuildingControlBless {
 
   def main(args: Array[Predef.String]): Unit = {
 
-    val rootDir = Os.home / "devel" / "gumbo" / "gumbo-models"
+    val gumboDir = Os.home / "devel" / "gumbo" / "gumbo-models"
+    val buildingControlDir = gumboDir / "building-control"
+    val sirfurDir = Os.home / "devel" / "surfur" / "models" / "aadl"
 
     var projects: ISZ[Project] = ISZ(
-      Project("building-control/building-control-ba-mixed", "BuildingControl_BuildingControlDemo_i_Instance.json", None(), ISZ(JVM)),
+      Project(None(), ISZ(JVM), buildingControlDir / "building-control-ba-mixed", Some("aadl"), "BuildingControl_BuildingControlDemo_i_Instance.json"),
+      //Project(None(), ISZ(JVM), buildingControlDir / "building-control-bless-mixed", Some("aadl"), "BuildingControl_Bless_BuildingControlDemo_i_Instance.json"),
+
+      Project(None(), ISZ(JVM), sirfurDir / "RedundantSensors", None(), "SensorSystem_redundant_sensors_impl_Instance.json")
     )
 
     for (project <- projects) {
-      val projectDir = rootDir / project.name
 
-      val outputDir = projectDir / "hamr"
+      val outputDir = project.projectDir / "hamr"
 
-      val cDir = outputDir / "src/c"
-      val aadlDir = projectDir / "aadl"
+      val cDir = outputDir / "src" / "c"
+      val aadlDir = if(project.aadlDir.isEmpty) project.projectDir else project.projectDir / project.aadlDir.get
       val slangFile = aadlDir / ".slang" / project.json
 
-      if(!projectDir.exists) {
-        throw new RuntimeException(s"${projectDir} does not exist");
+      if(!project.projectDir.exists) {
+        throw new RuntimeException(s"${project.projectDir} does not exist");
       }
 
       for (platform <- project.platforms) {
