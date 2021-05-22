@@ -11,7 +11,7 @@ import org.sireum.message.Reporter
 object CaseToolEval4_vmX extends App {
 
   @datatype class Project (basePackageName: String,
-                          
+
                            rootDir: Os.Path,
                            aadlDir: Os.Path,
                            hamrDir: Os.Path,
@@ -21,8 +21,8 @@ object CaseToolEval4_vmX extends App {
                            shouldSimulate: B,
                            timeout: Z)
   val USE_OSIREUM: B = F
-  val shouldReport: B = F
-  val runTranspiler: B = F
+  val shouldReport: B = T
+  val runTranspiler: B = T
 
   val graphFormat: DotFormat.Type = DotFormat.svg
   val defTimeout: Z = 18000
@@ -57,14 +57,21 @@ object CaseToolEval4_vmX extends App {
   val nonVmProjects: ISZ[Project] = ISZ(
 
     gen("basic/test_data_port_periodic_domains", "base", ISZ(linux, sel4)),
+    //gen("basic/test_event_data_port_periodic_domains", "base", ISZ(linux, sel4)),
+    //gen("basic/test_event_port_periodic_domains", "base", ISZ(linux, sel4)),
 
+    //gen("bit-codec/producer-filter-consumer", "pfc", ISZ(linux, sel4))
   )
 
   val vmProjects: ISZ[Project] = ISZ(
+    // FIXME: producer in the vm for data ports doesn't work as consumer will read garbase
+    //gen("vm/test_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4)),
+
+    //gen("vm/test_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4))
   )
 
-  val tests: ISZ[Project] = nonVmProjects
-  //val tests: ISZ[Project] = nonVmProjects ++ vmProjects
+  //val tests: ISZ[Project] = nonVmProjects
+  val tests: ISZ[Project] = nonVmProjects ++ vmProjects
   //val tests: ISZ[Project] = vmProjects
 
 
@@ -101,6 +108,8 @@ object CaseToolEval4_vmX extends App {
         //  experimentalOptions = experimentalOptions :+ ExperimentalOptions.USE_CASE_CONNECTORS
         //}
 
+        val maxArraySize: Z = if(project.basePackageName == "pfc") 3 else 1
+
         val o = Cli.HamrCodeGenOption(
           help = "",
           args = ISZ(project.slangFile.value),
@@ -115,7 +124,7 @@ object CaseToolEval4_vmX extends App {
 
           bitWidth = 32,
           maxStringSize = 256,
-          maxArraySize = 1,
+          maxArraySize = maxArraySize,
           runTranspiler = runTranspiler,
 
           slangAuxCodeDirs = ISZ(),
@@ -189,7 +198,9 @@ object CaseToolEval4_vmX extends App {
     o.aadlRootDir match {
       case Some(d) =>
         val aadlDir = Os.path(d)
-        val oDir = Os.path(o.outputDir.get)
+        val rootDir = aadlDir.up
+        val slangDir = Os.path(o.outputDir.get)
+        val cDir = Os.path(o.slangOutputCDir.get)
         val camkesDir = Os.path(o.camkesOutputDir.get)
 
         val project: Os.Path = if((aadlDir / ".system").exists) aadlDir / ".system" else aadlDir / ".project"
@@ -197,18 +208,23 @@ object CaseToolEval4_vmX extends App {
           halt(s"${project} doesn't exist")
         }
 
-        val rOutputDir = aadlDir.relativize(oDir).value
-        val rCamkesOutputDir = aadlDir.relativize(camkesDir).value
+        val rOutputDir = rootDir.relativize(slangDir).value
+        val rCOutputDir = rootDir.relativize(cDir).value
+        val rCamkesOutputDir = rootDir.relativize(camkesDir).value
 
         val sel4Options: Option[ST] =
-          if(o.platform == Cli.HamrPlatform.SeL4) {
-            Some(st"""--exclude-component-impl \
+          if(o.platform == Cli.HamrPlatform.SeL4) Some(st"""--camkes-output-dir $$ROOT_DIR/${rCamkesOutputDir.value} \""")
+          else None()
+
+        val sharedCOptions: Option[ST] =
+          if(o.platform == Cli.HamrPlatform.SeL4 || o.platform == Cli.HamrPlatform.Linux) {
+            Some(st"""--output-c-dir $$ROOT_DIR/${rCOutputDir} \
+                     |--exclude-component-impl \
                      |--bit-width ${o.bitWidth} \
                      |--max-string-size ${o.maxStringSize} \
                      |--max-array-size ${o.maxArraySize} \
                      |--run-transpiler \""")
-          }
-          else { None() }
+            } else {None()}
 
         val eOptions: Option[ST] = if(o.experimentalOptions.nonEmpty)
           Some(st"""--experimental-options \"${(o.experimentalOptions, ";")}\" \""")
@@ -231,6 +247,7 @@ object CaseToolEval4_vmX extends App {
               |
               |SCRIPT_DIR=$$( cd "$$( dirname "$$0" )" &> /dev/null && pwd )
               |AADL_DIR=$$SCRIPT_DIR/..
+              |ROOT_DIR=$$SCRIPT_DIR/../..
               |
               |OSIREUM=osireum
               |if [ -f "$$1" ]; then
@@ -252,10 +269,10 @@ object CaseToolEval4_vmX extends App {
               |eval "$$OSIREUM hamr codegen \
               |  --verbose \
               |  --platform $platform \
-              |  --output-dir $$AADL_DIR/${rOutputDir.value} \
               |  --package-name ${o.packageName.get} \
+              |  --output-dir $$ROOT_DIR/${rOutputDir.value} \
+              |  ${sharedCOptions}
               |  ${sel4Options}
-              |  --camkes-output-dir $$AADL_DIR/${rCamkesOutputDir.value} \
               |  --aadl-root-dir $$AADL_DIR \
               |  $eOptions
               |  $$AADL_DIR/${rProject.value}"
