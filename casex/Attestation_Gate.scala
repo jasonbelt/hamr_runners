@@ -103,6 +103,7 @@ object Attestation_Gate extends App {
             val expectedOutput = gen.simulate(timeout)
 
             val report = Report(
+              readmeDir = projectDir,
               options = o,
               runHamrScript = None(),
               timeout = timeout,

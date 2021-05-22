@@ -132,6 +132,7 @@ object WMS extends App {
               else st"NEED TO MANUALLY UPDATE EXPECTED OUTPUT"
 
             val report = Report(
+              readmeDir = project.rootOutputDir,
               options = o,
               runHamrScript = None(),
               timeout = project.timeout,

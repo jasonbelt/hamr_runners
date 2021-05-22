@@ -24,9 +24,10 @@ object CaseToolEval4_vmX extends App {
   val shouldReport: B = T
   val runTranspiler: B = T
 
-  val graphFormat: DotFormat.Type = DotFormat.svg
   val defTimeout: Z = 18000
   val vmTimeout: Z = 90000
+
+  val graphFormat: DotFormat.Type = DotFormat.svg
 
   val linux: Cli.HamrPlatform.Type = Cli.HamrPlatform.Linux
   val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
@@ -54,20 +55,24 @@ object CaseToolEval4_vmX extends App {
     return genFull(path, basePackageName, platforms, T, defTimeout)
   }
 
+  def genVM(path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
+    return genFull(path, basePackageName, platforms, T, vmTimeout)
+  }
+
   val nonVmProjects: ISZ[Project] = ISZ(
 
     gen("basic/test_data_port_periodic_domains", "base", ISZ(linux, sel4)),
-    //gen("basic/test_event_data_port_periodic_domains", "base", ISZ(linux, sel4)),
-    //gen("basic/test_event_port_periodic_domains", "base", ISZ(linux, sel4)),
+    gen("basic/test_event_data_port_periodic_domains", "base", ISZ(linux, sel4)),
+    gen("basic/test_event_port_periodic_domains", "base", ISZ(linux, sel4)),
 
-    //gen("bit-codec/producer-filter-consumer", "pfc", ISZ(linux, sel4))
+    gen("bit-codec/producer-filter-consumer", "pfc", ISZ(linux, sel4))
   )
 
   val vmProjects: ISZ[Project] = ISZ(
     // FIXME: producer in the vm for data ports doesn't work as consumer will read garbase
     //gen("vm/test_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4)),
 
-    //gen("vm/test_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4))
+    //genVM ("vm/test_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4))
   )
 
   //val tests: ISZ[Project] = nonVmProjects
@@ -158,17 +163,18 @@ object CaseToolEval4_vmX extends App {
           val gen = ReadmeGenerator(o, reporter)
 
           if(gen.build()) {
-            val timeout: Z = if(platform == Cli.HamrPlatform.SeL4) defTimeout else project.timeout
+            val timeout: Z = project.timeout
 
             val expectedOutput: ST =
               if(project.shouldSimulate) gen.simulate(timeout)
               else st"NEED TO MANUALLY UPDATE EXPECTED OUTPUT"
 
             val report = Report(
+              readmeDir = project.rootDir,
               options = o,
-              runHamrScript = Some(project.aadlDir.relativize(runHamrScript)),
+              runHamrScript = Some(runHamrScript),
               timeout = project.timeout,
-              runInstructions = gen.genRunInstructions(project.aadlDir, Some(runHamrScript)),
+              runInstructions = gen.genRunInstructions(project.rootDir, Some(runHamrScript)),
               expectedOutput = Some(expectedOutput),
               aadlArchDiagram = gen.getAadlArchDiagram(),
               hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
@@ -181,7 +187,7 @@ object CaseToolEval4_vmX extends App {
       }
 
       if(shouldReport) {
-        val readme = project.rootDir / "readme_autogen.md"
+        val readme = project.rootDir / "readme.md"
         val readmest = ReadmeTemplate.generateReport(project.rootDir.name, reports)
         readme.writeOver(readmest.render)
       }

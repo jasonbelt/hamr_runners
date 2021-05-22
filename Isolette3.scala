@@ -255,6 +255,7 @@ object Isolette3 extends App {
               else st"NEED TO MANUALLY UPDATE EXPECTED OUTPUT"
 
             val report = Report(
+              readmeDir = project.modelDir,
               options = o,
               runHamrScript = Some(project.modelDir.relativize(runHamrScript)),
               timeout = project.timeout,

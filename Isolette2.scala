@@ -100,6 +100,7 @@ object Isolette2 extends App {
             val expectedOutput = gen.simulate(timeout)
 
             val report = Report(
+              readmeDir  = evaluation_dir,
               options = o,
               runHamrScript = None(),
               timeout = timeout,

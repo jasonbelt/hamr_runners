@@ -85,7 +85,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     return st"${output.get}"
   }
 
-  def genRunInstructions(root: Os.Path, osireumScript: Option[Os.Path]): ST = {
+  def genRunInstructions(readmeDir: Os.Path, osireumScript: Option[Os.Path]): ST = {
 
     val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
     val runScript: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
@@ -94,7 +94,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
     val caseArmVmSetup: Option[ST] =
       if (caseArmVmSetupScript.exists) {
-        Some(st"./${root.relativize(caseArmVmSetupScript)}")
+        Some(st"./${readmeDir.relativize(caseArmVmSetupScript)}")
       }
       else {
         None()
@@ -102,7 +102,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
     val cakeML: Option[ST] =
       if (cakeMlScript.exists) {
-        Some(st"./${root.relativize(cakeMlScript)}")
+        Some(st"./${readmeDir.relativize(cakeMlScript)}")
       }
       else {
         None()
@@ -110,7 +110,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
     val transpile: Option[ST] =
       if (transpileSel4.exists && osireumScript.isEmpty) {
-        Some(st"./${root.relativize(transpileSel4)}")
+        Some(st"./${readmeDir.relativize(transpileSel4)}")
       }
       else {
         None()
@@ -128,10 +128,10 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
       else None()
 
     assert(runScript.exists, s"${runScript} not found")
-    val runCamkes: ST = st"./${root.relativize(runScript)} ${_camkesOptions}-s"
+    val runCamkes: ST = st"./${readmeDir.relativize(runScript)} ${_camkesOptions}-s"
 
     val osireum: Option[ST] =
-      if (osireumScript.nonEmpty) Some(st"./${root.relativize(osireumScript.get)}")
+      if (osireumScript.nonEmpty) Some(st"./${readmeDir.relativize(osireumScript.get)}")
       else None()
 
     val ret: ST =
@@ -208,30 +208,31 @@ object ReadmeTemplate {
 
   def generateDiagramsSection(reports: HashSMap[HamrPlatform.Type, Report]): Level = {
 
-    def toLevel(p: Os.Path, title: String) : Option[Level] = {
+    def toLevel(rootDir: Os.Path, p: Os.Path, title: String) : Option[Level] = {
       if(p.exists) {
-        val l: ST = createHyperLink(title, s"${p.up.name}/${p.name}")
+        val rel = rootDir.relativize(p)
+        val l: ST = createHyperLink(title, s"${rel}")
         Some(ContentLevel(title, st"!${l}"))
       } else { None() }
     }
 
-    var aadlarch: Option[Os.Path] = None()
+    var aadlarch: Option[(Os.Path, Os.Path)] = None()
 
     var subLevels: ISZ[Level] = reports.entries.map(e => {
       val platform = e._1
       val report: Report = e._2
 
       if(report.aadlArchDiagram.nonEmpty) {
-        aadlarch = report.aadlArchDiagram
+        aadlarch = Some(report.readmeDir, report.aadlArchDiagram.get)
       }
 
       var s: ISZ[Option[Level]] = ISZ()
 
       if(report.camkesArchDiagram.nonEmpty) {
-        s = s :+ toLevel(report.camkesArchDiagram.get, s"${platform.string} CAmkES Arch")
+        s = s :+ toLevel(report.readmeDir, report.camkesArchDiagram.get, s"${platform.string} CAmkES Arch")
       }
       if(report.hamrCamkesArchDiagram.nonEmpty) {
-        s = s :+ toLevel(report.hamrCamkesArchDiagram.get, s"${platform.string} CAmkES HAMR Arch")
+        s = s :+ toLevel(report.readmeDir, report.hamrCamkesArchDiagram.get, s"${platform.string} CAmkES HAMR Arch")
       }
 
       SubLevel(
@@ -242,7 +243,7 @@ object ReadmeTemplate {
     })
 
     if(aadlarch.nonEmpty) {
-      subLevels = toLevel(aadlarch.get, "AADL Arch").get +: subLevels
+      subLevels = toLevel(aadlarch.get._1, aadlarch.get._2, "AADL Arch").get +: subLevels
     }
 
     return SubLevel(
@@ -264,8 +265,9 @@ object ReadmeTemplate {
           var config = st"""|HAMR Codegen Configuration| |
                            ||--|--|"""
           if(report.runHamrScript.nonEmpty) {
+            val rel = report.readmeDir.relativize(report.runHamrScript.get)
             config = st"""${config}
-                         || refer to [${report.runHamrScript.get.value}](${report.runHamrScript.get.value}) |
+                         || refer to [${rel}](${rel}) |
                          |"""
           }
           else {
@@ -487,7 +489,9 @@ object ReadmeGenerator {
   }
 }
 
-@record class Report (options: Cli.HamrCodeGenOption,
+@record class Report (readmeDir: Os.Path,
+
+                      options: Cli.HamrCodeGenOption,
                       runHamrScript: Option[Os.Path],
                       timeout: Z,
 

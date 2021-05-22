@@ -160,6 +160,7 @@ object Attestation_Gate2 extends App {
               else None()
 
             val report = Report(
+              readmeDir = project.modelDir,
               options = o,
               runHamrScript = Some(project.modelDir.relativize(runHamrScript)),
               timeout = project.timeout,
