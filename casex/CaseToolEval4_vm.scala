@@ -272,7 +272,8 @@ object CaseToolEval4_vm extends App {
               expectedOutput = Some(expectedOutput),
               aadlArchDiagram = gen.getAadlArchDiagram(),
               hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
-              camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat)
+              camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat),
+              symbolTable = None()
             )
 
             reports = reports + (platform ~> report)

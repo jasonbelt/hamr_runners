@@ -140,7 +140,8 @@ object WMS extends App {
               expectedOutput = Some(expectedOutput),
               aadlArchDiagram = gen.getAadlArchDiagram(),
               hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
-              camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat)
+              camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat),
+              symbolTable = Some(gen.symbolTable)
             )
 
             reports = reports + (platform ~> report)

@@ -6,7 +6,7 @@ import org.sireum._
 import org.sireum.Cli.HamrPlatform
 import org.sireum.cli.HAMR
 import org.sireum.hamr.act.util.PathUtil
-import org.sireum.hamr.codegen.common.StringUtil
+import org.sireum.hamr.codegen.common.{CommonUtil, StringUtil}
 import org.sireum.hamr.codegen.common.properties.PropertyUtil
 import org.sireum.hamr.ir
 import org.sireum.message.Reporter
@@ -85,7 +85,37 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     return st"${output.get}"
   }
 
-  def genRunInstructions(readmeDir: Os.Path, osireumScript: Option[Os.Path]): ST = {
+  def genLinuxRunInstructions(readmeDir: Os.Path,
+                              osireumScript: Option[Os.Path],
+                              outputDir: Os.Path,
+                              outputCDir: Os.Path): ST = {
+    val bin = outputCDir / "bin"
+    assert(bin.exists, s"wheres ${bin}")
+
+    val transpile = outputDir / "bin" / "transpile.sh"
+    val compile = bin / "compile-linux.sh"
+    val run = bin / "run-linux.sh"
+    val stop = bin / "stop.sh"
+
+    assert(transpile.exists)
+    assert(compile.exists)
+    assert(run.exists)
+    assert(stop.exists)
+
+    val osireumOrTranspile: ST =
+      if (osireumScript.nonEmpty) st"./${readmeDir.relativize(osireumScript.get)}"
+      else st"./${readmeDir.relativize(transpile)}"
+
+    val ret: ST =
+      st"""${osireumOrTranspile}
+          |./${readmeDir.relativize(compile)}
+          |./${readmeDir.relativize(run)}
+          |./${readmeDir.relativize(stop)}"""
+    return ret
+  }
+
+  def genRunInstructions(readmeDir: Os.Path,
+                         osireumScript: Option[Os.Path]): ST = {
 
     val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
     val runScript: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
@@ -206,6 +236,45 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
 object ReadmeTemplate {
 
+  def generateArchitectureSection(value: HashSMap[Cli.HamrPlatform.Type, Report]): Level = {
+    var content: ST = st""
+    val cand = value.values.filter(p => p.aadlArchDiagram.nonEmpty)
+    if(cand.nonEmpty) {
+      val rootDir = cand(0).readmeDir
+      val rel = rootDir.relativize(cand(0).aadlArchDiagram.get)
+      val link = createHyperLink("AADL Arch", rel.value)
+      content = st"!${link}"
+
+      if(cand(0).symbolTable.nonEmpty){
+        val st = cand(0).symbolTable.get
+        for(thread <- st.getThreads()){
+          val name = thread.identifier
+          val typ: String =
+            if(CommonUtil.isPeriodic(thread.component)) s"Periodic: ${thread.period.get} ms"
+            else "Sporadic"
+
+          val compType: String =
+            if(thread.isCakeMLComponent()) "CakeML"
+            else if(thread.getParent(st).toVirtualMachine()) "Virtual Machine"
+            else "Native"
+
+          content =
+            st"""${content}
+                 |
+                 ||${name}|
+                 ||--|
+                 ||${typ}|
+                 ||${compType}|
+                 |
+                 |"""
+        }
+      }
+    }
+
+
+    return ContentLevel("AADL Architecture", content)
+  }
+
   def generateDiagramsSection(reports: HashSMap[HamrPlatform.Type, Report]): Level = {
 
     def toLevel(rootDir: Os.Path, p: Os.Path, title: String) : Option[Level] = {
@@ -250,6 +319,69 @@ object ReadmeTemplate {
       title = "Diagrams",
       content = None(),
       subs = subLevels)
+  }
+
+  def generatePlatformSections(reports: HashSMap[HamrPlatform.Type, Report]): ISZ[Level] = {
+    var subLevels: ISZ[Level] = ISZ()
+    for(e <- reports.entries){
+      val platform = e._1
+      val report = e._2
+
+      var subs: ISZ[Level] = ISZ()
+
+      val configuration: ST =
+        if(report.runHamrScript.nonEmpty) {
+          val rel = report.readmeDir.relativize(report.runHamrScript.get)
+          st"refer to [${rel}](${rel})"
+        } else {
+          val packageNameOption: Option[ST] =
+            if(report.options.packageName.nonEmpty) { Some(st"| package-name | ${report.options.packageName.get} |")}
+            else { None() }
+          st"""|HAMR Codegen Configuration| |
+               ||--|--|
+               ||${packageNameOption}
+               || exclude-component-impl | ${report.options.excludeComponentImpl} |
+               || bit-width | ${report.options.bitWidth} |
+               || max-string-size | ${report.options.maxStringSize} |
+               || max-array-size | ${report.options.maxArraySize} |
+               |"""
+        }
+
+      subs = subs :+ ContentLevel("HAMR Configuration", configuration)
+
+      subs = subs :+ ContentLevel("How to Build/Run",
+        st"""```
+            |${report.runInstructions}
+            |```""")
+
+      if(report.expectedOutput.nonEmpty) {
+        subs = subs :+ ContentLevel(s"Example Output: Timeout = ${report.timeout / 1000} seconds", report.expectedOutput.get)
+      }
+
+      def toLevel(rootDir: Os.Path, p: Os.Path, title: String) : Level = {
+        assert(p.exists, s"no ${p}")
+        val rel = rootDir.relativize(p)
+        val l: ST = createHyperLink(title, s"${rel}")
+        return ContentLevel(title, st"!${l}")
+      }
+
+      if(report.camkesArchDiagram.nonEmpty) {
+        subs = subs :+ toLevel(report.readmeDir, report.camkesArchDiagram.get, "CAmkES Architecture")
+      }
+
+      if(report.hamrCamkesArchDiagram.nonEmpty) {
+        subs = subs :+ toLevel(report.readmeDir, report.hamrCamkesArchDiagram.get, "HAMR CAmkES Architecture")
+      }
+
+      val sl = SubLevel(
+        title = platform.string,
+        content = None(),
+        subs = subs
+      )
+
+      subLevels = subLevels :+ sl
+    }
+    return subLevels
   }
 
   def generateExpectedOutputSection(reports: HashSMap[HamrPlatform.Type, Report]): Level = {
@@ -376,19 +508,22 @@ object ReadmeTemplate {
   }
 
   def generateReport(title: String, reports: HashSMap[Cli.HamrPlatform.Type, Report]): ST = {
-    val platformsDiagrams: Level = generateDiagramsSection(reports)
 
-    val platformExpectedOutput: Level = generateExpectedOutputSection(reports)
+    val archSection: Level = generateArchitectureSection(reports)
 
-    val toc: Level = generateTOC(ISZ(platformsDiagrams, platformExpectedOutput))
+    val platformSections: ISZ[Level]= generatePlatformSections(reports)
+
+    val toc: Level = generateTOC(archSection +: platformSections)
+
 
     val ret: ST = st"""# ${title}
                       |
                       |${level2ST(toc, 0)}
                       |
-                      |${level2ST(platformsDiagrams, 2)}
+                      |${level2ST(archSection, 2)}
                       |
-                      |${level2ST(platformExpectedOutput, 2)}"""
+                      |${(platformSections.map(st => level2ST(st, 2)), "\n")}"""
+
     return ret
   }
 }
@@ -502,5 +637,7 @@ object ReadmeGenerator {
 
                       hamrCamkesArchDiagram: Option[Os.Path],
 
-                      camkesArchDiagram: Option[Os.Path]
+                      camkesArchDiagram: Option[Os.Path],
+
+                      symbolTable: Option[SymbolTable]
                      )

@@ -21,6 +21,9 @@ object CaseToolEval4_vmX extends App {
                            shouldSimulate: B,
                            timeout: Z)
   val USE_OSIREUM: B = F
+
+  val SKIP_CAMKES_BUILD: B = F
+
   val shouldReport: B = T
   val runTranspiler: B = T
 
@@ -55,8 +58,8 @@ object CaseToolEval4_vmX extends App {
     return genFull(path, basePackageName, platforms, T, defTimeout)
   }
 
-  def genVM(path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
-    return genFull(path, basePackageName, platforms, T, vmTimeout)
+  def genVM(shouldSim: B, path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
+    return genFull(path, basePackageName, platforms, shouldSim, vmTimeout)
   }
 
   val nonVmProjects: ISZ[Project] = ISZ(
@@ -69,15 +72,19 @@ object CaseToolEval4_vmX extends App {
   )
 
   val vmProjects: ISZ[Project] = ISZ(
-    // FIXME: producer in the vm for data ports doesn't work as consumer will read garbase
+    // FIXME: producer in the vm for data ports doesn't work as consumer will read garbage
     //gen("vm/test_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4)),
 
-    //genVM ("vm/test_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4))
-  )
+    genVM (F,"vm/test_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4)),
+
+    genVM (F,"vm/test_event_data_port_periodic_domains_VM/both_vm", "base", ISZ(sel4)),
+    genVM (F,"vm/test_event_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4)),
+    genVM (F,"vm/test_event_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4))
+)
 
   //val tests: ISZ[Project] = nonVmProjects
-  val tests: ISZ[Project] = nonVmProjects ++ vmProjects
-  //val tests: ISZ[Project] = vmProjects
+  //val tests: ISZ[Project] = nonVmProjects ++ vmProjects
+  val tests: ISZ[Project] = vmProjects
 
 
   def run(): Unit = {
@@ -159,29 +166,53 @@ object CaseToolEval4_vmX extends App {
           halt(s"${project.rootDir.name} completed with ${exitCode}")
         }
 
-        if(shouldReport && isSel4(platform)) {
-          val gen = ReadmeGenerator(o, reporter)
+        if(shouldReport) {
+          if(isNix(platform)) {
+            val gen = ReadmeGenerator(o, reporter)
 
-          if(gen.build()) {
-            val timeout: Z = project.timeout
-
-            val expectedOutput: ST =
-              if(project.shouldSimulate) gen.simulate(timeout)
-              else st"NEED TO MANUALLY UPDATE EXPECTED OUTPUT"
+            val outputDir = Os.path(o.outputDir.get)
+            val cDir = Os.path(o.slangOutputCDir.get)
 
             val report = Report(
               readmeDir = project.rootDir,
               options = o,
               runHamrScript = Some(runHamrScript),
-              timeout = project.timeout,
-              runInstructions = gen.genRunInstructions(project.rootDir, Some(runHamrScript)),
-              expectedOutput = Some(expectedOutput),
+              timeout = 0,
+              runInstructions = gen.genLinuxRunInstructions(project.rootDir, Some(runHamrScript), outputDir, cDir),
+              expectedOutput = None(),
               aadlArchDiagram = gen.getAadlArchDiagram(),
-              hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
-              camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat)
+              hamrCamkesArchDiagram = None(),
+              camkesArchDiagram = None(),
+              symbolTable = Some(gen.symbolTable)
             )
-
             reports = reports + (platform ~> report)
+          }
+
+          if(isSel4(platform)) {
+            val gen = ReadmeGenerator(o, reporter)
+
+            if(SKIP_CAMKES_BUILD || gen.build()) {
+              val timeout: Z = project.timeout
+
+              val expectedOutput: ST =
+                if(project.shouldSimulate) gen.simulate(timeout)
+                else st"NEED TO MANUALLY UPDATE EXPECTED OUTPUT"
+
+              val report = Report(
+                readmeDir = project.rootDir,
+                options = o,
+                runHamrScript = Some(runHamrScript),
+                timeout = project.timeout,
+                runInstructions = gen.genRunInstructions(project.rootDir, Some(runHamrScript)),
+                expectedOutput = Some(expectedOutput),
+                aadlArchDiagram = gen.getAadlArchDiagram(),
+                hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
+                camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat),
+                symbolTable = Some(gen.symbolTable)
+              )
+
+              reports = reports + (platform ~> report)
+            }
           }
         }
       }
@@ -307,6 +338,15 @@ object CaseToolEval4_vmX extends App {
     return 0
   }
 
+
+  def isNix(platform: HamrPlatform.Type): B = {
+    return platform match {
+      case HamrPlatform.Linux => T
+      case HamrPlatform.Cygwin => T
+      case HamrPlatform.MacOS => T
+      case _ => F
+    }
+  }
 
   def isSel4(platform: HamrPlatform.Type): B = {
     return platform match {
