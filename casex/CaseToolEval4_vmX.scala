@@ -22,10 +22,10 @@ object CaseToolEval4_vmX extends App {
                            timeout: Z)
   val USE_OSIREUM: B = F
 
-  val SKIP_CAMKES_BUILD: B = F
 
   val shouldReport: B = T
-  val runTranspiler: B = T
+  val skipBuild: B = F
+  val regenReadmes: B = F
 
   val defTimeout: Z = 18000
   val vmTimeout: Z = 90000
@@ -37,8 +37,7 @@ object CaseToolEval4_vmX extends App {
   val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
   val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
 
-  //val case_tool_evaluation_dir: Os.Path = Os.home / "devel/case/case-loonwerks/TA5/tool-evaluation-4/HAMR/examples"
-  val case_tool_evaluation_dir: Os.Path = Os.home / "temp/tool_assessment_4"
+  val case_tool_evaluation_dir: Os.Path = Os.home / "devel/case/case-loonwerks/TA5/tool-assessment-4"
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
@@ -83,8 +82,8 @@ object CaseToolEval4_vmX extends App {
 )
 
   //val tests: ISZ[Project] = nonVmProjects
-  //val tests: ISZ[Project] = nonVmProjects ++ vmProjects
-  val tests: ISZ[Project] = vmProjects
+  val tests: ISZ[Project] = nonVmProjects ++ vmProjects
+  //val tests: ISZ[Project] = vmProjects
 
 
   def run(): Unit = {
@@ -137,7 +136,7 @@ object CaseToolEval4_vmX extends App {
           bitWidth = 32,
           maxStringSize = 256,
           maxArraySize = maxArraySize,
-          runTranspiler = runTranspiler,
+          runTranspiler = !skipBuild,
 
           slangAuxCodeDirs = ISZ(),
           slangOutputCDir = Some(cOutputDir.value),
@@ -191,11 +190,11 @@ object CaseToolEval4_vmX extends App {
           if(isSel4(platform)) {
             val gen = ReadmeGenerator(o, reporter)
 
-            if(SKIP_CAMKES_BUILD || gen.build()) {
+            if(skipBuild || gen.build()) {
               val timeout: Z = project.timeout
 
               val expectedOutput: ST =
-                if(project.shouldSimulate) gen.simulate(timeout)
+                if(!skipBuild && project.shouldSimulate) gen.simulate(timeout)
                 else st"NEED TO MANUALLY UPDATE EXPECTED OUTPUT"
 
               val report = Report(
@@ -219,8 +218,26 @@ object CaseToolEval4_vmX extends App {
 
       if(shouldReport) {
         val readme = project.rootDir / "readme.md"
+
+        if(regenReadmes && readme.exists){
+          readme.remove()
+          println(s"Removed ${readme}")
+        }
+
+        ReadmeTemplate.replaceExampleOutputSections = !skipBuild
+
+        if(readme.exists){
+          ReadmeTemplate.existingReadmeContents = ops.StringOps(readme.read)
+        }
+
         val readmest = ReadmeTemplate.generateReport(project.rootDir.name, reports)
-        readme.writeOver(readmest.render)
+
+        if(readme.exists){
+          readme.writeOver(ReadmeTemplate.existingReadmeContents.s)
+        } else {
+          readme.writeOver(readmest.render)
+        }
+        println(s"Wrote: ${readme}")
       }
     }
 

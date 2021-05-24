@@ -225,29 +225,50 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
 @sig trait Level {
   def title: String
+  def tag: String
 }
 
 @datatype  class SubLevel(val title: String,
+                          val tag: String,
                           content: Option[ST],
                           subs: ISZ[Level]) extends Level
 
 @datatype class ContentLevel(val title: String,
+                             val tag: String,
                              content: ST) extends Level
 
 object ReadmeTemplate {
+
+  var existingReadmeContents: ops.StringOps = ops.StringOps("")
+  var replaceExampleOutputSections: B = F
 
   def generateArchitectureSection(value: HashSMap[Cli.HamrPlatform.Type, Report]): Level = {
     var content: ST = st""
     val cand = value.values.filter(p => p.aadlArchDiagram.nonEmpty)
     if(cand.nonEmpty) {
-      val rootDir = cand(0).readmeDir
+      val report = cand(0)
+      val rootDir = report.readmeDir
       val rel = rootDir.relativize(cand(0).aadlArchDiagram.get)
       val link = createHyperLink("AADL Arch", rel.value)
       content = st"!${link}"
 
-      if(cand(0).symbolTable.nonEmpty){
-        val st = cand(0).symbolTable.get
-        for(thread <- st.getThreads()){
+      if(report.symbolTable.nonEmpty){
+        val st = report.symbolTable.get
+
+        var systemProps = st"""|System Properties|
+                              ||--|
+                              ||Domain Scheduling|"""
+
+        if(st.rootSystem.getUseRawConnection()) {
+          systemProps =
+            st"""${systemProps}
+                ||Wire Protocol|"""
+        }
+        content =
+          st"""${content}
+              |$systemProps"""
+
+        for(thread <- st.getThreads()) {
           val name = thread.identifier
           val typ: String =
             if(CommonUtil.isPeriodic(thread.component)) s"Periodic: ${thread.period.get} ms"
@@ -261,7 +282,7 @@ object ReadmeTemplate {
           content =
             st"""${content}
                  |
-                 ||${name}|
+                 ||${name} Properties|
                  ||--|
                  ||${typ}|
                  ||${compType}|
@@ -270,55 +291,24 @@ object ReadmeTemplate {
         }
       }
     }
-
-
-    return ContentLevel("AADL Architecture", content)
+    val title = "AADL Architecture"
+    return ContentLevel(title, createTag(title), content)
   }
 
-  def generateDiagramsSection(reports: HashSMap[HamrPlatform.Type, Report]): Level = {
-
-    def toLevel(rootDir: Os.Path, p: Os.Path, title: String) : Option[Level] = {
-      if(p.exists) {
-        val rel = rootDir.relativize(p)
-        val l: ST = createHyperLink(title, s"${rel}")
-        Some(ContentLevel(title, st"!${l}"))
-      } else { None() }
+  def hackyFind(dir: Os.Path, suffix: String): Option[Os.Path] = {
+    assert(dir.isDir, s"${dir}")
+    for(f <- dir.list if f.isFile) {
+      if (ops.StringOps(f.name).endsWith(suffix)) {
+        return Some(f)
+      }
     }
-
-    var aadlarch: Option[(Os.Path, Os.Path)] = None()
-
-    var subLevels: ISZ[Level] = reports.entries.map(e => {
-      val platform = e._1
-      val report: Report = e._2
-
-      if(report.aadlArchDiagram.nonEmpty) {
-        aadlarch = Some(report.readmeDir, report.aadlArchDiagram.get)
+    for(subdir <- dir.list if subdir.isDir) {
+      hackyFind(subdir, suffix) match {
+        case Some(matchy) => return Some(matchy)
+        case _ =>
       }
-
-      var s: ISZ[Option[Level]] = ISZ()
-
-      if(report.camkesArchDiagram.nonEmpty) {
-        s = s :+ toLevel(report.readmeDir, report.camkesArchDiagram.get, s"${platform.string} CAmkES Arch")
-      }
-      if(report.hamrCamkesArchDiagram.nonEmpty) {
-        s = s :+ toLevel(report.readmeDir, report.hamrCamkesArchDiagram.get, s"${platform.string} CAmkES HAMR Arch")
-      }
-
-      SubLevel(
-        title = platform.string,
-        content = None(),
-        subs = s.map(t => t.get)
-      )
-    })
-
-    if(aadlarch.nonEmpty) {
-      subLevels = toLevel(aadlarch.get._1, aadlarch.get._2, "AADL Arch").get +: subLevels
     }
-
-    return SubLevel(
-      title = "Diagrams",
-      content = None(),
-      subs = subLevels)
+    return None()
   }
 
   def generatePlatformSections(reports: HashSMap[HamrPlatform.Type, Report]): ISZ[Level] = {
@@ -347,34 +337,91 @@ object ReadmeTemplate {
                |"""
         }
 
-      subs = subs :+ ContentLevel("HAMR Configuration", configuration)
+      var title = s"HAMR Configuration: ${platform}"
+      subs = subs :+ ContentLevel(title, createTag(title), configuration)
 
-      subs = subs :+ ContentLevel("How to Build/Run",
+      if(report.symbolTable.nonEmpty) {
+        val symtable =report.symbolTable.get
+        title = s"Behavior Code: ${platform}"
+        var locs: ISZ[ST] = ISZ()
+        for(t <- symtable.getThreads()) {
+
+          val id = t.identifier
+          val suffix = s"${id}.c"
+
+          platform match {
+            case Cli.HamrPlatform.Linux =>
+              val cdir = Os.path(report.options.slangOutputCDir.get) / "ext-c"
+              val suffix = s"${id}.c"
+              hackyFind(cdir, suffix) match {
+                case Some(p) =>
+                  locs = locs :+ createHyperLink(id, report.readmeDir.relativize(p).value)
+                case _ => halt(s" didn't find ${suffix} in ${cdir}")
+              }
+            case Cli.HamrPlatform.SeL4 =>
+              val cdir = report.options.slangOutputCDir.get
+              val camkesDir = report.options.camkesOutputDir.get
+              val isVM = t.getParent(symtable).toVirtualMachine()
+              if(isVM) {
+                val camkesDir = Os.path(report.options.camkesOutputDir.get) / "components" / "VM" / "apps"
+                hackyFind(camkesDir, suffix) match {
+                  case Some(p) =>
+                    locs = locs :+ createHyperLink(s"$id (includes VM glue code)", report.readmeDir.relativize(p).value)
+                  case _ => halt(s" didn't find ${suffix} in ${camkesDir}")
+                }
+              } else {
+                val cdir = Os.path(report.options.slangOutputCDir.get) / "ext-c"
+                hackyFind(cdir, suffix) match {
+                  case Some(p) =>
+                    locs = locs :+ createHyperLink(id, report.readmeDir.relativize(p).value)
+                  case _ => halt(s" didn't find ${suffix} in $cdir")
+                }
+              }
+            case _ => halt("NOOOO")
+          }
+        }
+
+        subs = subs :+ ContentLevel(title, createTag(title),
+          st"""${(locs.map(s => st"  * ${s}"), "\n\n")}"""
+        )
+      }
+
+
+      title = s"How to Build/Run: ${platform}"
+      subs = subs :+ ContentLevel(title, createTag(title),
         st"""```
             |${report.runInstructions}
             |```""")
 
       if(report.expectedOutput.nonEmpty) {
-        subs = subs :+ ContentLevel(s"Example Output: Timeout = ${report.timeout / 1000} seconds", report.expectedOutput.get)
+        title = s"Example Output: ${platform}"
+        subs = subs :+ ContentLevel(title, createTag(title),
+          st"""Timeout = ${report.timeout / 1000} seconds
+              |```
+              |${report.expectedOutput.get}
+              |```""")
       }
 
-      def toLevel(rootDir: Os.Path, p: Os.Path, title: String) : Level = {
+      def toLevel(rootDir: Os.Path, p: Os.Path, title: String, tag: String) : Level = {
         assert(p.exists, s"no ${p}")
         val rel = rootDir.relativize(p)
         val l: ST = createHyperLink(title, s"${rel}")
-        return ContentLevel(title, st"!${l}")
+        return ContentLevel(title, tag, st"!${l}")
       }
 
       if(report.camkesArchDiagram.nonEmpty) {
-        subs = subs :+ toLevel(report.readmeDir, report.camkesArchDiagram.get, "CAmkES Architecture")
+        title = s"CAmkES Architecture: ${platform}"
+        subs = subs :+ toLevel(report.readmeDir, report.camkesArchDiagram.get, title, createTag(title))
       }
 
       if(report.hamrCamkesArchDiagram.nonEmpty) {
-        subs = subs :+ toLevel(report.readmeDir, report.hamrCamkesArchDiagram.get, "HAMR CAmkES Architecture")
+        title = s"HAMR CAmkES Architecture: ${platform}"
+        subs = subs :+ toLevel(report.readmeDir, report.hamrCamkesArchDiagram.get, title, createTag(title))
       }
 
       val sl = SubLevel(
         title = platform.string,
+        tag = platform.string,
         content = None(),
         subs = subs
       )
@@ -382,63 +429,6 @@ object ReadmeTemplate {
       subLevels = subLevels :+ sl
     }
     return subLevels
-  }
-
-  def generateExpectedOutputSection(reports: HashSMap[HamrPlatform.Type, Report]): Level = {
-    val subLevels: ISZ[Option[Level]] = reports.entries.map(e => {
-      val platform = e._1
-      val report = e._2
-      report.expectedOutput match {
-        case Some(x) =>
-          val packageNameOption: Option[ST] =
-            if(report.options.packageName.nonEmpty) { Some(st"| package-name | ${report.options.packageName.get} |")}
-            else { None() }
-
-          var config = st"""|HAMR Codegen Configuration| |
-                           ||--|--|"""
-          if(report.runHamrScript.nonEmpty) {
-            val rel = report.readmeDir.relativize(report.runHamrScript.get)
-            config = st"""${config}
-                         || refer to [${rel}](${rel}) |
-                         |"""
-          }
-          else {
-            config = st"""${config}
-                         ||${packageNameOption}
-                         || exclude-component-impl | ${report.options.excludeComponentImpl} |
-                         || bit-width | ${report.options.bitWidth} |
-                         || max-string-size | ${report.options.maxStringSize} |
-                         || max-array-size | ${report.options.maxArraySize} |
-                         |"""
-          }
-
-          Some(ContentLevel(s"${platform.string} Expected Output: Timeout = ${report.timeout / 1000} seconds",
-            st"""
-                |  ${config}
-                |
-                |  **How To Run**
-                |  ```
-                |  ${report.runInstructions}
-                |  ```
-                |
-                |  ```
-                |  ${x}
-                |  ```"""))
-        case _ => None()
-      }
-    })
-
-    var _subLevels: ISZ[Level] = ISZ()
-    for(s <- subLevels) {
-      if(s.nonEmpty) {
-        _subLevels = _subLevels :+ s.get
-      }
-    }
-
-    return SubLevel(
-      title = "Example Output",
-      content = Some(st"*NOTE:* actual output may differ due to issues related to thread interleaving"),
-      subs = _subLevels) //subLevels.map(s => s.get))
   }
 
   def expand(count: Z, c: C) : String = {
@@ -451,7 +441,7 @@ object ReadmeTemplate {
     return st"[${title}](${target})"
   }
 
-  def toGithubLink(s: String): String = {
+  def createTag(s: String): String = {
     val lc = StringUtil.toLowerCase(s)
     val d = StringUtil.replaceAll(lc, " ", "-")
     val cis = conversions.String.toCis(d)
@@ -461,7 +451,11 @@ object ReadmeTemplate {
       (c.value >= 48 && c.value <= 57) || (c.value >= 97 && c.value <= 122) ||
       (c == '-') || (c == '_'))
     val d_ = conversions.String.fromCis(cis_)
-    return s"#${d_}"
+    return d_
+  }
+
+  def toGithubLink(s: String): String = {
+    return s"#${createTag(s)}"
   }
 
   def generateTOC(levels: ISZ[Level]): Level = {
@@ -485,29 +479,90 @@ object ReadmeTemplate {
     val subs = levels.map(level => gen(level, 2))
     val content: ST = st"${(subs, "\n")}"
 
+    var title = "Table of Contents"
     return ContentLevel(
-      title = "Table of Contents",
+      title = title,
+      tag = createTag(title),
       content = content)
   }
 
-  def level2ST(level: Level, levelNum: Z): ST = {
-    //val spaces = expand(levelNum, ' ')
+  def wrapWithTag(tag: String, content: ST): ST = {
+    val (start, end): (String, String) = (s"<!--${tag}_start-->", s"<!--${tag}_end-->")
+    val ret: ST =
+      if(content.render.size == 0) {
+        st"${start}${end}"
+      } else {
+        st"""${start}
+            |${content}
+            |${end}"""
+      }
+    return ret
+  }
+
+  def replaceContent(tag: String, level: Level): Unit = {
+    if(ops.StringOps(level.title).contains("Example Output") && !replaceExampleOutputSections) {
+      return
+    }
+
+    val (start, end): (String, String) = (s"<!--${tag}_start-->", s"<!--${tag}_end-->")
+
+    def doit(content: ST): Unit = {
+      val posStart = existingReadmeContents.stringIndexOf(start) + start.size // include the tag
+      if(posStart > 0) {
+        val posEnd = existingReadmeContents.stringIndexOfFrom(end, posStart)
+        assert(posEnd > 0, s"didn't find end tag ${end} -- postStart:${posStart}, posEnd:${posEnd} ${existingReadmeContents.substring(posStart, existingReadmeContents.size - 1)}")
+        val prelude: String = existingReadmeContents.substring(0, posStart)
+        val postlude: String = existingReadmeContents.substring(posEnd, existingReadmeContents.size)
+        val newContent: String =
+          st"""${prelude}
+              |${content}
+              |${postlude}""".render
+        existingReadmeContents = ops.StringOps(newContent)
+      } else {
+        cprintln(T, s"Couldn't find tag ${start}")
+      }
+    }
+
+    level match {
+      case s: ContentLevel => doit(s.content)
+      case s: SubLevel =>
+        s.content match {
+          case Some(content) => doit(content)
+          case _ =>
+        }
+    }
+  }
+
+  def level2ST(level: Level, levelNum: Z, readmeExists: B): ST = {
     val hashes = expand(levelNum, '#')
     val title = s"${hashes} ${level.title}"
+
     val content: ST = level match {
-      case s: ContentLevel => s.content
+      case s: ContentLevel => wrapWithTag(level.tag, s.content)
       case s: SubLevel => {
-        val x = s.subs.map(sub => level2ST(sub, levelNum + 1))
-        st"""${s.content}
+        val x = s.subs.map(sub => level2ST(sub, levelNum + 1, readmeExists))
+        val levelContent = wrapWithTag(level.tag, st"${s.content}")
+        st"""$levelContent
+            |
             |${(x, "\n\n")}"""
       }
     }
-    val ret: ST = st"""${title}
-                      |${content}"""
+
+    if(readmeExists) {
+      replaceContent(level.tag, level)
+    }
+
+    val ret: ST =
+        st"""${title}
+            |${content}
+            |"""
+
     return ret
   }
 
   def generateReport(title: String, reports: HashSMap[Cli.HamrPlatform.Type, Report]): ST = {
+
+    val readmeExists: B = (reports.values(0).readmeDir / "readme.md").exists
 
     val archSection: Level = generateArchitectureSection(reports)
 
@@ -518,11 +573,11 @@ object ReadmeTemplate {
 
     val ret: ST = st"""# ${title}
                       |
-                      |${level2ST(toc, 0)}
+                      |${level2ST(toc, 0, readmeExists)}
                       |
-                      |${level2ST(archSection, 2)}
+                      |${level2ST(archSection, 2, readmeExists)}
                       |
-                      |${(platformSections.map(st => level2ST(st, 2)), "\n")}"""
+                      |${(platformSections.map(st => level2ST(st, 2, readmeExists)), "\n")}"""
 
     return ret
   }
