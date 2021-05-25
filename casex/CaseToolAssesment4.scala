@@ -8,7 +8,7 @@ import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, 
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 
-object CaseToolEval4_vmX extends App {
+object CaseToolAssesment4 extends App {
 
   @datatype class Project (basePackageName: String,
 
