@@ -2,8 +2,8 @@
 
 package org.sireum.cli.hamr_runners.casex
 
-import org.sireum.Cli.HamrPlatform
 import org.sireum._
+import org.sireum.Cli.HamrPlatform
 import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
@@ -159,7 +159,7 @@ object CaseToolAssesment4 extends App {
             val results = Os.procs(runHamrScript.canon.value).console.runCheck()
             results.exitCode
           }
-          else { Z(org.sireum.cli.HAMR.codeGen(o).intValue) }
+          else { Z(org.sireum.cli.HAMR.codeGen(o).toInt) }
 
         if(exitCode != 0) {
           halt(s"${project.rootDir.name} completed with ${exitCode}")

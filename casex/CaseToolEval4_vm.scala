@@ -243,7 +243,7 @@ object CaseToolEval4_vm extends App {
             val results = Os.procs(runHamrScript.canon.value).console.runCheck()
             results.exitCode
           }
-          else { Z(org.sireum.cli.HAMR.codeGen(o).intValue) }
+          else { Z(org.sireum.cli.HAMR.codeGen(o).toInt) }
 
         if(exitCode != 0) {
           halt(s"${project.simpleName} completed with ${exitCode}")

@@ -237,7 +237,7 @@ object Isolette3 extends App {
           val _result = Os.procs(runHamrScript.canon.value).console.runCheck()
           _result.exitCode
         } else {
-          Z(org.sireum.cli.HAMR.codeGen(o).intValue)
+          Z(org.sireum.cli.HAMR.codeGen(o).toInt)
         }
 
         if(result != 0) {

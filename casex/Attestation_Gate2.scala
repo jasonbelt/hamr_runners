@@ -19,8 +19,9 @@ object Attestation_Gate2 extends App {
 
   val USE_OSIREUM: B = F // if using osireum then may need to rebuild sireum.jar
 
-  val shouldReport: B = T
-  val runTranspiler: B = T
+  val shouldReport: B = F
+  val skipBuild: B = T
+  val regenReadmes: B = F
 
   val graphFormat: DotFormat.Type = DotFormat.svg
   val defTimeout: Z = 20000
@@ -32,7 +33,7 @@ object Attestation_Gate2 extends App {
   val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
   val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
 
-  val proj_dir: Os.Path = Os.home / "devel/case/case-ku/examples/ksu-proprietary"
+  val proj_dir: Os.Path = Os.home / "devel/case/case-loonwerks/TA5/tool-assessment-4/cakeml/"
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
@@ -120,7 +121,7 @@ object Attestation_Gate2 extends App {
           bitWidth = 32,
           maxStringSize = 256,
           maxArraySize = 1,
-          runTranspiler = runTranspiler,
+          runTranspiler = !skipBuild,
 
           slangAuxCodeDirs = ISZ(),
           slangOutputCDir = None(),
@@ -136,43 +137,46 @@ object Attestation_Gate2 extends App {
         //outputDir.removeAll()
 
         val runHamrScript = generateRunScript(o)
-        regenSlangFile(project.modelDir)
+        //regenSlangFile(project.modelDir)
 
         val result: Z = if(USE_OSIREUM) {
           val _result = Os.procs(runHamrScript.canon.value).console.runCheck()
           _result.exitCode
         } else {
-          Z(org.sireum.cli.HAMR.codeGen(o).intValue)
+          Z(org.sireum.cli.HAMR.codeGen(o).toInt)
         }
 
         if(result != 0) {
           halt(s"${project.simpleName} completed with ${result}")
         }
 
-        if(shouldReport && isSel4(platform)) {
-          val gen = ReadmeGenerator(o, reporter)
+        if(shouldReport) {
 
-          if(gen.build()) {
-            val timeout: Z = if(platform == Cli.HamrPlatform.SeL4) defTimeout else project.timeout
+          if(isSel4(platform)) {
+            val gen = ReadmeGenerator(o, reporter)
 
-            val expectedOutput: Option[ST] =
-              if(project.shouldSimulate) Some(gen.simulate(timeout))
-              else None()
+            if(skipBuild ||gen.build()) {
+              val timeout: Z = project.timeout
 
-            val report = Report(
-              readmeDir = project.modelDir,
-              options = o,
-              runHamrScript = Some(project.modelDir.relativize(runHamrScript)),
-              timeout = project.timeout,
-              runInstructions = gen.genRunInstructions(project.modelDir, Some(runHamrScript)),
-              expectedOutput = expectedOutput,
-              aadlArchDiagram = gen.getAadlArchDiagram(),
-              hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
-              camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat),
-              symbolTable = None()
-            )
+              val expectedOutput: Option[ST] =
+                if(!skipBuild && project.shouldSimulate) Some(gen.simulate(timeout))
+                else None()
 
-            reports = reports + (platform ~> report)
+              val report = Report(
+                readmeDir = project.modelDir,
+                options = o,
+                runHamrScript = Some(project.modelDir.relativize(runHamrScript)),
+                timeout = project.timeout,
+                runInstructions = gen.genRunInstructions(project.modelDir, Some(runHamrScript)),
+                expectedOutput = expectedOutput,
+                aadlArchDiagram = gen.getAadlArchDiagram(),
+                hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
+                camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat),
+                symbolTable = None()
+              )
+
+              reports = reports + (platform ~> report)
+            }
           }
         }
       }

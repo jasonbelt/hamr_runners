@@ -30,7 +30,7 @@ object PFC_Periodic{
 
     def run(o: Cli.HamrCodeGenOption): Int = {
       val ret = cli.HAMR.codeGen(o)
-      return ret
+      return ret.toInt
     }
 
     var INCLUDE = T
