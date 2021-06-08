@@ -25,7 +25,7 @@ object CaseToolAssesment4 extends App {
 
   val shouldReport: B = T
   val skipBuild: B = F
-  val regenReadmes: B = F
+  val regenReadmes: B = T
 
   val defTimeout: Z = 18000
   val vmTimeout: Z = 90000
@@ -47,7 +47,7 @@ object CaseToolAssesment4 extends App {
     val hamrDir = rootDir / "hamr"
     val json: Os.Path = {
       val cands = (aadlDir / ".slang").list.filter(f => f.ext == "json")
-      assert(cands.size == 1)
+      assert(cands.size == 1, s"${aadlDir}: ${cands.size}")
       cands(0)
     }
     return Project(basePackageName, rootDir, aadlDir, hamrDir, json, platforms, shouldSimulate, timeout)
@@ -62,12 +62,14 @@ object CaseToolAssesment4 extends App {
   }
 
   val nonVmProjects: ISZ[Project] = ISZ(
-
+/*
     gen("basic/test_data_port_periodic_domains", "base", ISZ(linux, sel4)),
     gen("basic/test_event_data_port_periodic_domains", "base", ISZ(linux, sel4)),
     gen("basic/test_event_port_periodic_domains", "base", ISZ(linux, sel4)),
 
-    gen("bit-codec/producer-filter-consumer", "pfc", ISZ(linux, sel4))
+    gen("bit-codec/producer-filter-consumer", "pfc", ISZ(linux, sel4)),
+*/
+    gen("cakeml/attestation-gate", "attestation-gate", ISZ(linux, sel4))
   )
 
   val vmProjects: ISZ[Project] = ISZ(
@@ -81,8 +83,8 @@ object CaseToolAssesment4 extends App {
     genVM (F,"vm/test_event_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4))
 )
 
-  //val tests: ISZ[Project] = nonVmProjects
-  val tests: ISZ[Project] = nonVmProjects ++ vmProjects
+  val tests: ISZ[Project] = nonVmProjects
+  //val tests: ISZ[Project] = nonVmProjects ++ vmProjects
   //val tests: ISZ[Project] = vmProjects
 
 

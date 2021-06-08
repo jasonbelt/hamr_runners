@@ -142,7 +142,7 @@ def toEntry(o: ops.StringOps): Entry = {
   }
   val text = ops.StringOps(o.substring(pounds, o.size)).trim
   val tag = createTag(text)
-  return Entry(pounds, text, tag)
+  return Entry(pounds, text, s"#$tag")
 }
 
 def trim(st: ST): ST = {
