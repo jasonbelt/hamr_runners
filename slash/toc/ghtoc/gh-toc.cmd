@@ -94,20 +94,20 @@ def processReadme(f: Os.Path): Unit = {
     }
 
     val oo = ops.ISZOps(contents)
-    val start = ops.ISZOps(oo.slice(0, tcStart + 1)).foldLeft((a: ST, b: String) =>
-      st"""$a
-          |$b""", st"")
-    val end = ops.ISZOps(oo.slice(tcEnd, contents.size)).foldLeft((a: ST, b: String) =>
-      st"""$a
-          |$b""", st"")
+    val start: ST = ops.ISZOps(oo.slice(0, tcStart + 1)).foldLeft((a: ST, b: String) =>
+      st"$a$b\n", st"")
+    val end: ST = ops.ISZOps(oo.slice(tcEnd, contents.size)).foldLeft((a: ST, b: String) =>
+      st"$a$b\n", st"")
 
+    // remove last newline from start as the following adds a newline b/w start and toc
+    val ostart = ops.StringOps(start.render)
     val combined =
-      st"""${start}
+      st"""${ostart.substring(0, ostart.size - 1)}
           |${trim(toc)}
           |${end}"""
 
     f.writeOver(combined.render)
-    println(s"Wrote: ${f}")
+    println(s"Wrote: ${f.canon}")
   }
 }
 
