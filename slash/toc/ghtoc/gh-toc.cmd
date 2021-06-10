@@ -50,6 +50,7 @@ val startAtLevel: Z = if(pos < Os.cliArgs.size) {
 }
 
 @datatype class Entry(level: Z, text: String, link: String)
+
 val TC_START="<!--ts-->"
 val TC_END="<!--te-->"
 
@@ -69,47 +70,53 @@ def processReadme(f: Os.Path): Unit = {
       tcStart = i
     }
     if(o.contains(TC_END)) {
-      assert(tcStart > -1, s"$TC_START must appear before $TC_END")
+      assert(tcStart > -1 && tcStart != i, s"$TC_START must appear before $TC_END and cannot be on the same line")
       tcEnd = i
     }
-    if(o.startsWith("#")) {
-      entries = entries :+ toEntry(o)
+    val trimmed = ops.StringOps(o.trim)
+    if(trimmed.startsWith("#")) {
+      entries = entries :+ toEntry(trimmed)
     }
   }
 
-  if(tcStart == -1 || tcEnd == -1) {
-    halt(s"Didn't find $TC_START and/or $TC_END")
-  }
-
-  if(entries.size > 0) {
-    //println(entries)
-    var toc = st""
-    for (e <- entries) {
-      if (e.level >= startAtLevel) {
-        val spaces = expand(e.level - startAtLevel, ' ')
-        toc =
-          st"""$toc
-              |${spaces}* ${createHyperLink(e.text, e.link)}"""
+  if(tcStart > -1 && tcEnd > -1) {
+    if(entries.size > 0) {
+      //println(entries)
+      var toc = st""
+      for (e <- entries) {
+        if (e.level >= startAtLevel) {
+          val spaces = expand(e.level - startAtLevel, ' ')
+          toc =
+            st"""$toc
+                |${spaces}* ${createHyperLink(e.text, e.link)}"""
+        }
       }
+
+      val oo = ops.ISZOps(contents)
+      val start: ST = ops.ISZOps(oo.slice(0, tcStart + 1)).foldLeft((a: ST, b: String) => st"$a$b\n", st"")
+      val end: ST = ops.ISZOps(oo.slice(tcEnd, contents.size)).foldLeft((a: ST, b: String) => st"$a$b\n", st"")
+
+      // remove last newline from start as the following adds a newline b/w start and toc
+      val ostart = ops.StringOps(start.render)
+      val combined =
+        st"""${ostart.substring(0, ostart.size - 1)}
+            |${trim(toc)}
+            |${end}"""
+
+      f.writeOver(combined.render)
+      println(s"Wrote: ${f.canon}")
     }
-
-    val oo = ops.ISZOps(contents)
-    val start: ST = ops.ISZOps(oo.slice(0, tcStart + 1)).foldLeft((a: ST, b: String) =>
-      st"$a$b\n", st"")
-    val end: ST = ops.ISZOps(oo.slice(tcEnd, contents.size)).foldLeft((a: ST, b: String) =>
-      st"$a$b\n", st"")
-
-    // remove last newline from start as the following adds a newline b/w start and toc
-    val ostart = ops.StringOps(start.render)
-    val combined =
-      st"""${ostart.substring(0, ostart.size - 1)}
-          |${trim(toc)}
-          |${end}"""
-
-    f.writeOver(combined.render)
-    println(s"Wrote: ${f.canon}")
+  } else {
+    println(s"Didn't find $TC_START and/or $TC_END in ${f.canon}")
   }
 }
+
+if(fileOrDir.isFile) {
+  processReadme(fileOrDir)
+} else {
+
+}
+
 
 
 def replaceAll(s: String, from: String, to: String): String = {
@@ -147,10 +154,6 @@ def toEntry(o: ops.StringOps): Entry = {
 
 def trim(st: ST): ST = {
   return st"${ops.StringOps(st.render).trim}"
-}
-
-if(fileOrDir.isFile) {
-  processReadme(fileOrDir)
 }
 
 def expand(count: Z, c: C) : String = {

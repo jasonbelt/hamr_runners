@@ -8,21 +8,17 @@ if [ -z ${SIREUM_HOME} ]; then                                #
   echo "Please set SIREUM_HOME env var"                       #
   exit -1                                                     #
 fi                                                            #
-exec ${SIREUM_HOME}/bin/sireum slang run -s -n "$0" "$@"      #
+exec ${SIREUM_HOME}/bin/sireum slang run -n "$0" "$@"         #
 :BOF
 if not defined SIREUM_HOME (
   echo Please set SIREUM_HOME env var
   exit /B -1
 )
-%SIREUM_HOME%\bin\sireum.bat slang run -s -n "%0" %*
+%SIREUM_HOME%\bin\sireum.bat slang run -n "%0" %*
 exit /B %errorlevel%
 ::!#
 // #Sireum
-
 import org.sireum._
 
-val s = "types/src/sp_int64_t.c"
-
-val r = ops.StringOps(s).replaceAllLiterally("types/", "")
-
-println(r)
+val args: ISZ[String] = ISZ("bash", "-c", "q=0; while [[ 0 ]]; do ((q++)); echo $q; done")
+Os.proc(args).timeout(50).console.run()

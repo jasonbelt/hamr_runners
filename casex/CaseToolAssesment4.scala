@@ -25,7 +25,7 @@ object CaseToolAssesment4 extends App {
 
   val shouldReport: B = T
   val skipBuild: B = F
-  val regenReadmes: B = T
+  val replaceReadmes: B = T
 
   val defTimeout: Z = 18000
   val vmTimeout: Z = 90000
@@ -66,10 +66,13 @@ object CaseToolAssesment4 extends App {
     gen("basic/test_data_port_periodic_domains", "base", ISZ(linux, sel4)),
     gen("basic/test_event_data_port_periodic_domains", "base", ISZ(linux, sel4)),
     gen("basic/test_event_port_periodic_domains", "base", ISZ(linux, sel4)),
-
-    gen("bit-codec/producer-filter-consumer", "pfc", ISZ(linux, sel4)),
 */
+    gen("basic/tutorial", "base", ISZ(linux, sel4)),
+/*
+    gen("bit-codec/producer-filter-consumer", "pfc", ISZ(linux, sel4)),
+
     gen("cakeml/attestation-gate", "attestation-gate", ISZ(linux, sel4))
+    */
   )
 
   val vmProjects: ISZ[Project] = ISZ(
@@ -221,9 +224,9 @@ object CaseToolAssesment4 extends App {
       if(shouldReport) {
         val readme = project.rootDir / "readme.md"
 
-        if(regenReadmes && readme.exists){
+        if(replaceReadmes && readme.exists){
           readme.remove()
-          println(s"Removed ${readme}")
+          println(s"Removed: ${readme}")
         }
 
         ReadmeTemplate.replaceExampleOutputSections = !skipBuild
