@@ -10,9 +10,9 @@ import org.sireum.hamr.codegen.common.{CommonUtil, StringUtil}
 import org.sireum.hamr.codegen.common.properties.PropertyUtil
 import org.sireum.hamr.ir
 import org.sireum.message.Reporter
-import org.sireum.hamr.codegen.common.symbols.{SymbolResolver, SymbolTable}
+import org.sireum.hamr.codegen.common.symbols.{AadlThread, SymbolResolver, SymbolTable}
 import org.sireum.hamr.codegen.common.types.TypeResolver
-import org.sireum.hamr.codegen.common.util.CodeGenConfig
+import org.sireum.hamr.codegen.common.util.{CodeGenConfig, ModelUtil}
 import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
 @record class ReadmeGenerator(o: Cli.HamrCodeGenOption, reporter: Reporter) {
@@ -56,7 +56,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
         camkesOptions = camkesOptions :+ OPT_USE_PRECONFIGURED_ROOTFS
       }
       if (camkesOptions.nonEmpty) {
-        args = args :+ "-o" :+ st"""${(camkesOptions, ";")}""".render
+        args = args :+ "-o" :+ st"""${(camkesOptions, " ")}""".render
       }
 
       continue = ReadmeGenerator.run(args, reporter)
@@ -268,7 +268,14 @@ object ReadmeTemplate {
           st"""${content}
               |$systemProps"""
 
-        for(thread <- st.getThreads()) {
+        val threads: ISZ[AadlThread] = {
+          if(report.symbolTable.nonEmpty && ops.ISZOps(st.getThreads()).forall(t => t.getParent(report.symbolTable.get).getDomain().nonEmpty)) {
+            ops.ISZOps(st.getThreads()).sortWith((a,b) => a.getParent(report.symbolTable.get).getDomain().get < b.getParent(report.symbolTable.get).getDomain().get)
+          } else {
+            st.getThreads()
+          }
+        }
+        for(thread <- threads) {
           val name = thread.identifier
           val typ: String =
             if(CommonUtil.isPeriodic(thread.component)) s"Periodic: ${thread.period.get} ms"
@@ -279,14 +286,18 @@ object ReadmeTemplate {
             else if(thread.getParent(st).toVirtualMachine()) "Virtual Machine"
             else "Native"
 
+          val domain: Option[ST]= if(report.symbolTable.nonEmpty && thread.getParent(report.symbolTable.get).getDomain().nonEmpty) {
+            Some(st"""|Domain: ${thread.getParent(report.symbolTable.get).getDomain().get}|""")
+          } else { None() }
+
           content =
             st"""${content}
                  |
                  ||${name} Properties|
                  ||--|
-                 ||${typ}|
                  ||${compType}|
-                 |
+                 ||${typ}|
+                 |${domain}
                  |"""
         }
       }
@@ -363,11 +374,13 @@ object ReadmeTemplate {
               val camkesDir = report.options.camkesOutputDir.get
               val isVM = t.getParent(symtable).toVirtualMachine()
               if(isVM) {
+                val processId = t.getParent(symtable).identifier
+                val processSuffix = s"${processId}.c"
                 val camkesDir = Os.path(report.options.camkesOutputDir.get) / "components" / "VM" / "apps"
-                hackyFind(camkesDir, suffix) match {
+                hackyFind(camkesDir, processSuffix) match {
                   case Some(p) =>
                     locs = locs :+ createHyperLink(s"$id (includes VM glue code)", report.readmeDir.relativize(p).value)
-                  case _ => halt(s" didn't find ${suffix} in ${camkesDir}")
+                  case _ => halt(s" didn't find ${processSuffix} in ${camkesDir}")
                 }
               } else {
                 val cdir = Os.path(report.options.slangOutputCDir.get) / "ext-c"
@@ -670,12 +683,11 @@ object ReadmeGenerator {
   def getSymbolTable(model: ir.Aadl, options: CodeGenConfig): SymbolTable = {
     val reporter = Reporter.create
 
-    val rawConnections: B = PropertyUtil.getUseRawConnection(model.components(0).properties)
-    val aadlTypes = TypeResolver.processDataTypes(model, rawConnections, 256, 32, "")
+    val modelElements = ModelUtil.resolve(model, options.packageName.get, options, reporter).get
 
-    val s = SymbolResolver.resolve(model, aadlTypes, options, reporter)
     reporter.printMessages()
-    return s
+
+    return modelElements.symbolTable
   }
 }
 

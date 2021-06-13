@@ -17,15 +17,16 @@ object CaseToolAssesment4 extends App {
                            hamrDir: Os.Path,
 
                            slangFile: Os.Path,
-                           platforms: ISZ[Cli.HamrPlatform.Type],
+
+                           options: ISZ[Cli.HamrCodeGenOption],
                            shouldSimulate: B,
                            timeout: Z)
   val USE_OSIREUM: B = F
 
 
-  val shouldReport: B = T
-  val skipBuild: B = F
-  val replaceReadmes: B = T
+  val shouldReport: B = F
+  val skipBuild: B = T
+  val replaceReadmes: B = F
 
   val defTimeout: Z = 18000
   val vmTimeout: Z = 90000
@@ -41,44 +42,26 @@ object CaseToolAssesment4 extends App {
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
-  def genFull(path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type], shouldSimulate: B, timeout: Z): Project = {
-    val rootDir = case_tool_evaluation_dir / path
-    val aadlDir = rootDir / "aadl"
-    val hamrDir = rootDir / "hamr"
-    val json: Os.Path = {
-      val cands = (aadlDir / ".slang").list.filter(f => f.ext == "json")
-      assert(cands.size == 1, s"${aadlDir}: ${cands.size}")
-      cands(0)
-    }
-    return Project(basePackageName, rootDir, aadlDir, hamrDir, json, platforms, shouldSimulate, timeout)
-  }
-
-  def gen(path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
-    return genFull(path, basePackageName, platforms, T, defTimeout)
-  }
-
-  def genVM(shouldSim: B, path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
-    return genFull(path, basePackageName, platforms, shouldSim, vmTimeout)
-  }
-
   val nonVmProjects: ISZ[Project] = ISZ(
 /*
     gen("basic/test_data_port_periodic_domains", "base", ISZ(linux, sel4)),
     gen("basic/test_event_data_port_periodic_domains", "base", ISZ(linux, sel4)),
     gen("basic/test_event_port_periodic_domains", "base", ISZ(linux, sel4)),
-*/
+
     gen("basic/tutorial", "base", ISZ(linux, sel4)),
-/*
+
     gen("bit-codec/producer-filter-consumer", "pfc", ISZ(linux, sel4)),
 
     gen("cakeml/attestation-gate", "attestation-gate", ISZ(linux, sel4))
-    */
+  */
+
+    {
+      val proj = gen("phase2", "hamr", ISZ(linux, sel4))
+      proj(options = proj.options.map(o => o(slangAuxCodeDirs = ISZ((proj.aadlDir / "c_libraries/CMASI").value, (proj.aadlDir / "c_libraries/hexdump").value, (proj.aadlDir / "c_libraries/dummy_serial_server").value))))
+    },
   )
 
   val vmProjects: ISZ[Project] = ISZ(
-    // FIXME: producer in the vm for data ports doesn't work as consumer will read garbage
-    //gen("vm/test_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4)),
-
     genVM (F,"vm/test_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4)),
 
     genVM (F,"vm/test_event_data_port_periodic_domains_VM/both_vm", "base", ISZ(sel4)),
@@ -101,85 +84,37 @@ object CaseToolAssesment4 extends App {
         halt(s"${project.rootDir} does not exist");
       }
 
-      for (platform <- project.platforms) {
-
-        platform match {
-          case Cli.HamrPlatform.SeL4_Only => halt("")
-          case Cli.HamrPlatform.SeL4_TB =>halt("")
-          case _ =>
-        }
+      for (option <- project.options) {
 
         println("***************************************")
-        println(s"${project.rootDir} -- ${platform})")
+        println(s"${project.rootDir} -- ${option.platform})")
         println("***************************************")
-
-        val slangOutputDir: Os.Path = project.hamrDir / "slang"
-        val cOutputDir: Os.Path = project.hamrDir / "c"
-        val camkesOutputDir: Os.Path = project.hamrDir / "camkes"
-
-        project.hamrDir.mkdir()
-        (project.aadlDir / "hamr").mklink(project.hamrDir)
-
-        //if(ops.StringOps(project.modelDir.value).contains("VMx")) {
-        //  experimentalOptions = experimentalOptions :+ ExperimentalOptions.USE_CASE_CONNECTORS
-        //}
-
-        val maxArraySize: Z = if(project.basePackageName == "pfc") 3 else 1
-
-        val o = Cli.HamrCodeGenOption(
-          help = "",
-          args = ISZ(project.slangFile.value),
-          msgpack = F,
-          verbose = T,
-          platform = platform,
-
-          packageName = Some(project.basePackageName),
-          noEmbedArt = F,
-          devicesAsThreads = F,
-          excludeComponentImpl = T,
-
-          bitWidth = 32,
-          maxStringSize = 256,
-          maxArraySize = maxArraySize,
-          runTranspiler = !skipBuild,
-
-          slangAuxCodeDirs = ISZ(),
-          slangOutputCDir = Some(cOutputDir.value),
-          outputDir = Some(slangOutputDir.value),
-
-
-          camkesOutputDir = Some(camkesOutputDir.value),
-          camkesAuxCodeDirs = ISZ(),
-          aadlRootDir = Some(project.aadlDir.value),
-
-          experimentalOptions = experimentalOptions
-        )
 
         //outputDir.removeAll()
 
-        val runHamrScript = generateRunScript(o)
+        val runHamrScript = generateRunScript(option)
 
         val exitCode: Z =
           if(USE_OSIREUM) {
             val results = Os.procs(runHamrScript.canon.value).console.runCheck()
             results.exitCode
           }
-          else { Z(org.sireum.cli.HAMR.codeGen(o).toInt) }
+          else { Z(org.sireum.cli.HAMR.codeGen(option).toInt) }
 
         if(exitCode != 0) {
           halt(s"${project.rootDir.name} completed with ${exitCode}")
         }
 
         if(shouldReport) {
-          if(isNix(platform)) {
-            val gen = ReadmeGenerator(o, reporter)
+          if(isNix(option.platform)) {
+            val gen = ReadmeGenerator(option, reporter)
 
-            val outputDir = Os.path(o.outputDir.get)
-            val cDir = Os.path(o.slangOutputCDir.get)
+            val outputDir = Os.path(option.outputDir.get)
+            val cDir = Os.path(option.slangOutputCDir.get)
 
             val report = Report(
               readmeDir = project.rootDir,
-              options = o,
+              options = option,
               runHamrScript = Some(runHamrScript),
               timeout = 0,
               runInstructions = gen.genLinuxRunInstructions(project.rootDir, Some(runHamrScript), outputDir, cDir),
@@ -189,11 +124,11 @@ object CaseToolAssesment4 extends App {
               camkesArchDiagram = None(),
               symbolTable = Some(gen.symbolTable)
             )
-            reports = reports + (platform ~> report)
+            reports = reports + (option.platform ~> report)
           }
 
-          if(isSel4(platform)) {
-            val gen = ReadmeGenerator(o, reporter)
+          if(isSel4(option.platform)) {
+            val gen = ReadmeGenerator(option, reporter)
 
             if(skipBuild || gen.build()) {
               val timeout: Z = project.timeout
@@ -204,7 +139,7 @@ object CaseToolAssesment4 extends App {
 
               val report = Report(
                 readmeDir = project.rootDir,
-                options = o,
+                options = option,
                 runHamrScript = Some(runHamrScript),
                 timeout = project.timeout,
                 runInstructions = gen.genRunInstructions(project.rootDir, Some(runHamrScript)),
@@ -215,7 +150,7 @@ object CaseToolAssesment4 extends App {
                 symbolTable = Some(gen.symbolTable)
               )
 
-              reports = reports + (platform ~> report)
+              reports = reports + (option.platform ~> report)
             }
           }
         }
@@ -277,11 +212,20 @@ object CaseToolAssesment4 extends App {
 
         val sharedCOptions: Option[ST] =
           if(o.platform == Cli.HamrPlatform.SeL4 || o.platform == Cli.HamrPlatform.Linux) {
+            val auxCodeDirOpt: Option[ST] = if(o.slangAuxCodeDirs.nonEmpty) {
+                val entries: ISZ[String] = o.slangAuxCodeDirs.map(acd => {
+                  assert(Os.path(acd).exists, s"${acd} doesn't exist")
+                  s"$$AADL_DIR/${aadlDir.relativize(Os.path(acd))}"
+                })
+                Some(st"""--aux-code-dirs ${(entries, ";")} \""")
+              } else { None() }
+
             Some(st"""--output-c-dir $$ROOT_DIR/${rCOutputDir} \
                      |--exclude-component-impl \
                      |--bit-width ${o.bitWidth} \
                      |--max-string-size ${o.maxStringSize} \
                      |--max-array-size ${o.maxArraySize} \
+                     |${auxCodeDirOpt}
                      |--run-transpiler \""")
             } else {None()}
 
@@ -404,5 +348,76 @@ object CaseToolAssesment4 extends App {
       val comm: ISZ[String] = ISZ("git", "checkout", d)
       Os.proc(comm).at(case_tool_evaluation_dir).console.runCheck()
     }
+  }
+
+
+  def genFull(path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type], shouldSimulate: B, timeout: Z): Project = {
+    val rootDir = case_tool_evaluation_dir / path
+    val aadlDir = rootDir / "aadl"
+    val hamrDir = rootDir / "hamr"
+    val json: Os.Path = {
+      val cands = (aadlDir / ".slang").list.filter(f => f.ext == "json")
+      assert(cands.size == 1, s"${aadlDir}: ${cands.size}")
+      cands(0)
+    }
+    var options: ISZ[Cli.HamrCodeGenOption] = ISZ()
+    for(platform <- platforms) {
+      platform match {
+        case Cli.HamrPlatform.SeL4_Only => halt("")
+        case Cli.HamrPlatform.SeL4_TB =>halt("")
+        case _ =>
+      }
+
+      val slangOutputDir: Os.Path = hamrDir / "slang"
+      val cOutputDir: Os.Path = hamrDir / "c"
+      val camkesOutputDir: Os.Path = hamrDir / "camkes"
+
+      hamrDir.mkdir()
+      (aadlDir / "hamr").mklink(hamrDir)
+
+      //if(ops.StringOps(project.modelDir.value).contains("VMx")) {
+      //  experimentalOptions = experimentalOptions :+ ExperimentalOptions.USE_CASE_CONNECTORS
+      //}
+
+      val maxArraySize: Z = if(basePackageName == "pfc") 3 else 1
+
+      val o = Cli.HamrCodeGenOption(
+        help = "",
+        args = ISZ(json.value),
+        msgpack = F,
+        verbose = T,
+        platform = platform,
+
+        packageName = Some(basePackageName),
+        noEmbedArt = F,
+        devicesAsThreads = F,
+        excludeComponentImpl = T,
+
+        bitWidth = 32,
+        maxStringSize = 256,
+        maxArraySize = maxArraySize,
+        runTranspiler = !skipBuild,
+
+        slangAuxCodeDirs = ISZ(),
+        slangOutputCDir = Some(cOutputDir.value),
+        outputDir = Some(slangOutputDir.value),
+
+        camkesOutputDir = Some(camkesOutputDir.value),
+        camkesAuxCodeDirs = ISZ(),
+        aadlRootDir = Some(aadlDir.value),
+
+        experimentalOptions = experimentalOptions
+      )
+      options = options :+ o
+    }
+    return Project(basePackageName, rootDir, aadlDir, hamrDir, json, options, shouldSimulate, timeout)
+  }
+
+  def gen(path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
+    return genFull(path, basePackageName, platforms, T, defTimeout)
+  }
+
+  def genVM(shouldSim: B, path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
+    return genFull(path, basePackageName, platforms, shouldSim, vmTimeout)
   }
 }
