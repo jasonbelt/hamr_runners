@@ -25,8 +25,9 @@ object CaseToolAssesment4 extends App {
 
 
   val shouldReport: B = T
-  val skipBuild: B = T
+  val skipBuild: B = F
   val replaceReadmes: B = F
+  val simulateKillSwitch: B = T
 
   val defTimeout: Z = 18000
   val vmTimeout: Z = 90000
@@ -43,7 +44,7 @@ object CaseToolAssesment4 extends App {
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
   val nonVmProjects: ISZ[Project] = ISZ(
-/*
+
     gen("basic/test_data_port_periodic_domains", "base", ISZ(linux, sel4)),
     gen("basic/test_event_data_port_periodic_domains", "base", ISZ(linux, sel4)),
     gen("basic/test_event_port_periodic_domains", "base", ISZ(linux, sel4)),
@@ -52,13 +53,7 @@ object CaseToolAssesment4 extends App {
 
     gen("bit-codec/producer-filter-consumer", "pfc", ISZ(linux, sel4)),
 
-    gen("cakeml/attestation-gate", "attestation-gate", ISZ(linux, sel4))
-  */
-
-    {
-      val proj = gen("phase2", "hamr", ISZ(linux, sel4))
-      proj(options = proj.options.map(o => o(slangAuxCodeDirs = ISZ((proj.aadlDir / "c_libraries/CMASI").value, (proj.aadlDir / "c_libraries/hexdump").value, (proj.aadlDir / "c_libraries/dummy_serial_server").value))))
-    },
+    gen("cakeml/attestation-gate", "attestation-gate", ISZ(linux, sel4)),
   )
 
   val vmProjects: ISZ[Project] = ISZ(
@@ -66,11 +61,16 @@ object CaseToolAssesment4 extends App {
 
     genVM (F,"vm/test_event_data_port_periodic_domains_VM/both_vm", "base", ISZ(sel4)),
     genVM (F,"vm/test_event_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4)),
-    genVM (F,"vm/test_event_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4))
-)
+    genVM (F,"vm/test_event_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4)),
 
-  val tests: ISZ[Project] = nonVmProjects
-  //val tests: ISZ[Project] = nonVmProjects ++ vmProjects
+    {
+      val proj = gen("phase2", "hamr", ISZ(linux, sel4))
+      proj(options = proj.options.map(o => o(slangAuxCodeDirs = ISZ((proj.aadlDir / "c_libraries/CMASI").value, (proj.aadlDir / "c_libraries/hexdump").value, (proj.aadlDir / "c_libraries/dummy_serial_server").value))))
+    },
+  )
+
+  //val tests: ISZ[Project] = nonVmProjects
+  val tests: ISZ[Project] = nonVmProjects ++ vmProjects
   //val tests: ISZ[Project] = vmProjects
 
 
@@ -134,7 +134,7 @@ object CaseToolAssesment4 extends App {
               val timeout: Z = project.timeout
 
               val expectedOutput: ST =
-                if(!skipBuild && project.shouldSimulate) gen.simulate(timeout)
+                if(!skipBuild && !simulateKillSwitch && project.shouldSimulate) gen.simulate(timeout)
                 else st"NEED TO MANUALLY UPDATE EXPECTED OUTPUT"
 
               val report = Report(
