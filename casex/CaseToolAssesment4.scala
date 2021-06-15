@@ -24,7 +24,7 @@ object CaseToolAssesment4 extends App {
   val USE_OSIREUM: B = F
 
 
-  val shouldReport: B = F
+  val shouldReport: B = T
   val skipBuild: B = T
   val replaceReadmes: B = F
 

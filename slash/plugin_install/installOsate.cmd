@@ -58,7 +58,7 @@ val cli = Feature(
   id = "org.sireum.aadl.osate.feature.feature.group")
 
 //val order = ISZ(base, cli, hamr, awas)
-val order = ISZ(base)
+val order = ISZ(base, hamr)
 
 for(o <- order) {
   if (isInstalled(o.id, osateExe)) {

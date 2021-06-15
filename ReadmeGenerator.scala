@@ -7,11 +7,9 @@ import org.sireum.Cli.HamrPlatform
 import org.sireum.cli.HAMR
 import org.sireum.hamr.act.util.PathUtil
 import org.sireum.hamr.codegen.common.{CommonUtil, StringUtil}
-import org.sireum.hamr.codegen.common.properties.PropertyUtil
 import org.sireum.hamr.ir
-import org.sireum.message.Reporter
-import org.sireum.hamr.codegen.common.symbols.{AadlThread, SymbolResolver, SymbolTable}
-import org.sireum.hamr.codegen.common.types.TypeResolver
+import org.sireum.message.{Reporter}
+import org.sireum.hamr.codegen.common.symbols.{AadlThread, SymbolTable}
 import org.sireum.hamr.codegen.common.util.{CodeGenConfig, ModelUtil}
 import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
@@ -248,6 +246,7 @@ object ReadmeTemplate {
     if(cand.nonEmpty) {
       val report = cand(0)
       val rootDir = report.readmeDir
+      val aadlDir = report.options.aadlRootDir.get
       val rel = rootDir.relativize(cand(0).aadlArchDiagram.get)
       val link = createHyperLink("AADL Arch", rel.value)
       content = st"!${link}"
@@ -290,10 +289,34 @@ object ReadmeTemplate {
             Some(st"""|Domain: ${thread.getParent(report.symbolTable.get).getDomain().get}|""")
           } else { None() }
 
+          val header: ST = {
+
+
+            thread.ports(0).feature.identifier.pos match {
+              case Some(org.sireum.message.FlatPos(Some(uriOpt), beginLine, _, _, _, _, _)) =>
+                val sops = ops.StringOps(uriOpt)
+                assert(sops.startsWith("/"))
+                val pos = sops.indexOfFrom('/', 1)
+                val stripped = sops.substring(pos, sops.size)
+                val uri = Os.path(aadlDir) / stripped
+
+                def findThread(uri: Os.Path, start: Z): Z = {
+                  val lines = uri.readLines
+                  var index = start
+                  while(!ops.StringOps(lines(index)).contains("thread")) { index = index - 1 }
+                  return index
+                }
+
+                val line = findThread(uri, conversions.U32.toZ(beginLine))
+                st"[${name}](${rootDir.relativize(uri).value}#L${line}) Properties"
+              case _ => st"${name} Properties"
+            }
+          }
+
           content =
             st"""${content}
                  |
-                 ||${name} Properties|
+                 ||${header}|
                  ||--|
                  ||${compType}|
                  ||${typ}|
@@ -523,14 +546,17 @@ object ReadmeTemplate {
       val posStart = existingReadmeContents.stringIndexOf(start) + start.size // include the tag
       if(posStart > 0) {
         val posEnd = existingReadmeContents.stringIndexOfFrom(end, posStart)
-        assert(posEnd > 0, s"didn't find end tag ${end} -- postStart:${posStart}, posEnd:${posEnd} ${existingReadmeContents.substring(posStart, existingReadmeContents.size - 1)}")
-        val prelude: String = existingReadmeContents.substring(0, posStart)
-        val postlude: String = existingReadmeContents.substring(posEnd, existingReadmeContents.size)
-        val newContent: String =
-          st"""${prelude}
-              |${content}
-              |${postlude}""".render
-        existingReadmeContents = ops.StringOps(newContent)
+        if(posEnd > 0){
+          val prelude: String = existingReadmeContents.substring(0, posStart)
+          val postlude: String = existingReadmeContents.substring(posEnd, existingReadmeContents.size)
+          val newContent: String =
+            st"""${prelude}
+                |${content}
+                |${postlude}""".render
+          existingReadmeContents = ops.StringOps(newContent)
+        } else {
+          cprintln(T, s"didn't find end tag ${end}")
+        }
       } else {
         cprintln(T, s"Couldn't find tag ${start}")
       }
