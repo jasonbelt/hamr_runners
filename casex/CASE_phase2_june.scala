@@ -4,7 +4,7 @@ package org.sireum.cli.hamr_runners.casex
 import org.sireum._
 import org.sireum.cli.hamr_runners.DotFormat
 
-object CASE_phase2_june {
+object CASE_phase2_june extends App {
 
   @datatype class Project (simpleName: String,
                            projectDir: Os.Path,
@@ -60,7 +60,7 @@ object CASE_phase2_june {
     gen(rootDir, "vm", "UAV_UAV_Impl_Instance.json", ISZ(linux, sel4))
   )
 
-  def main(args: Array[Predef.String]): Unit = {
+  override def main(args: ISZ[String]): Z = {
 
     for (project <- projectsDirs) {
       val projectDir = project.projectDir
@@ -160,5 +160,6 @@ object CASE_phase2_june {
 
       readme.writeOver(readmest.render)
     }
+    return 0
   }
 }

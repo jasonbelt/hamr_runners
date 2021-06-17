@@ -5,11 +5,12 @@ package org.sireum.cli.hamr_runners
 import org.sireum._
 import org.sireum.Cli.HamrPlatform
 import org.sireum.cli.HAMR
+import org.sireum.hamr.act.periodic.PeriodicUtil
 import org.sireum.hamr.act.util.PathUtil
 import org.sireum.hamr.codegen.common.{CommonUtil, StringUtil}
 import org.sireum.hamr.ir
-import org.sireum.message.{Reporter}
-import org.sireum.hamr.codegen.common.symbols.{AadlThread, SymbolTable}
+import org.sireum.message.{Position, Reporter}
+import org.sireum.hamr.codegen.common.symbols.{AadlProcessor, AadlThread, SymbolTable}
 import org.sireum.hamr.codegen.common.util.{CodeGenConfig, ModelUtil}
 import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
@@ -240,13 +241,49 @@ object ReadmeTemplate {
   var existingReadmeContents: ops.StringOps = ops.StringOps("")
   var replaceExampleOutputSections: B = F
 
+  def createHeader(componentName: String, pos: Option[Position], searchString: String, aadlDir: Os.Path, rootDir: Os.Path): ST = {
+    val ret: ST = pos match {
+      case Some(org.sireum.message.FlatPos(Some(uriOpt), beginLine, _, _, _, _, _)) =>
+        val sops = ops.StringOps(uriOpt)
+        assert(sops.startsWith("/"))
+        val pos = sops.indexOfFrom('/', 1)
+        val stripped = sops.substring(pos, sops.size)
+        val uri = aadlDir / stripped
+
+        def findThread(uri: Os.Path, start: Z): Z = {
+          val lines = uri.readLines
+          var index = start
+          while (!ops.StringOps(lines(index)).contains(searchString)) {
+            index = index - 1
+          }
+          return index
+        }
+
+        val line = findThread(uri, conversions.U32.toZ(beginLine)) + 1
+        st"[${componentName}](${rootDir.relativize(uri).value}#L${line})"
+
+      case _ => st"${componentName}"
+    }
+    return ret
+  }
+
+  def sortThreads(threads: ISZ[AadlThread], symbolTable: SymbolTable): ISZ[AadlThread] = {
+    val ret: ISZ[AadlThread] = if(ops.ISZOps(threads()).forall(t => t.getParent(symbolTable).getDomain().nonEmpty)) {
+      ops.ISZOps(threads()).sortWith((a,b) => a.getParent(symbolTable).getDomain().get < b.getParent(symbolTable).getDomain().get)
+    } else {
+      threads
+    }
+    return ret
+  }
+
   def generateArchitectureSection(value: HashSMap[Cli.HamrPlatform.Type, Report]): Level = {
     var content: ST = st""
     val cand = value.values.filter(p => p.aadlArchDiagram.nonEmpty)
     if(cand.nonEmpty) {
       val report = cand(0)
+      val symbolTable = report.symbolTable.get
       val rootDir = report.readmeDir
-      val aadlDir = report.options.aadlRootDir.get
+      val aadlDir = Os.path(report.options.aadlRootDir.get)
       val rel = rootDir.relativize(cand(0).aadlArchDiagram.get)
       val link = createHyperLink("AADL Arch", rel.value)
       content = st"!${link}"
@@ -254,7 +291,12 @@ object ReadmeTemplate {
       if(report.symbolTable.nonEmpty){
         val st = report.symbolTable.get
 
-        var systemProps = st"""|System Properties|
+        val header: ST = {
+          val pos: Option[Position] = report.symbolTable.get.rootSystem.component.identifier.pos
+          createHeader(report.symbolTable.get.rootSystem.identifier, pos, "system", aadlDir, rootDir)
+        }
+
+        var systemProps = st"""|System: ${header} Properties|
                               ||--|
                               ||Domain Scheduling|"""
 
@@ -267,13 +309,7 @@ object ReadmeTemplate {
           st"""${content}
               |$systemProps"""
 
-        val threads: ISZ[AadlThread] = {
-          if(report.symbolTable.nonEmpty && ops.ISZOps(st.getThreads()).forall(t => t.getParent(report.symbolTable.get).getDomain().nonEmpty)) {
-            ops.ISZOps(st.getThreads()).sortWith((a,b) => a.getParent(report.symbolTable.get).getDomain().get < b.getParent(report.symbolTable.get).getDomain().get)
-          } else {
-            st.getThreads()
-          }
-        }
+        val threads: ISZ[AadlThread] = sortThreads(st.getThreads(), report.symbolTable.get)
         for(thread <- threads) {
           val name = thread.identifier
           val typ: String =
@@ -290,33 +326,16 @@ object ReadmeTemplate {
           } else { None() }
 
           val header: ST = {
-
-
-            thread.ports(0).feature.identifier.pos match {
-              case Some(org.sireum.message.FlatPos(Some(uriOpt), beginLine, _, _, _, _, _)) =>
-                val sops = ops.StringOps(uriOpt)
-                assert(sops.startsWith("/"))
-                val pos = sops.indexOfFrom('/', 1)
-                val stripped = sops.substring(pos, sops.size)
-                val uri = Os.path(aadlDir) / stripped
-
-                def findThread(uri: Os.Path, start: Z): Z = {
-                  val lines = uri.readLines
-                  var index = start
-                  while(!ops.StringOps(lines(index)).contains("thread")) { index = index - 1 }
-                  return index
-                }
-
-                val line = findThread(uri, conversions.U32.toZ(beginLine))
-                st"[${name}](${rootDir.relativize(uri).value}#L${line}) Properties"
-              case _ => st"${name} Properties"
-            }
+            val pos: Option[Position] =
+              if(thread.ports.nonEmpty) thread.ports(0).feature.identifier.pos
+              else(thread.component.identifier.pos)
+            createHeader(name, pos, "thread", aadlDir, rootDir)
           }
 
           content =
             st"""${content}
                  |
-                 ||${header}|
+                 ||${header} Properties|
                  ||--|
                  ||${compType}|
                  ||${typ}|
@@ -324,7 +343,20 @@ object ReadmeTemplate {
                  |"""
         }
       }
+
+      val proc: AadlProcessor = PeriodicUtil.getBoundProcessor(symbolTable)
+      proc.getScheduleSourceText() match {
+        case Some(loc) =>
+          val schedule = Os.path(report.options.aadlRootDir.get) / loc
+          assert(schedule.exists, schedule.canon)
+          content =
+                st"""$content
+                    |
+                    |**Schedule:** [${schedule.name}](${report.readmeDir.relativize(schedule).value})"""
+        case _ =>
+      }
     }
+
     val title = "AADL Architecture"
     return ContentLevel(title, createTag(title), content)
   }
@@ -356,7 +388,25 @@ object ReadmeTemplate {
       val configuration: ST =
         if(report.runHamrScript.nonEmpty) {
           val rel = report.readmeDir.relativize(report.runHamrScript.get)
-          st"refer to [${rel}](${rel})"
+          var cont = st"""refer to [${rel}](${rel})"""
+          val dialogcli = Os.home / "devel/case/case-loonwerks/TA5/tool-assessment-4/doc/dialog_cli.jpg"
+          assert(dialogcli.exists)
+          if(dialogcli.exists) {
+            val rel: Os.Path = report.readmeDir.relativize(dialogcli)
+            cont = st"""$cont
+                |<details>
+                |<summary>Click for an example showing how HAMR's plugin dialog box relates to the CLI options</summary>
+                |<!-- due to security issues, you may need to have the parent folder (ie. '../') open in your
+                |     editor (e.g. vscode) in order to see the following image -->
+                |
+                |![dialog_cli](${rel.value})
+                |
+                |The CLI options ``verbose`` and ``run-transpiler`` are set via ``Verbose output`` and ``Run Transpiler``
+                |options respectively that are located in __Preferences >> OSATE >> Sireum HAMR >> Code Generation__.
+                |The last two CLI options are set by the HAMR plugin.
+                |</details>"""
+          }
+          cont
         } else {
           val packageNameOption: Option[ST] =
             if(report.options.packageName.nonEmpty) { Some(st"| package-name | ${report.options.packageName.get} |")}
@@ -375,10 +425,10 @@ object ReadmeTemplate {
       subs = subs :+ ContentLevel(title, createTag(title), configuration)
 
       if(report.symbolTable.nonEmpty) {
-        val symtable =report.symbolTable.get
+        val symtable = report.symbolTable.get
         title = s"Behavior Code: ${platform}"
         var locs: ISZ[ST] = ISZ()
-        for(t <- symtable.getThreads()) {
+        for(t <- sortThreads(symtable.getThreads(), symtable)) {
 
           val id = t.identifier
           val suffix = s"${id}.c"
@@ -417,9 +467,8 @@ object ReadmeTemplate {
           }
         }
 
-        subs = subs :+ ContentLevel(title, createTag(title),
-          st"""${(locs.map(s => st"  * ${s}"), "\n\n")}"""
-        )
+        var content = st"""${(locs.map(s => st"  * ${s}"), "\n\n")}"""
+        subs = subs :+ ContentLevel(title, createTag(title), content)
       }
 
 
@@ -717,7 +766,7 @@ object ReadmeGenerator {
   }
 }
 
-@record class Report (readmeDir: Os.Path,
+@datatype class Report (readmeDir: Os.Path,
 
                       options: Cli.HamrCodeGenOption,
                       runHamrScript: Option[Os.Path],

@@ -13,7 +13,7 @@ object QuickRunner extends App{
   val outputDir: Os.Path = aadlDir / "hamr"
   val platform: HamrPlatform.Type = HamrPlatform.SeL4
 
-  val o = Cli.HamrCodeGenOption(
+  val o: Cli.HamrCodeGenOption = Cli.HamrCodeGenOption(
     help = "",
     args = ISZ(json.value),
     msgpack = F,

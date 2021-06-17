@@ -25,7 +25,7 @@ object CaseToolAssesment4 extends App {
 
 
   val shouldReport: B = T
-  val skipBuild: B = F
+  val skipBuild: B = T
   val replaceReadmes: B = F
   val simulateKillSwitch: B = T
 
@@ -56,18 +56,22 @@ object CaseToolAssesment4 extends App {
     gen("cakeml/attestation-gate", "attestation-gate", ISZ(linux, sel4)),
   )
 
-  val vmProjects: ISZ[Project] = ISZ(
-    genVM (F,"vm/test_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4)),
+  val vmProjects: ISZ[Project] = {
+    //val phase2: Project = {
+    //  val proj = gen("phase2", "hamr", ISZ(linux, sel4))
+    //  proj(options = proj.options.map(o => o(slangAuxCodeDirs = ISZ((proj.aadlDir / "c_libraries/CMASI").value, (proj.aadlDir / "c_libraries/hexdump").value, (proj.aadlDir / "c_libraries/dummy_serial_server").value))))
+    //}
 
-    genVM (F,"vm/test_event_data_port_periodic_domains_VM/both_vm", "base", ISZ(sel4)),
-    genVM (F,"vm/test_event_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4)),
-    genVM (F,"vm/test_event_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4)),
+    ISZ(
+      genVM (F,"vm/test_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4)),
 
-    {
-      val proj = gen("phase2", "hamr", ISZ(linux, sel4))
-      proj(options = proj.options.map(o => o(slangAuxCodeDirs = ISZ((proj.aadlDir / "c_libraries/CMASI").value, (proj.aadlDir / "c_libraries/hexdump").value, (proj.aadlDir / "c_libraries/dummy_serial_server").value))))
-    },
-  )
+      genVM (F,"vm/test_event_data_port_periodic_domains_VM/both_vm", "base", ISZ(sel4)),
+      genVM (F,"vm/test_event_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4)),
+      genVM (F,"vm/test_event_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4)),
+
+      //phase2
+    )
+  }
 
   //val tests: ISZ[Project] = nonVmProjects
   val tests: ISZ[Project] = nonVmProjects ++ vmProjects
@@ -133,9 +137,9 @@ object CaseToolAssesment4 extends App {
             if(skipBuild || gen.build()) {
               val timeout: Z = project.timeout
 
-              val expectedOutput: ST =
-                if(!skipBuild && !simulateKillSwitch && project.shouldSimulate) gen.simulate(timeout)
-                else st"NEED TO MANUALLY UPDATE EXPECTED OUTPUT"
+              val expectedOutput: Option[ST] =
+                if(!skipBuild && !simulateKillSwitch && project.shouldSimulate) Some(gen.simulate(timeout))
+                else None()
 
               val report = Report(
                 readmeDir = project.rootDir,
@@ -143,7 +147,7 @@ object CaseToolAssesment4 extends App {
                 runHamrScript = Some(runHamrScript),
                 timeout = project.timeout,
                 runInstructions = gen.genRunInstructions(project.rootDir, Some(runHamrScript)),
-                expectedOutput = Some(expectedOutput),
+                expectedOutput = expectedOutput,
                 aadlArchDiagram = gen.getAadlArchDiagram(),
                 hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
                 camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat),
@@ -306,21 +310,23 @@ object CaseToolAssesment4 extends App {
 
 
   def isNix(platform: HamrPlatform.Type): B = {
-    return platform match {
+    val ret: B = platform match {
       case HamrPlatform.Linux => T
       case HamrPlatform.Cygwin => T
       case HamrPlatform.MacOS => T
       case _ => F
     }
+    return ret
   }
 
   def isSel4(platform: HamrPlatform.Type): B = {
-    return platform match {
+    val ret: B = platform match {
       case HamrPlatform.SeL4 => T
       case HamrPlatform.SeL4_TB => T
       case HamrPlatform.SeL4_Only => T
       case _ => F
     }
+    return ret
   }
 
   def replaceVM(): Unit = {

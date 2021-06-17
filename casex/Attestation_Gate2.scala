@@ -297,11 +297,12 @@ object Attestation_Gate2 extends App {
 
 
   def isSel4(platform: HamrPlatform.Type): B = {
-    return platform match {
+    val ret: B = platform match {
       case HamrPlatform.SeL4 => T
       case HamrPlatform.SeL4_TB => T
       case HamrPlatform.SeL4_Only => T
       case _ => F
     }
+    return ret
   }
 }

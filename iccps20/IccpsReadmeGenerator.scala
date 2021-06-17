@@ -302,7 +302,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   }
 
   def dirsScanned(dirs: ISZ[Os.Path]): ST = {
-    val rdirs = dirs.map(m => project.projectDir.relativize(m)).map(m => st"- [${m}]($m)")
+    val rdirs = dirs.map((m: Os.Path) => project.projectDir.relativize(m)).map((m: Os.Path) => st"- [${m}]($m)")
 
     val _dirs: ST = st"""Directories Scanned Using [https://github.com/AlDanial/cloc](https://github.com/AlDanial/cloc) v1.88:
                         |${(rdirs, "\n")}"""
@@ -378,7 +378,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
       "cloc",
       "--md",
       "--exclude-lang=make,CMake"
-    ) ++ dirs.map(m => m.value)
+    ) ++ dirs.map((m: Os.Path) => m.value)
 
     val results = Os.proc(args).run()
     val s = results.out.native
@@ -440,11 +440,14 @@ object IccpsReadmeTemplate {
   def generateDiagramsSection(projectRoot: Os.Path, reports: HashSMap[HamrPlatform.Type, Report]): Level = {
 
     def toLevel(p: Os.Path, title: String) : Option[Level] = {
-      if(p.exists) {
-        val relPath = projectRoot.relativize(p)
-        val l: ST = createLink(title, relPath.value) //s"${p.up.name}/${p.name}")
-        Some(ContentLevel(title, st"!${l}"))
-      } else { None() }
+      val ret: Option[Level] =
+        if(p.exists) {
+          val relPath = projectRoot.relativize(p)
+          val l: ST = createLink(title, relPath.value) //s"${p.up.name}/${p.name}")
+          Some(ContentLevel(title, st"!${l}"))
+        }
+        else { None() }
+      return ret
     }
 
     var aadlarch: Option[Os.Path] = None()
@@ -570,7 +573,7 @@ object IccpsReadmeTemplate {
     val cis = conversions.String.toCis(d)
 
     // only keep numbers, lowercase letters, '-' and '_'
-    val cis_ = cis.filter(c =>
+    val cis_ = cis.filter((c: C) =>
       (c.value >= 48 && c.value <= 57) || (c.value >= 97 && c.value <= 122) ||
       (c == '-') || (c == '_'))
     val d_ = conversions.String.fromCis(cis_)
@@ -762,7 +765,7 @@ object IccpsReadmeGenerator {
   }
 }
 
-@msig trait Report{
+@sig trait Report{
   def options: Cli.HamrCodeGenOption
   def timeout: Z
 
@@ -775,7 +778,7 @@ object IccpsReadmeGenerator {
   def codeMetrics: ST
 }
 
-@record class NixReport (options: Cli.HamrCodeGenOption,
+@datatype class NixReport (options: Cli.HamrCodeGenOption,
                          timeout: Z,
 
                          runInstructions: ST,
@@ -786,7 +789,7 @@ object IccpsReadmeGenerator {
                          aadlMetrics: ST,
                          codeMetrics: ST) extends Report
 
-@record class JvmReport (options: Cli.HamrCodeGenOption,
+@datatype class JvmReport (options: Cli.HamrCodeGenOption,
                           timeout: Z,
 
                           runInstructions: ST,
@@ -797,7 +800,7 @@ object IccpsReadmeGenerator {
                           aadlMetrics: ST,
                           codeMetrics: ST) extends Report
 
-@record class CamkesReport (options: Cli.HamrCodeGenOption,
+@datatype class CamkesReport (options: Cli.HamrCodeGenOption,
                             timeout: Z,
 
                             runInstructions: ST,

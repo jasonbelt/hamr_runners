@@ -51,10 +51,11 @@ val startAtLevel: Z = if(pos < Os.cliArgs.size) {
 
 @datatype class Entry(level: Z, text: String, link: String)
 
-val TC_START="<!--ts-->"
-val TC_END="<!--te-->"
+val TC_START="<!--table-of-contents_start-->"
+val TC_END="<!--table-of-contents_end-->"
 
 def processReadme(f: Os.Path): Unit = {
+  println(s"Processing ${f.canon}")
   assert(f.isFile, s"$f is not a file")
 
   var tcStart: Z = -1
@@ -98,12 +99,21 @@ def processReadme(f: Os.Path): Unit = {
 
       // remove last newline from start as the following adds a newline b/w start and toc
       val ostart = ops.StringOps(start.render)
+      val dastart = ostart.substring(0, ostart.size - 1)
+      val trimmed = trim(toc)
+
       val combined =
-        st"""${ostart.substring(0, ostart.size - 1)}
-            |${trim(toc)}
+        st"""${dastart}
+            |${trimmed}
             |${end}"""
 
-      f.writeOver(combined.render)
+      //val oldComdined = combined.render
+
+      val combinedRendered = combined.render
+
+      //val combinedRendered = "oh no"
+
+      f.writeOver(combinedRendered)
       println(s"Wrote: ${f.canon}")
     }
   } else {
@@ -114,7 +124,20 @@ def processReadme(f: Os.Path): Unit = {
 if(fileOrDir.isFile) {
   processReadme(fileOrDir)
 } else {
-
+  def recurse(arg: Os.Path): Unit = {
+    if(arg.isDir) {
+      for(child <- arg.list) {
+        if(!child.isSymLink) {
+          recurse(child)
+        }
+      }
+    } else {
+      if(arg.name == "readme.md") {
+        processReadme(arg)
+      }
+    }
+  }
+  recurse(fileOrDir)
 }
 
 

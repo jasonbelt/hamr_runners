@@ -2,8 +2,8 @@
 
 package org.sireum.cli.hamr_runners
 
-import org.sireum.Cli.HamrPlatform
 import org.sireum._
+import org.sireum.Cli.HamrPlatform
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 
@@ -301,11 +301,12 @@ object Isolette3 extends App {
 
 
   def isSel4(platform: HamrPlatform.Type): B = {
-    return platform match {
+    val ret: B = platform match {
       case HamrPlatform.SeL4 => T
       case HamrPlatform.SeL4_TB => T
       case HamrPlatform.SeL4_Only => T
       case _ => F
     }
+    return ret
   }
 }
