@@ -101,15 +101,23 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     assert(run.exists)
     assert(stop.exists)
 
+    //val osireumOrTranspile: ST =
+    //  if (osireumScript.nonEmpty) st"./${readmeDir.relativize(osireumScript.get)}"
+    //  else st"./${readmeDir.relativize(transpile)}"
     val osireumOrTranspile: ST =
-      if (osireumScript.nonEmpty) st"./${readmeDir.relativize(osireumScript.get)}"
-      else st"./${readmeDir.relativize(transpile)}"
+    st"""If you didn't configure HAMR's FMIDE plugin to run the transpiler automatically then first run
+        |```
+        |./${readmeDir.relativize(transpile)}
+        |```
+        |then """
 
     val ret: ST =
       st"""${osireumOrTranspile}
+          |```
           |./${readmeDir.relativize(compile)}
           |./${readmeDir.relativize(run)}
-          |./${readmeDir.relativize(stop)}"""
+          |./${readmeDir.relativize(stop)}
+          |```"""
     return ret
   }
 
@@ -159,16 +167,25 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     assert(runScript.exists, s"${runScript} not found")
     val runCamkes: ST = st"./${readmeDir.relativize(runScript)} ${_camkesOptions}-s"
 
-    val osireum: Option[ST] =
-      if (osireumScript.nonEmpty) Some(st"./${readmeDir.relativize(osireumScript.get)}")
-      else None()
+    //val osireum: Option[ST] =
+    //  if (osireumScript.nonEmpty) Some(st"./${readmeDir.relativize(osireumScript.get)}")
+    //  else None()
+
+    val osireum:ST =
+      st"""If you didn't configure HAMR's FMIDE plugin to run the transpiler automatically then run
+          |```
+          |./${readmeDir.relativize(transpileSel4)}
+          |```
+          |then
+          |"""
 
     val ret: ST =
       st"""${osireum}
+          |```
           |${caseArmVmSetup}
           |${cakeML}
-          |${transpile}
-          |${runCamkes}"""
+          |${runCamkes}
+          |```"""
     return ret
   }
 
@@ -385,41 +402,80 @@ object ReadmeTemplate {
 
       var subs: ISZ[Level] = ISZ()
 
-      val configuration: ST =
-        if(report.runHamrScript.nonEmpty) {
-          val rel = report.readmeDir.relativize(report.runHamrScript.get)
-          var cont = st"""refer to [${rel}](${rel})"""
-          val dialogcli = Os.home / "devel/case/case-loonwerks/TA5/tool-assessment-4/doc/dialog_cli.jpg"
-          assert(dialogcli.exists)
-          if(dialogcli.exists) {
-            val rel: Os.Path = report.readmeDir.relativize(dialogcli)
-            cont = st"""$cont
-                |<details>
-                |<summary>Click for an example showing how HAMR's plugin dialog box relates to the CLI options</summary>
-                |<!-- due to security issues, you may need to have the parent folder (ie. '../') open in your
-                |     editor (e.g. vscode) in order to see the following image -->
-                |
-                |![dialog_cli](${rel.value})
-                |
-                |The CLI options ``verbose`` and ``run-transpiler`` are set via ``Verbose output`` and ``Run Transpiler``
-                |options respectively that are located in __Preferences >> OSATE >> Sireum HAMR >> Code Generation__.
-                |The last two CLI options are set by the HAMR plugin.
-                |</details>"""
+      val configuration: ST = {
+          def rel(o: String): ST = {
+            val f = Os.path(o)
+            assert(f.exists, f)
+            return st"""_&lt;example-dir&gt;_/${report.readmeDir.relativize(f).value}"""
           }
-          cont
-        } else {
           val packageNameOption: Option[ST] =
             if(report.options.packageName.nonEmpty) { Some(st"| package-name | ${report.options.packageName.get} |")}
             else { None() }
-          st"""|HAMR Codegen Configuration| |
+
+          val sharedCStuff: Option[ST] = {
+            var content: ISZ[ST] = ISZ()
+            if(report.options.excludeComponentImpl) { content = content :+ st"|Exclude Slang Component Implementations|True/Checked|" }
+            content = content :+ st"|Bit Width|${report.options.bitWidth}|"
+            content = content :+ st"|Max Sequence Size|${report.options.maxArraySize}|"
+            content = content :+ st"|Max String Size|${report.options.maxStringSize}|"
+            content = content :+ st"|C Output Directory|${rel(report.options.slangOutputCDir.get)}|"
+            assert(report.options.slangAuxCodeDirs.isEmpty)
+
+            Some(st"${(content, "\n")}")
+          }
+
+          val camkesStuff: Option[ST] = if(platform == Cli.HamrPlatform.SeL4) {
+            var content: ST = st"|seL4/CAmkES Output Directory|${rel(report.options.camkesOutputDir.get)}"
+            Some(content)
+          } else { None() }
+
+          var content =
+            st"""The following are the options that were used in HAMR's FMIDE dialog box (_&lt;example-dir&gt;_ is the directory that contains this readme file)
+               |
+               |Option Name|Value |
                ||--|--|
-               ||${packageNameOption}
-               || exclude-component-impl | ${report.options.excludeComponentImpl} |
-               || bit-width | ${report.options.bitWidth} |
-               || max-string-size | ${report.options.maxStringSize} |
-               || max-array-size | ${report.options.maxArraySize} |
+               |Platform|${report.options.platform}|
+               |Output Directory|${rel(report.options.outputDir.get)}|
+               |Base Package Name|${report.options.packageName.get}|
+               |${sharedCStuff}
+               |${camkesStuff}
+               |
+               |You can have HAMR's FMIDE plugin generate verbose output and run the transpiler by setting the ``Verbose output`` and ``Run Transpiler``
+               |options that are located in __Preferences >> OSATE >> Sireum HAMR >> Code Generation__.
                |"""
-        }
+
+          if(report.runHamrScript.nonEmpty) {
+
+            var cont = st""
+            val dialogcli = Os.home / "devel/case/case-loonwerks/TA5/tool-assessment-4/doc/dialog_cli.jpg"
+            assert(dialogcli.exists)
+            if(dialogcli.exists) {
+              val reportRel = report.readmeDir.relativize(report.runHamrScript.get)
+              val rel: Os.Path = report.readmeDir.relativize(dialogcli)
+
+              cont = st"""$cont
+                         |<details>
+                         |
+                         |<summary>Click for instructions on how to run HAMR Codegen via the command line</summary>
+                         |
+                         |The script [${reportRel}](${reportRel}) uses an experimental OSATE/FMIDE plugin we've developed that
+                         |allows you to run HAMR's OSATE/FMIDE plugin via the command line.  It has primarily been used/tested
+                         |when installed in OSATE (not FMIDE) and under Linux so may not work as expected in FMIDE or
+                         |under a different operating system. The script contains instructions on how to install the plugin.
+                         |
+                         |```
+                         |./$reportRel
+                         |```
+                         |
+                         |</details>"""
+              content =
+                st"""${content}
+                    |
+                    |${cont}"""
+            }
+          }
+          content
+      }
 
       var title = s"HAMR Configuration: ${platform}"
       subs = subs :+ ContentLevel(title, createTag(title), configuration)
@@ -473,10 +529,7 @@ object ReadmeTemplate {
 
 
       title = s"How to Build/Run: ${platform}"
-      subs = subs :+ ContentLevel(title, createTag(title),
-        st"""```
-            |${report.runInstructions}
-            |```""")
+      subs = subs :+ ContentLevel(title, createTag(title), report.runInstructions)
 
       if(report.expectedOutput.nonEmpty) {
         title = s"Example Output: ${platform}"
