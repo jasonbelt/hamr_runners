@@ -429,8 +429,16 @@ object ReadmeTemplate {
             Some(content)
           } else { None() }
 
+        val st = report.symbolTable.get
+
+        val header: ST = {
+          val pos: Option[Position] = report.symbolTable.get.rootSystem.component.identifier.pos
+          createHeader("this", pos, "system", Os.path(report.options.aadlRootDir.get), report.readmeDir)
+        }
+
           var content =
-            st"""The following are the options that were used in HAMR's FMIDE dialog box (_&lt;example-dir&gt;_ is the directory that contains this readme file)
+            st"""To run HAMR Codegen, select ${header} system implementation in FMIDE's outline view and then click the
+               |HAMR button in the toolbar.  Use the following values in the dialog box that opens up (_&lt;example-dir&gt;_ is the directory that contains this readme file)
                |
                |Option Name|Value |
                ||--|--|

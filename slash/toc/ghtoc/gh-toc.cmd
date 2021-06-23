@@ -128,7 +128,11 @@ if(fileOrDir.isFile) {
     if(arg.isDir) {
       for(child <- arg.list) {
         if(!child.isSymLink) {
-          recurse(child)
+          if(child.up.name == "tutorial") {
+            println("skipping tutorial")
+          } else {
+            recurse(child)
+          }
         }
       }
     } else {
