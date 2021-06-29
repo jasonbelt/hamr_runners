@@ -1,16 +1,22 @@
 // #Sireum
 package org.sireum.cli.hamr_runners
 
-import org.sireum.Cli.HamrPlatform
 import org.sireum._
+import org.sireum.Cli.HamrPlatform
 
 object QuickRunner extends App{
 
 
+  val buildingDir: Os.Path = Os.home / "devel/gumbo/gumbo-models/building-control/building-control-bless-mixed/aadl"
+  val buildingJson: Os.Path = buildingDir / ".slang/BuildingControl_Bless_BuildingControlDemo_i_Instance.json"
+
 //Wrote: /home/vagrant/devel/gumbo/gumbo-models/building-control/building-control-bless-mixed/aadl/.slang/BuildingControl_Bless_BuildingControlDemo_i_Instance.json
-  val aadlDir: Os.Path = Os.home / "devel/gumbo/gumbo-models/building-control/building-control-bless-mixed/aadl"
-  val json: Os.Path = aadlDir / ".slang/BuildingControl_Bless_BuildingControlDemo_i_Instance.json"
-  val outputDir: Os.Path = aadlDir.up / "hamr3"
+  val voterDir: Os.Path = Os.home / "devel/gumbo/gumbo-models/voter/RedundantSensors_Bless"
+  val voterJson: Os.Path = voterDir / ".slang/SensorSystem_redundant_sensors_impl_Instance.json"
+
+  val aadlDir: Os.Path = voterDir
+  val json: Os.Path = voterJson
+  val outputDir: Os.Path = aadlDir / "hamr"
   val platform: HamrPlatform.Type = HamrPlatform.JVM
 
   val o: Cli.HamrCodeGenOption = Cli.HamrCodeGenOption(
@@ -20,7 +26,7 @@ object QuickRunner extends App{
     verbose = T,
     platform = platform,
 
-    packageName = Some("hamr3"),
+    packageName = Some("hamr"),
     noEmbedArt = F,
     devicesAsThreads = F,
     excludeComponentImpl = T,
