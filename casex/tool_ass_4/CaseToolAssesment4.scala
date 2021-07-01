@@ -1,10 +1,9 @@
 // #Sireum
 
-package org.sireum.cli.hamr_runners.casex
+package org.sireum.cli.hamr_runners.casex.tool_ass_4
 
 import org.sireum._
 import org.sireum.Cli.HamrPlatform
-import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 
@@ -111,7 +110,7 @@ object CaseToolAssesment4 extends App {
 
         if(shouldReport) {
           if(isNix(option.platform)) {
-            val gen = ReadmeGenerator(option, reporter)
+            val gen = ReadmeGenerator_ta4(option, reporter)
 
             val outputDir = Os.path(option.outputDir.get)
             val cDir = Os.path(option.slangOutputCDir.get)
@@ -132,7 +131,7 @@ object CaseToolAssesment4 extends App {
           }
 
           if(isSel4(option.platform)) {
-            val gen = ReadmeGenerator(option, reporter)
+            val gen = ReadmeGenerator_ta4(option, reporter)
 
             if(skipBuild || gen.build()) {
               val timeout: Z = project.timeout

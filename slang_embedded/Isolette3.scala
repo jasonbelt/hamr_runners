@@ -1,9 +1,10 @@
 // #Sireum
 
-package org.sireum.cli.hamr_runners
+package org.sireum.cli.hamr_runners.slang_embedded
 
-import org.sireum._
 import org.sireum.Cli.HamrPlatform
+import org.sireum._
+import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 

@@ -1,41 +1,38 @@
 // #Sireum
 
-package org.sireum.cli.hamr_runners
+package org.sireum.cli.hamr_runners.slang_embedded
 
 import org.sireum._
-import org.sireum.Cli.{HamrCodeGenOption, HamrPlatform}
+import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 
-object Isolette2 extends App {
+object Hatcliff extends App {
 
-  val shouldReport: B = T
+  val shouldReport: B = F
   val graphFormat: DotFormat.Type = DotFormat.svg
   val build: B = F
-  val timeout: Z = 25000
+  val timeout: Z = 15000
 
-  val jvm: HamrPlatform.Type = HamrPlatform.JVM
-  val cygwin: HamrPlatform.Type = HamrPlatform.Cygwin
-  val linux: HamrPlatform.Type = HamrPlatform.Linux
-  val macos: HamrPlatform.Type = HamrPlatform.MacOS
-  val sel4: HamrPlatform.Type = HamrPlatform.SeL4
-  val sel4_tb: HamrPlatform.Type = HamrPlatform.SeL4_TB
-  val sel4_only: HamrPlatform.Type = HamrPlatform.SeL4_Only
+  val jvm: Cli.HamrPlatform.Type = Cli.HamrPlatform.JVM
+  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
+  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
+  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
 
-  val evaluation_dir: Os.Path = Os.home / "devel/slang-embedded/isolette"
+  ///home/vagrant/devel/slang-embedded/HAMR-Examples/datatype-examples/aadl/.slang/DatatypesSystem_Sys_i_Instance.json
+  val evaluation_dir: Os.Path = Os.home / "devel/slang-embedded/HAMR-Examples/datatype-examples"
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
-  def gen(name: String, json: String, platforms: ISZ[HamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[HamrPlatform.Type]) = {
+  def gen(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type]) = {
     val modelDir = evaluation_dir / name
     val simpleName = Os.path(name).name // get last dir name
     return (simpleName, modelDir, modelDir / ".slang" / json, platforms)
   }
 
-  val tests: ISZ[(String, Os.Path, Os.Path, ISZ[HamrPlatform.Type])] = ISZ(
+  val tests: ISZ[(String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type])] = ISZ(
 
-    gen("src/aadl", "Isolette_isolette_single_sensor_Instance.json",
-      ISZ(jvm, linux, macos, cygwin, sel4)),
+    gen("aadl", "DatatypesSystem_Sys_i_Instance.json", ISZ(jvm)),
 
   )
 
@@ -46,7 +43,7 @@ object Isolette2 extends App {
       val projectDir = project._2
       val slangFile = project._3
 
-      var reports: HashSMap[HamrPlatform.Type, Report] = HashSMap.empty
+      var reports: HashSMap[Cli.HamrPlatform.Type, Report] = HashSMap.empty
 
       if(!projectDir.exists) {
         halt(s"${projectDir} does not exist");
@@ -57,26 +54,41 @@ object Isolette2 extends App {
         println(s"${projectDir} -- ${platform})")
         println("***************************************")
 
-        val outputDir: Os.Path = evaluation_dir
+        val outputDir: Os.Path = platform match {
+          case Cli.HamrPlatform.JVM => projectDir.up / "hamr2"
+          case Cli.HamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
+          case Cli.HamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
+          case Cli.HamrPlatform.SeL4 => projectDir / "CAmkES_seL4"
+          case _ => halt("??")
+        }
 
-        val camkesOutputDir: Os.Path = evaluation_dir / "src" / "c" / "CAmkES_seL4"
+        val camkesOutputDir: Os.Path = platform match {
+          case Cli.HamrPlatform.SeL4_TB => outputDir
+          case Cli.HamrPlatform.SeL4_Only => outputDir
+          case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
+          case _ => outputDir
+        }
 
-        //outputDir.removeAll()
+        if(ops.StringOps(project._2.value).contains("VMx")) {
+          experimentalOptions = experimentalOptions :+ ExperimentalOptions.USE_CASE_CONNECTORS
+        }
 
-        val o = HamrCodeGenOption(
+        outputDir.removeAll()
+
+        val o = Cli.HamrCodeGenOption(
           help = "",
           args = ISZ(slangFile.value),
           msgpack = F,
           verbose = T,
           platform = platform,
 
-          packageName = Some("isolette"),
+          packageName = Some(project._1),
           noEmbedArt = F,
           devicesAsThreads = F,
-          excludeComponentImpl = F,
+          excludeComponentImpl = T,
 
           bitWidth = 32,
-          maxStringSize = 250,
+          maxStringSize = 256,
           maxArraySize = 1,
           runTranspiler = build,
 
@@ -93,14 +105,14 @@ object Isolette2 extends App {
 
         org.sireum.cli.HAMR.codeGen(o)
 
-        if(shouldReport && isSel4(platform)) {
+        if(shouldReport) {
           val gen = ReadmeGenerator(o, reporter)
 
           if(gen.build()) {
             val expectedOutput = gen.simulate(timeout)
 
             val report = Report(
-              readmeDir  = evaluation_dir,
+              readmeDir = projectDir,
               options = o,
               runHamrScript = None(),
               timeout = timeout,
@@ -110,6 +122,7 @@ object Isolette2 extends App {
               hamrCamkesArchDiagram = gen.getHamrCamkesArchDiagram(graphFormat),
               camkesArchDiagram = gen.getCamkesArchDiagram(graphFormat),
               symbolTable = None()
+
             )
 
             reports = reports + (platform ~> report)
@@ -118,7 +131,7 @@ object Isolette2 extends App {
       }
 
       if(shouldReport) {
-        val readme = evaluation_dir / "readme_autogen.md"
+        val readme = projectDir / "readme_autogen.md"
         val readmest = ReadmeTemplate.generateReport(project._1, reports)
         readme.writeOver(readmest.render)
       }
@@ -139,19 +152,8 @@ object Isolette2 extends App {
     }
   }
 
-  def isSel4(platform: HamrPlatform.Type): B = {
-    val ret: B = platform match {
-      case HamrPlatform.SeL4 => T
-      case HamrPlatform.SeL4_TB => T
-      case HamrPlatform.SeL4_Only => T
-      case _ => F
-    }
-    return ret
-  }
-
   override def main(args: ISZ[String]): Z = {
     run()
     return 0
   }
-
 }

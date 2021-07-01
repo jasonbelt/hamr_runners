@@ -1,6 +1,7 @@
-package org.sireum.cli.hamr_runners
+package org.sireum.cli.hamr_runners.slang_embedded
 
 import org.sireum._
+import org.sireum.cli.hamr_runners.Util
 
 object Isolette {
 

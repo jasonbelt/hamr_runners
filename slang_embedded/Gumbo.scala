@@ -1,7 +1,7 @@
-package org.sireum.cli.hamr_runners
+package org.sireum.cli.hamr_runners.slang_embedded
 
 import org.sireum._
-import org.sireum.cli._
+import org.sireum.cli.hamr_runners.Util
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 
 object Gumbo {
