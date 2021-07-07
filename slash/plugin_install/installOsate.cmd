@@ -57,8 +57,7 @@ val cli = Feature(
   localUpdateSite = Some("file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.update.site"),
   id = "org.sireum.aadl.osate.feature.feature.group")
 
-//val order = ISZ(base, cli, hamr, awas)
-val order = ISZ(base, hamr)
+val order = ISZ(base, hamr, cli, awas)
 
 for(o <- order) {
   if (isInstalled(o.id, osateExe)) {
