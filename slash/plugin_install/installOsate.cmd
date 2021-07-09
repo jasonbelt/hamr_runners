@@ -55,15 +55,15 @@ val cli = Feature(
   name = "cli",
   updateSite = "https://raw.githubusercontent.com/sireum/osate-plugin-update-site/master/org.sireum.aadl.osate.update.site",
   localUpdateSite = Some("file:///home/vagrant/devel/sireum/osate-plugin-update-site/org.sireum.aadl.osate.update.site"),
-  id = "org.sireum.aadl.osate.feature.feature.group")
+  id = "org.sireum.aadl.osate.cli.feature.feature.group")
 
-val order = ISZ(base, hamr, cli, awas)
+val order = ISZ(base, hamr, cli)
 
 for(o <- order) {
   if (isInstalled(o.id, osateExe)) {
     uninstallPlugin(o, osateExe)
   }
-  installPlugin(o, osateExe)
+  //installPlugin(o, osateExe)
 }
 
 println(s"\n\nExecute the following to to launch OSATE :\n")
