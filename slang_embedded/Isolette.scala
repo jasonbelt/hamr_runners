@@ -30,7 +30,7 @@ object Isolette {
     
     val appsDir = Os.path("/home/sireum/devel/sel4/home/camkes-project/projects/camkes/apps")
     
-    def run(o: Cli.HamrCodeGenOption): Int = {
+    def run(o: Cli.SireumHamrCodegenOption): Int = {
       val ret = cli.HAMR.codeGen(o)
       return ret.toInt
     }
@@ -44,7 +44,7 @@ object Isolette {
       val isoletteAppsDir = cDir / "isolette_sel4_tb"
       
       ret = run(o(
-        platform = Cli.HamrPlatform.SeL4_TB,
+        platform = Cli.SireumHamrCodegenHamrPlatform.SeL4_TB,
         camkesOutputDir = Some(camkesOutputDir.value),
         camkesAuxCodeDirs = ISZ()
       ))
@@ -56,16 +56,16 @@ object Isolette {
     if(ret == 0) {
       // JVM
 
-      ret = run(o(platform = Cli.HamrPlatform.JVM))
+      ret = run(o(platform = Cli.SireumHamrCodegenHamrPlatform.JVM))
 
     }
     
     if(ret == 0) {
       // LINUX
 
-      ret = run(o(platform = Cli.HamrPlatform.Linux))
-      ret = run(o(platform = Cli.HamrPlatform.MacOS))
-      ret = run(o(platform = Cli.HamrPlatform.Cygwin))
+      ret = run(o(platform = Cli.SireumHamrCodegenHamrPlatform.Linux))
+      ret = run(o(platform = Cli.SireumHamrCodegenHamrPlatform.MacOS))
+      ret = run(o(platform = Cli.SireumHamrCodegenHamrPlatform.Cygwin))
 
     }
 
@@ -77,7 +77,7 @@ object Isolette {
       val isoletteAppsDir = appsDir / "isolette_sel4"
 
       ret = run(o(
-        platform = Cli.HamrPlatform.SeL4,
+        platform = Cli.SireumHamrCodegenHamrPlatform.SeL4,
         camkesOutputDir = Some(camkesOutputDir.value),
         camkesAuxCodeDirs = ISZ(camkesAuxCodeDir.value)
       ))

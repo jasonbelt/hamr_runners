@@ -40,7 +40,7 @@ object Isaac_UAV_Test_Runner {
         aadlRootDir = Some(p.aadlDir.value),
       )
 
-      def run(o: Cli.HamrCodeGenOption): Int = {
+      def run(o: Cli.SireumHamrCodegenOption): Int = {
         val ret = cli.HAMR.codeGen(o)
         return ret.toInt
       }
@@ -49,7 +49,7 @@ object Isaac_UAV_Test_Runner {
 
       if (ret == 0) {
         ret = run(o(
-          platform = Cli.HamrPlatform.JVM,
+          platform = Cli.SireumHamrCodegenHamrPlatform.JVM,
         ))
       }
     }

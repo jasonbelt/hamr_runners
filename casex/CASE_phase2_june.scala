@@ -10,7 +10,7 @@ object CASE_phase2_june extends App {
                            projectDir: Os.Path,
                            aadlDir: Os.Path,
                            slangFile: Os.Path,
-                           platforms: ISZ[Cli.HamrPlatform.Type],
+                           platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type],
                            shouldSimulate: B,
                            timeout: Z)
 
@@ -20,16 +20,16 @@ object CASE_phase2_june extends App {
   val defTimeout: Z = 15000
   val vmTimeout: Z = 90000
 
-  val linux: Cli.HamrPlatform.Type = Cli.HamrPlatform.Linux
-  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
-  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
-  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
+  val linux: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
+  val sel4: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
+  val sel4_tb: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_TB
+  val sel4_only: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_Only
 
   val rootDir: Os.Path = Os.home / "devel" / "case" / "case-ku" / "examples" / "ksu-proprietary" / "Phase-2-UAV-Experimental-Platform-June-step6-hamr"
 
   val runTranspiler: B = F
 
-  def genFull(rDir: Os.Path, name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type],
+  def genFull(rDir: Os.Path, name: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type],
               shouldSimulate: B, timeout: Z): Project = {
     val projectDir = rDir / name
     val aadlDir = projectDir / "aadl"
@@ -41,7 +41,7 @@ object CASE_phase2_june extends App {
     return Project(name, projectDir, aadlDir, jsonFile, platforms, shouldSimulate, timeout)
   }
 
-  def gen(rDir: Os.Path, name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
+  def gen(rDir: Os.Path, name: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]): Project = {
     return genFull(rDir, name, json, platforms, T, defTimeout)
   }
 
@@ -88,9 +88,9 @@ object CASE_phase2_june extends App {
 
       for (platform <- project.platforms) {
         val camkesOutputDir: Option[Os.Path] = platform match {
-          case Cli.HamrPlatform.SeL4_TB => Some(outputDir / "src" / "c" / "CAmkES_seL4_TB_VM")
-          case Cli.HamrPlatform.SeL4_Only => Some(outputDir / "src" / "c" / "CAmkES_seL4_Only_VM")
-          case Cli.HamrPlatform.SeL4 => Some(outputDir / "src" / "c" / "CAmkES_seL4_VM")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => Some(outputDir / "src" / "c" / "CAmkES_seL4_TB_VM")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => Some(outputDir / "src" / "c" / "CAmkES_seL4_Only_VM")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => Some(outputDir / "src" / "c" / "CAmkES_seL4_VM")
           case _ => None()
         }
 

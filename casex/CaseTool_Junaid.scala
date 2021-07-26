@@ -25,13 +25,13 @@ object CaseTool_Junaid {
     gen("vm-uxas-wpm-hamr", "SysContext_top_Impl_Instance.json"),
   )
 
-  val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(
-    Cli.HamrPlatform.Linux,
-    Cli.HamrPlatform.MacOS,
-    Cli.HamrPlatform.SeL4,
-    //Cli.HamrPlatform.SeL4_TB,
-    //Cli.HamrPlatform.SeL4_Only,
-    //Cli.HamrPlatform.SeL4
+  val platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type] = ISZ(
+    Cli.SireumHamrCodegenHamrPlatform.Linux,
+    Cli.SireumHamrCodegenHamrPlatform.MacOS,
+    Cli.SireumHamrCodegenHamrPlatform.SeL4,
+    //Cli.SireumHamrCodegenHamrPlatform.SeL4_TB,
+    //Cli.SireumHamrCodegenHamrPlatform.SeL4_Only,
+    //Cli.SireumHamrCodegenHamrPlatform.SeL4
   )
 
   def main(args: Array[Predef.String]): Unit = {
@@ -51,9 +51,9 @@ object CaseTool_Junaid {
 
       for (platform <- platforms) {
         val camkesOutputDir: Option[Os.Path] = platform match {
-          case Cli.HamrPlatform.SeL4_TB => Some(outputDir / "src/c/CAmkES_seL4_TB_VM")
-          case Cli.HamrPlatform.SeL4_Only => Some(outputDir / "src/c/CAmkES_seL4_Only_VM")
-          case Cli.HamrPlatform.SeL4 => Some(outputDir / "src/c/CAmkES_seL4_VM")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => Some(outputDir / "src/c/CAmkES_seL4_TB_VM")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => Some(outputDir / "src/c/CAmkES_seL4_Only_VM")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => Some(outputDir / "src/c/CAmkES_seL4_VM")
           case _ => None()
         }
 

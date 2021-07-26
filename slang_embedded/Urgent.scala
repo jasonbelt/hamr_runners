@@ -23,7 +23,7 @@ object Urgent {
 
     val appsDir = Os.path("/home/sireum/devel/sel4/home/camkes-project/projects/camkes/apps")
 
-    def run(o: Cli.HamrCodeGenOption): Int = {
+    def run(o: Cli.SireumHamrCodegenOption): Int = {
       val ret = cli.HAMR.codeGen(o)
       return ret.toInt
     }
@@ -32,7 +32,7 @@ object Urgent {
 
     if(ret == 0) {
       ret = run(o(
-        platform = Cli.HamrPlatform.JVM,
+        platform = Cli.SireumHamrCodegenHamrPlatform.JVM,
       ))
     }
   }

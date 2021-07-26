@@ -3,7 +3,7 @@
 package org.sireum.cli.hamr_runners.iccps20
 
 import org.sireum._
-import org.sireum.Cli.HamrPlatform
+import org.sireum.Cli.SireumHamrCodegenHamrPlatform
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 
@@ -17,7 +17,7 @@ import org.sireum.message.Reporter
                          description: Option[ST],
 
                          slangFile: Os.Path,
-                         platforms: ISZ[Cli.HamrPlatform.Type],
+                         platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type],
                          shouldSimulate: B,
                          excludeComponentImplementation: B,
                          devicesAsThreads: B,
@@ -36,11 +36,11 @@ object iccps20 extends App {
   val defTimeout: Z = 1
   val vmTimeout: Z = 90000
 
-  val jvm: Cli.HamrPlatform.Type = Cli.HamrPlatform.JVM
-  val linux: Cli.HamrPlatform.Type = Cli.HamrPlatform.Linux
-  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
-  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
-  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
+  val jvm: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.JVM
+  val linux: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
+  val sel4: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
+  val sel4_tb: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_TB
+  val sel4_only: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_Only
 
   val case_tool_evaluation_dir: Os.Path = Os.home / "devel/slang-embedded/iccps20-case-studies"
 
@@ -51,7 +51,7 @@ object iccps20 extends App {
               title: String,
               description: Option[ST],
               rootAadlDir: String, outputDir: String, json: String,
-              platforms: ISZ[Cli.HamrPlatform.Type],
+              platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type],
               excludeComponentImplementation: B,
               shouldSimulate: B,
               devicesAsThreads: B,
@@ -291,7 +291,7 @@ object iccps20 extends App {
     var projReadmes: ISZ[(Os.Path, Project)] = ISZ()
 
     for (project <- tests) {
-      var reports: HashSMap[Cli.HamrPlatform.Type, Report] = HashSMap.empty
+      var reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report] = HashSMap.empty
 
       assert(project.projectDir.exists, project.projectDir)
       assert(project.aadlDir.exists, project.aadlDir)
@@ -310,13 +310,13 @@ object iccps20 extends App {
         val outputDir: Os.Path = project.hamrDir
 
         val camkesOutputDir: Option[Os.Path] = platform match {
-          case Cli.HamrPlatform.SeL4_TB => Some(outputDir / "CAkES_seL4_tb")
-          case Cli.HamrPlatform.SeL4_Only => Some(outputDir / "CAmkES_seL4_only")
-          case Cli.HamrPlatform.SeL4 => Some(outputDir / "src/c/CAmkES_seL4")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => Some(outputDir / "CAkES_seL4_tb")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => Some(outputDir / "CAmkES_seL4_only")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => Some(outputDir / "src/c/CAmkES_seL4")
           case _ => None()
         }
 
-        val o = Cli.HamrCodeGenOption(
+        val o = Cli.SireumHamrCodegenOption(
           help = "",
           args = ISZ(project.slangFile.value),
           msgpack = F,
@@ -324,6 +324,7 @@ object iccps20 extends App {
           platform = platform,
 
           packageName = Some(project.basePackageName),
+          noProyekIve = F,
           noEmbedArt = F,
           devicesAsThreads = project.devicesAsThreads,
           excludeComponentImpl = project.excludeComponentImplementation,
@@ -449,13 +450,13 @@ object iccps20 extends App {
     return 0
   }
 
-  def isJVM(platform: HamrPlatform.Type): B = {return platform == HamrPlatform.JVM}
+  def isJVM(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {return platform == Cli.SireumHamrCodegenHamrPlatform.JVM}
 
-  def isSel4(platform: HamrPlatform.Type): B = {
+  def isSel4(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {
     val ret: B = platform match {
-      case HamrPlatform.SeL4 => T
-      case HamrPlatform.SeL4_TB => T
-      case HamrPlatform.SeL4_Only => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4 => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => T
       case _ => F
     }
     return ret

@@ -29,7 +29,7 @@ object PFC_splat{
 
     val appsDir = Os.path("/home/sireum/devel/sel4/home/camkes-project/projects/camkes/apps")
 
-    def run(o: Cli.HamrCodeGenOption): Int = {
+    def run(o: Cli.SireumHamrCodegenOption): Int = {
       val ret = cli.HAMR.codeGen(o)
       return ret.toInt
     }
@@ -38,7 +38,7 @@ object PFC_splat{
 
     if(ret == 0) {
       ret = run(o(
-        platform = Cli.HamrPlatform.JVM,
+        platform = Cli.SireumHamrCodegenHamrPlatform.JVM,
       ))
     }
 
@@ -46,9 +46,9 @@ object PFC_splat{
     if(ret == 0) {
       // C targets
 
-      ret = run(o(platform = Cli.HamrPlatform.Linux))
-      ret = run(o(platform = Cli.HamrPlatform.MacOS))
-      ret = run(o(platform = Cli.HamrPlatform.Cygwin))
+      ret = run(o(platform = Cli.SireumHamrCodegenHamrPlatform.Linux))
+      ret = run(o(platform = Cli.SireumHamrCodegenHamrPlatform.MacOS))
+      ret = run(o(platform = Cli.SireumHamrCodegenHamrPlatform.Cygwin))
     }
 
     if(ret == 0) {
@@ -59,7 +59,7 @@ object PFC_splat{
       val projectAppsDir = appsDir / s"${projName}_sel4"
 
       ret = run(o(
-        platform = Cli.HamrPlatform.SeL4,
+        platform = Cli.SireumHamrCodegenHamrPlatform.SeL4,
         camkesOutputDir = Some(camkesOutputDir.value),
         camkesAuxCodeDirs = ISZ(camkesAuxCodeDir.value)
       ))

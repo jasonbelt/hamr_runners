@@ -21,17 +21,17 @@ exit /B %errorlevel%
 
 import org.sireum._
 
-val(sel4, sel4_tb, sel4_only) = (Cli.HamrPlatform.SeL4, Cli.HamrPlatform.SeL4_TB, Cli.HamrPlatform.SeL4_Only)
+val(sel4, sel4_tb, sel4_only) = (Cli.SireumHamrCodegenHamrPlatform.SeL4, Cli.SireumHamrCodegenHamrPlatform.SeL4_TB, Cli.SireumHamrCodegenHamrPlatform.SeL4_Only)
 
 val case_tool_evaluation_dir = Os.home / "devel/case/CASE-loonwerks/TA5/tool-evaluation-4/HAMR/examples"
 
-def gen(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type]) = {
+def gen(name: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]) = {
   val modelDir = case_tool_evaluation_dir / name
   val simpleName = Os.path(name).name // get last dir name
   return (simpleName, modelDir, modelDir / ".slang" / json, platforms)
 }
 
-val tests: ISZ[(String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type])] = ISZ(
+val tests: ISZ[(String, Os.Path, Os.Path, ISZ[Cli.SireumHamrCodegenHamrPlatform.Type])] = ISZ(
   gen("simple_uav", "UAV_UAV_Impl_Instance.json", ISZ(sel4_tb, sel4_only)),
 
   gen("test_data_port", "test_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only)),
@@ -73,20 +73,20 @@ def run(runCAmkESBuild: B): Unit = {
     for (platform <- project._4) {
 
       val outputDir = platform match {
-        case Cli.HamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
-        case Cli.HamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
-        case Cli.HamrPlatform.SeL4 => projectDir / "CAmkES_seL4"
+        case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
+        case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
+        case Cli.SireumHamrCodegenHamrPlatform.SeL4 => projectDir / "CAmkES_seL4"
         case _ => halt("??")
       }
 
       val camkesOutputDir = platform match {
-        case Cli.HamrPlatform.SeL4_TB => outputDir
-        case Cli.HamrPlatform.SeL4_Only => outputDir
-        case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
+        case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => outputDir
+        case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => outputDir
+        case Cli.SireumHamrCodegenHamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
         case _ => halt("??")
       }
 
-      val o = Cli.HamrCodeGenOption(
+      val o = Cli.SireumHamrCodegenOption(
         help = "",
         args = ISZ(slangFile.value),
         json = T,

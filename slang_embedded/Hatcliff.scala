@@ -14,23 +14,23 @@ object Hatcliff extends App {
   val build: B = F
   val timeout: Z = 15000
 
-  val jvm: Cli.HamrPlatform.Type = Cli.HamrPlatform.JVM
-  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
-  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
-  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
+  val jvm: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.JVM
+  val sel4: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
+  val sel4_tb: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_TB
+  val sel4_only: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_Only
 
   ///home/vagrant/devel/slang-embedded/HAMR-Examples/datatype-examples/aadl/.slang/DatatypesSystem_Sys_i_Instance.json
   val evaluation_dir: Os.Path = Os.home / "devel/slang-embedded/HAMR-Examples/datatype-examples"
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
-  def gen(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type]) = {
+  def gen(name: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]) = {
     val modelDir = evaluation_dir / name
     val simpleName = Os.path(name).name // get last dir name
     return (simpleName, modelDir, modelDir / ".slang" / json, platforms)
   }
 
-  val tests: ISZ[(String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type])] = ISZ(
+  val tests: ISZ[(String, Os.Path, Os.Path, ISZ[Cli.SireumHamrCodegenHamrPlatform.Type])] = ISZ(
 
     gen("aadl", "DatatypesSystem_Sys_i_Instance.json", ISZ(jvm)),
 
@@ -43,7 +43,7 @@ object Hatcliff extends App {
       val projectDir = project._2
       val slangFile = project._3
 
-      var reports: HashSMap[Cli.HamrPlatform.Type, Report] = HashSMap.empty
+      var reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report] = HashSMap.empty
 
       if(!projectDir.exists) {
         halt(s"${projectDir} does not exist");
@@ -55,17 +55,17 @@ object Hatcliff extends App {
         println("***************************************")
 
         val outputDir: Os.Path = platform match {
-          case Cli.HamrPlatform.JVM => projectDir.up / "hamr2"
-          case Cli.HamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
-          case Cli.HamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
-          case Cli.HamrPlatform.SeL4 => projectDir / "CAmkES_seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.JVM => projectDir.up / "hamr2"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => projectDir / "CAmkES_seL4"
           case _ => halt("??")
         }
 
         val camkesOutputDir: Os.Path = platform match {
-          case Cli.HamrPlatform.SeL4_TB => outputDir
-          case Cli.HamrPlatform.SeL4_Only => outputDir
-          case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => outputDir
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => outputDir
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
           case _ => outputDir
         }
 
@@ -75,7 +75,7 @@ object Hatcliff extends App {
 
         outputDir.removeAll()
 
-        val o = Cli.HamrCodeGenOption(
+        val o = Cli.SireumHamrCodegenOption(
           help = "",
           args = ISZ(slangFile.value),
           msgpack = F,
@@ -83,6 +83,7 @@ object Hatcliff extends App {
           platform = platform,
 
           packageName = Some(project._1),
+          noProyekIve = F,
           noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = T,

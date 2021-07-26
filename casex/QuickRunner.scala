@@ -2,7 +2,7 @@
 package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
-import org.sireum.Cli.HamrPlatform
+import org.sireum.Cli.SireumHamrCodegenHamrPlatform
 
 object QuickRunner extends App{
 
@@ -11,9 +11,9 @@ object QuickRunner extends App{
   val aadlDir: Os.Path = Os.home / "devel/case/case-loonwerks/CASE_Simple_Example_V4/Hardened"
   val json: Os.Path = aadlDir / ".slang/MC_MissionComputer_Impl_Instance.json"
   val outputDir: Os.Path = aadlDir / "hamr"
-  val platform: HamrPlatform.Type = HamrPlatform.SeL4
+  val platform: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
 
-  val o: Cli.HamrCodeGenOption = Cli.HamrCodeGenOption(
+  val o: Cli.SireumHamrCodegenOption = Cli.SireumHamrCodegenOption(
     help = "",
     args = ISZ(json.value),
     msgpack = F,
@@ -21,6 +21,7 @@ object QuickRunner extends App{
     platform = platform,
 
     packageName = Some("base"),
+    noProyekIve = F,
     noEmbedArt = F,
     devicesAsThreads = F,
     excludeComponentImpl = T,

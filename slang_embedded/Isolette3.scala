@@ -2,7 +2,7 @@
 
 package org.sireum.cli.hamr_runners.slang_embedded
 
-import org.sireum.Cli.HamrPlatform
+import org.sireum.Cli.SireumHamrCodegenHamrPlatform
 import org.sireum._
 import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
@@ -13,7 +13,7 @@ object Isolette3 extends App {
   @datatype class Project (simpleName: String,
                            modelDir: Os.Path,
                            slangFile: Os.Path,
-                           platforms: ISZ[Cli.HamrPlatform.Type],
+                           platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type],
                            shouldSimulate: B,
                            timeout: Z)
 
@@ -25,23 +25,23 @@ object Isolette3 extends App {
   val defTimeout: Z = 15000
   val vmTimeout: Z = 90000
 
-  val jvm: Cli.HamrPlatform.Type = Cli.HamrPlatform.JVM
-  val linux: Cli.HamrPlatform.Type = Cli.HamrPlatform.Linux
-  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
-  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
-  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
+  val jvm: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.JVM
+  val linux: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
+  val sel4: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
+  val sel4_tb: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_TB
+  val sel4_only: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_Only
 
   val proj_dir: Os.Path = Os.home / "devel/slang-embedded/isolette"
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
-  def genFull(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type], shouldSimulate: B, timeout: Z): Project = {
+  def genFull(name: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type], shouldSimulate: B, timeout: Z): Project = {
     val modelDir = proj_dir / name
     val simpleName = Os.path(name).name // get last dir name
     return Project(simpleName, modelDir, modelDir / ".slang" / json, platforms, shouldSimulate, timeout)
   }
 
-  def gen(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
+  def gen(name: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]): Project = {
     return genFull(name, json, platforms, T, defTimeout)
   }
 
@@ -66,7 +66,7 @@ object Isolette3 extends App {
     return project
   }
 
-  def generateRunScript(o: Cli.HamrCodeGenOption): Os.Path = {
+  def generateRunScript(o: Cli.SireumHamrCodegenOption): Os.Path = {
     o.aadlRootDir match {
       case Some(d) =>
         val aadlDir = Os.path(d)
@@ -77,38 +77,39 @@ object Isolette3 extends App {
         val rCamkesOutputDir = aadlDir.relativize(camkesDir).value
 
         val platform: String = o.platform match {
-          case Cli.HamrPlatform.JVM => "JVM"
-          case Cli.HamrPlatform.Linux => "Linux"
-          case Cli.HamrPlatform.Cygwin => "Cygwin"
-          case Cli.HamrPlatform.MacOS => "MacOs"
-          case Cli.HamrPlatform.SeL4 => "seL4"
-          case Cli.HamrPlatform.SeL4_Only => "seL4_Only"
-          case Cli.HamrPlatform.SeL4_TB => "seL4_TB"
+          case Cli.SireumHamrCodegenHamrPlatform.JVM => "JVM"
+          case Cli.SireumHamrCodegenHamrPlatform.Linux => "Linux"
+          case Cli.SireumHamrCodegenHamrPlatform.Cygwin => "Cygwin"
+          case Cli.SireumHamrCodegenHamrPlatform.MacOS => "MacOs"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => "seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => "seL4_Only"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => "seL4_TB"
         }
 
+        val bs = "\\"
         var sts: ISZ[ST] = ISZ()
-        if(o.verbose) { sts = sts :+ st"--verbose \\"}
+        if(o.verbose) { sts = sts :+ st"--verbose ${bs}"}
 
-        sts = sts :+ st"--platform $platform \\"
-        sts = sts :+ st"--output-dir $$AADL_DIR/${rOutputDir.value} \\"
-        sts = sts :+ st"--package-name ${o.packageName.get} \\"
-        sts = sts :+ st"--aadl-root-dir $$AADL_DIR \\"
+        sts = sts :+ st"--platform $platform ${bs}"
+        sts = sts :+ st"--output-dir $$AADL_DIR/${rOutputDir.value} ${bs}"
+        sts = sts :+ st"--package-name ${o.packageName.get} ${bs}"
+        sts = sts :+ st"--aadl-root-dir $$AADL_DIR ${bs}"
 
-        if(o.platform == Cli.HamrPlatform.Linux || o.platform == Cli.HamrPlatform.SeL4) {
+        if(o.platform == Cli.SireumHamrCodegenHamrPlatform.Linux || o.platform == Cli.SireumHamrCodegenHamrPlatform.SeL4) {
             sts = sts ++ ISZ(
-              st"--bit-width ${o.bitWidth} \\",
-              st"--max-string-size ${o.maxStringSize} \\",
-              st"--max-array-size ${o.maxArraySize} \\")
-            if(o.excludeComponentImpl) { sts = sts :+ st"--exclude-component-impl \\" }
-            if(o.runTranspiler) { sts = sts :+ st"--run-transpiler \\" }
+              st"--bit-width ${o.bitWidth} ${bs}",
+              st"--max-string-size ${o.maxStringSize} ${bs}",
+              st"--max-array-size ${o.maxArraySize} ${bs}")
+            if(o.excludeComponentImpl) { sts = sts :+ st"--exclude-component-impl ${bs}" }
+            if(o.runTranspiler) { sts = sts :+ st"--run-transpiler ${bs}" }
         }
 
-        if(o.platform == Cli.HamrPlatform.SeL4) {
-          sts = sts :+ st"--camkes-output-dir $$AADL_DIR/${rCamkesOutputDir.value} \\"
+        if(o.platform == Cli.SireumHamrCodegenHamrPlatform.SeL4) {
+          sts = sts :+ st"--camkes-output-dir $$AADL_DIR/${rCamkesOutputDir.value} ${bs}"
         }
 
         if(o.experimentalOptions.nonEmpty) {
-           sts = sts :+ st"""--experimental-options \"${(o.experimentalOptions, ";")}\" \"""
+           sts = sts :+ st"""--experimental-options \"${(o.experimentalOptions, ";")}\" ${bs}"""
         }
 
         val project = getSystemOrProject(aadlDir)
@@ -137,7 +138,7 @@ object Isolette3 extends App {
               |  exit
               |fi
               |
-              |eval "$$OSIREUM hamr codegen \
+              |eval "$$OSIREUM hamr codegen ${bs}
               |  ${(sts, "\n")}
               |  $$AADL_DIR/${rProject.value}"
               |"""
@@ -165,7 +166,7 @@ object Isolette3 extends App {
     val reporter = Reporter.create
 
     for (project <- tests) {
-      var reports: HashSMap[Cli.HamrPlatform.Type, Report] = HashSMap.empty
+      var reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report] = HashSMap.empty
 
       if(!project.modelDir.exists) {
         halt(s"${project.modelDir} does not exist");
@@ -178,18 +179,18 @@ object Isolette3 extends App {
 
         /*
         val outputDir: Os.Path = platform match {
-          case Cli.HamrPlatform.SeL4_TB => project.modelDir / "CAmkES_seL4_TB"
-          case Cli.HamrPlatform.SeL4_Only => project.modelDir / "CAmkES_seL4_Only"
-          case Cli.HamrPlatform.SeL4 => project.modelDir / "CAmkES_seL4"
-          case Cli.HamrPlatform.Linux => project.modelDir / "Linux"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => project.modelDir / "CAmkES_seL4_TB"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => project.modelDir / "CAmkES_seL4_Only"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => project.modelDir / "CAmkES_seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.Linux => project.modelDir / "Linux"
           case _ => halt("??")
         }
 
         val camkesOutputDir: Os.Path = platform match {
-          case Cli.HamrPlatform.SeL4_TB => outputDir
-          case Cli.HamrPlatform.SeL4_Only => outputDir
-          case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
-          case Cli.HamrPlatform.Linux => outputDir / ""
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => outputDir
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => outputDir
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.Linux => outputDir / ""
           case _ => halt("??")
         }
          */
@@ -201,7 +202,7 @@ object Isolette3 extends App {
         val outputDir = project.modelDir.up / "hamr"
         val camkesOutputDir = outputDir / "src" / "c" / "camkes"
 
-        val o = Cli.HamrCodeGenOption(
+        val o = Cli.SireumHamrCodegenOption(
           help = "",
           args = ISZ(project.slangFile.value),
           msgpack = F,
@@ -209,6 +210,7 @@ object Isolette3 extends App {
           platform = platform,
 
           packageName = Some("isolette"),
+          noProyekIve = F,
           noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = F,
@@ -249,7 +251,7 @@ object Isolette3 extends App {
           val gen = ReadmeGenerator(o, reporter)
 
           if(gen.build()) {
-            val timeout: Z = if(platform == Cli.HamrPlatform.SeL4) defTimeout else project.timeout
+            val timeout: Z = if(platform == Cli.SireumHamrCodegenHamrPlatform.SeL4) defTimeout else project.timeout
 
             val expectedOutput: ST =
               if(project.shouldSimulate) gen.simulate(timeout)
@@ -301,11 +303,11 @@ object Isolette3 extends App {
   }
 
 
-  def isSel4(platform: HamrPlatform.Type): B = {
+  def isSel4(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {
     val ret: B = platform match {
-      case HamrPlatform.SeL4 => T
-      case HamrPlatform.SeL4_TB => T
-      case HamrPlatform.SeL4_Only => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4 => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => T
       case _ => F
     }
     return ret

@@ -12,19 +12,19 @@ object Attestation_Gate extends App {
   val timeout: Z = 18000
   val graphFormat: DotFormat.Type = DotFormat.svg
 
-  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
-  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
-  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
+  val sel4: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
+  val sel4_tb: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_TB
+  val sel4_only: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_Only
 
   val case_tool_evaluation_dir: Os.Path = Os.home / "devel/case/CASETeam/examples/ksu-proprietary"
 
-  def gen(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type]) = {
+  def gen(name: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]) = {
     val modelDir = case_tool_evaluation_dir / name
     val simpleName = Os.path(name).name // get last dir name
     return (simpleName, modelDir, modelDir / ".slang" / json, platforms)
   }
 
-  val tests: ISZ[(String, Os.Path, Os.Path, ISZ[Cli.HamrPlatform.Type])] = ISZ(
+  val tests: ISZ[(String, Os.Path, Os.Path, ISZ[Cli.SireumHamrCodegenHamrPlatform.Type])] = ISZ(
 
     gen("attestation-gate", "SysContext_top_Impl_Instance.json", ISZ(sel4)),
 
@@ -46,27 +46,27 @@ object Attestation_Gate extends App {
         halt(s"${projectDir} does not exist");
       }
 
-      var reports: HashSMap[Cli.HamrPlatform.Type, Report] = HashSMap.empty
+      var reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report] = HashSMap.empty
 
       for (platform <- project._4) {
 
         val outputDir: Os.Path = platform match {
-          case Cli.HamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
-          case Cli.HamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
-          case Cli.HamrPlatform.SeL4 => projectDir / "CAmkES_seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => projectDir / "CAmkES_seL4"
           case _ => halt("??")
         }
 
         val camkesOutputDir: Os.Path = platform match {
-          case Cli.HamrPlatform.SeL4_TB => outputDir
-          case Cli.HamrPlatform.SeL4_Only => outputDir
-          case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => outputDir
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => outputDir
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
           case _ => halt("??")
         }
 
         //outputDir.removeAll()
 
-        val o = Cli.HamrCodeGenOption(
+        val o = Cli.SireumHamrCodegenOption(
           help = "",
           args = ISZ(slangFile.value),
           msgpack = F,
@@ -74,6 +74,7 @@ object Attestation_Gate extends App {
           platform = platform,
 
           packageName = Some(project._1),
+          noProyekIve = F,
           noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = T,

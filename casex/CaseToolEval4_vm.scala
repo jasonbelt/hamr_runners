@@ -311,11 +311,11 @@ object CaseToolEval4_vm extends App {
   }
 
 
-  def isSel4(platform: SireumHamrCodegenHamrPlatform.Type): B = {
+  def isSel4(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {
     val ret: B = platform match {
-      case SireumHamrCodegenHamrPlatform.SeL4 => T
-      case SireumHamrCodegenHamrPlatform.SeL4_TB => T
-      case SireumHamrCodegenHamrPlatform.SeL4_Only => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4 => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => T
       case _ => F
     }
     return ret

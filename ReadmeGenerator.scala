@@ -393,7 +393,7 @@ object ReadmeTemplate {
     return None()
   }
 
-  def generatePlatformSections(reports: HashSMap[SireumHamrCodegenHamrPlatform.Type, Report]): ISZ[Level] = {
+  def generatePlatformSections(reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report]): ISZ[Level] = {
     var subLevels: ISZ[Level] = ISZ()
     for(e <- reports.entries){
       val platform = e._1

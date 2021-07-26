@@ -4,6 +4,8 @@ import org.sireum._
 
 object PFC_Periodic{
 
+  val bs = "\\"
+
   def main(args: Array[Predef.String]): Unit = {
     val projectDir = Os.home / "temp/producer-filter-consumer/periodic"
 
@@ -28,7 +30,7 @@ object PFC_Periodic{
       aadlRootDir = Some(aadlDir.value),
     )
 
-    def run(o: Cli.HamrCodeGenOption): Int = {
+    def run(o: Cli.SireumHamrCodegenOption): Int = {
       val ret = cli.HAMR.codeGen(o)
       return ret.toInt
     }
@@ -38,11 +40,11 @@ object PFC_Periodic{
 
     val nonbitcodec: ST = st"""
  _   _                        ____  _ _      _____          _
-| \ | |                      |  _ \(_) |    / ____|        | |
-|  \| | ___  _ __    ______  | |_) |_| |_  | |     ___   __| | ___  ___
-| . ` |/ _ \| '_ \  |______| |  _ <| | __| | |    / _ \ / _` |/ _ \/ __|
-| |\  | (_) | | | |          | |_) | | |_  | |___| (_) | (_| |  __/ (__
-|_| \_|\___/|_| |_|          |____/|_|\__|  \_____\___/ \__,_|\___|\___|
+| ${bs} | |                      |  _ ${bs}(_) |    / ____|        | |
+|  ${bs}| | ___  _ __    ______  | |_) |_| |_  | |     ___   __| | ___  ___
+| . ` |/ _ ${bs}| '_ ${bs}  |______| |  _ <| | __| | |    / _ ${bs} / _` |/ _ ${bs}/ __|
+| |${bs}  | (_) | | | |          | |_) | | |_  | |___| (_) | (_| |  __/ (__
+|_| ${bs}_|${bs}___/|_| |_|          |____/|_|${bs}__|  ${bs}_____${bs}___/ ${bs}__,_|${bs}___|${bs}___|
 """
     for(i <- 0 until 100) {
       println(nonbitcodec.render)
@@ -69,7 +71,7 @@ object PFC_Periodic{
       if (ret == 0) {
         // JVM with bitcodec
 
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.JVM))
+        ret = run(o_bitcodec_base(platform = Cli.SireumHamrCodegenHamrPlatform.JVM))
       }
 
       INCLUDE = T
@@ -77,16 +79,16 @@ object PFC_Periodic{
       if (ret == 0 && INCLUDE) {
         // C with bitcodec
 
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.Linux))
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.MacOS))
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.Cygwin))
+        ret = run(o_bitcodec_base(platform = Cli.SireumHamrCodegenHamrPlatform.Linux))
+        ret = run(o_bitcodec_base(platform = Cli.SireumHamrCodegenHamrPlatform.MacOS))
+        ret = run(o_bitcodec_base(platform = Cli.SireumHamrCodegenHamrPlatform.Cygwin))
       }
 
       INCLUDE = T
       if (ret == 0 && INCLUDE) {
         // SeL4 with bitcodec
 
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.SeL4))
+        ret = run(o_bitcodec_base(platform = Cli.SireumHamrCodegenHamrPlatform.SeL4))
 
         if (ret == 0) {
           val camkesAppsDir = Os.home / "CASE/camkes/projects/camkes/apps"
@@ -104,11 +106,11 @@ object PFC_Periodic{
 
     val nonbitcodecexcludes: ST = st"""
  _   _             ____   _____       ______          _           _
-| \ | |           |  _ \ / ____|     |  ____|        | |         | |
-|  \| | ___       | |_) | |          | |__  __  _____| |_   _  __| | ___  ___
-| . ` |/ _ \      |  _ <| |          |  __| \ \/ / __| | | | |/ _` |/ _ \/ __|
-| |\  | (_) |     | |_) | |____      | |____ >  < (__| | |_| | (_| |  __/\__ \
-|_| \_|\___/      |____/ \_____|     |______/_/\_\___|_|\__,_|\__,_|\___||___/
+| ${bs} | |           |  _ ${bs} / ____|     |  ____|        | |         | |
+|  ${bs}| | ___       | |_) | |          | |__  __  _____| |_   _  __| | ___  ___
+| . ` |/ _ ${bs}      |  _ <| |          |  __| ${bs} ${bs}/ / __| | | | |/ _` |/ _ ${bs}/ __|
+| |${bs}  | (_) |     | |_) | |____      | |____ >  < (__| | |_| | (_| |  __/${bs}__ ${bs}
+|_| ${bs}_|${bs}___/      |____/ ${bs}_____|     |______/_/${bs}_${bs}___|_|${bs}__,_|${bs}__,_|${bs}___||___/
 """
     for(i <- 0 until 100) {
       println(nonbitcodecexcludes.render)
@@ -137,7 +139,7 @@ object PFC_Periodic{
       if (ret == 0) {
         // JVM with bitcodec
 
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.JVM))
+        ret = run(o_bitcodec_base(platform = Cli.SireumHamrCodegenHamrPlatform.JVM))
       }
 
       INCLUDE = T
@@ -145,16 +147,16 @@ object PFC_Periodic{
       if (ret == 0 && INCLUDE) {
         // C with bitcodec
 
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.Linux))
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.MacOS))
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.Cygwin))
+        ret = run(o_bitcodec_base(platform = Cli.SireumHamrCodegenHamrPlatform.Linux))
+        ret = run(o_bitcodec_base(platform = Cli.SireumHamrCodegenHamrPlatform.MacOS))
+        ret = run(o_bitcodec_base(platform = Cli.SireumHamrCodegenHamrPlatform.Cygwin))
       }
 
       INCLUDE = T
       if (ret == 0 && INCLUDE) {
         // SeL4 with bitcodec
 
-        ret = run(o_bitcodec_base(platform = Cli.HamrPlatform.SeL4))
+        ret = run(o_bitcodec_base(platform = Cli.SireumHamrCodegenHamrPlatform.SeL4))
 
         if (ret == 0) {
           val camkesAppsDir = Os.home / "CASE/camkes/projects/camkes/apps"

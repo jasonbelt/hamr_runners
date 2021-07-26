@@ -3,7 +3,6 @@
 package org.sireum.cli.hamr_runners.casex.tool_ass_4
 
 import org.sireum._
-import org.sireum.Cli.HamrPlatform
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
 
@@ -17,7 +16,7 @@ object CaseToolAssesment4 extends App {
 
                            slangFile: Os.Path,
 
-                           options: ISZ[Cli.HamrCodeGenOption],
+                           options: ISZ[Cli.SireumHamrCodegenOption],
                            shouldSimulate: B,
                            timeout: Z)
   val USE_OSIREUM: B = F
@@ -33,10 +32,10 @@ object CaseToolAssesment4 extends App {
 
   val graphFormat: DotFormat.Type = DotFormat.svg
 
-  val linux: Cli.HamrPlatform.Type = Cli.HamrPlatform.Linux
-  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
-  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
-  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
+  val linux: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
+  val sel4: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
+  val sel4_tb: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_TB
+  val sel4_only: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_Only
 
   val case_tool_evaluation_dir: Os.Path = Os.home / "devel/case/case-loonwerks/TA5/tool-assessment-4"
 
@@ -81,7 +80,7 @@ object CaseToolAssesment4 extends App {
     val reporter = Reporter.create
 
     for (project <- tests) {
-      var reports: HashSMap[Cli.HamrPlatform.Type, Report] = HashSMap.empty
+      var reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report] = HashSMap.empty
 
       if(!project.rootDir.exists) {
         halt(s"${project.rootDir} does not exist");
@@ -191,7 +190,7 @@ object CaseToolAssesment4 extends App {
   }
 
 
-  def generateRunScript(o: Cli.HamrCodeGenOption): Os.Path = {
+  def generateRunScript(o: Cli.SireumHamrCodegenOption): Os.Path = {
     o.aadlRootDir match {
       case Some(d) =>
         val aadlDir = Os.path(d)
@@ -209,43 +208,45 @@ object CaseToolAssesment4 extends App {
         val rCOutputDir = rootDir.relativize(cDir).value
         val rCamkesOutputDir = rootDir.relativize(camkesDir).value
 
+        val bs = "\\"
+
         val sel4Options: Option[ST] =
-          if(o.platform == Cli.HamrPlatform.SeL4) Some(st"""--camkes-output-dir $$ROOT_DIR/${rCamkesOutputDir.value} \""")
+          if(o.platform == Cli.SireumHamrCodegenHamrPlatform.SeL4) Some(st"""--camkes-output-dir $$ROOT_DIR/${rCamkesOutputDir.value} ${bs}""")
           else None()
 
         val sharedCOptions: Option[ST] =
-          if(o.platform == Cli.HamrPlatform.SeL4 || o.platform == Cli.HamrPlatform.Linux) {
+          if(o.platform == Cli.SireumHamrCodegenHamrPlatform.SeL4 || o.platform == Cli.SireumHamrCodegenHamrPlatform.Linux) {
             val auxCodeDirOpt: Option[ST] = if(o.slangAuxCodeDirs.nonEmpty) {
                 val entries: ISZ[String] = o.slangAuxCodeDirs.map(acd => {
                   assert(Os.path(acd).exists, s"${acd} doesn't exist")
                   s"$$AADL_DIR/${aadlDir.relativize(Os.path(acd))}"
                 })
-                Some(st"""--aux-code-dirs ${(entries, ";")} \""")
+                Some(st"""--aux-code-dirs ${(entries, ";")} ${bs}""")
               } else { None() }
 
-            Some(st"""--output-c-dir $$ROOT_DIR/${rCOutputDir} \
-                     |--exclude-component-impl \
-                     |--bit-width ${o.bitWidth} \
-                     |--max-string-size ${o.maxStringSize} \
-                     |--max-array-size ${o.maxArraySize} \
+            Some(st"""--output-c-dir $$ROOT_DIR/${rCOutputDir} ${bs}
+                     |--exclude-component-impl ${bs}
+                     |--bit-width ${o.bitWidth} ${bs}
+                     |--max-string-size ${o.maxStringSize} ${bs}
+                     |--max-array-size ${o.maxArraySize} ${bs}
                      |${auxCodeDirOpt}
-                     |--run-transpiler \""")
+                     |--run-transpiler ${bs}""")
             } else {None()}
 
         val eOptions: Option[ST] = if(o.experimentalOptions.nonEmpty)
-          Some(st"""--experimental-options \"${(o.experimentalOptions, ";")}\" \""")
+          Some(st"""--experimental-options \"${(o.experimentalOptions, ";")}\" ${bs}""")
         else None()
 
         val rProject = aadlDir.relativize(project)
 
         val platform: String = o.platform match {
-          case Cli.HamrPlatform.JVM => "JVM"
-          case Cli.HamrPlatform.Linux => "Linux"
-          case Cli.HamrPlatform.Cygwin => "Cygwin"
-          case Cli.HamrPlatform.MacOS => "MacOs"
-          case Cli.HamrPlatform.SeL4 => "seL4"
-          case Cli.HamrPlatform.SeL4_Only => "seL4_Only"
-          case Cli.HamrPlatform.SeL4_TB => "seL4_TB"
+          case Cli.SireumHamrCodegenHamrPlatform.JVM => "JVM"
+          case Cli.SireumHamrCodegenHamrPlatform.Linux => "Linux"
+          case Cli.SireumHamrCodegenHamrPlatform.Cygwin => "Cygwin"
+          case Cli.SireumHamrCodegenHamrPlatform.MacOS => "MacOs"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => "seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => "seL4_Only"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => "seL4_TB"
         }
 
         val s =
@@ -272,14 +273,14 @@ object CaseToolAssesment4 extends App {
               |  exit
               |fi
               |
-              |eval "$$OSIREUM hamr codegen \
-              |  --verbose \
-              |  --platform $platform \
-              |  --package-name ${o.packageName.get} \
-              |  --output-dir $$ROOT_DIR/${rOutputDir.value} \
+              |eval "$$OSIREUM hamr codegen ${bs}
+              |  --verbose ${bs}
+              |  --platform $platform ${bs}
+              |  --package-name ${o.packageName.get} ${bs}
+              |  --output-dir $$ROOT_DIR/${rOutputDir.value} ${bs}
               |  ${sharedCOptions}
               |  ${sel4Options}
-              |  --aadl-root-dir $$AADL_DIR \
+              |  --aadl-root-dir $$AADL_DIR ${bs}
               |  $eOptions
               |  $$AADL_DIR/${rProject.value}"
               |"""
@@ -308,21 +309,21 @@ object CaseToolAssesment4 extends App {
   }
 
 
-  def isNix(platform: HamrPlatform.Type): B = {
+  def isNix(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {
     val ret: B = platform match {
-      case HamrPlatform.Linux => T
-      case HamrPlatform.Cygwin => T
-      case HamrPlatform.MacOS => T
+      case Cli.SireumHamrCodegenHamrPlatform.Linux => T
+      case Cli.SireumHamrCodegenHamrPlatform.Cygwin => T
+      case Cli.SireumHamrCodegenHamrPlatform.MacOS => T
       case _ => F
     }
     return ret
   }
 
-  def isSel4(platform: HamrPlatform.Type): B = {
+  def isSel4(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {
     val ret: B = platform match {
-      case HamrPlatform.SeL4 => T
-      case HamrPlatform.SeL4_TB => T
-      case HamrPlatform.SeL4_Only => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4 => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => T
       case _ => F
     }
     return ret
@@ -356,7 +357,7 @@ object CaseToolAssesment4 extends App {
   }
 
 
-  def genFull(path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type], shouldSimulate: B, timeout: Z): Project = {
+  def genFull(path: String, basePackageName: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type], shouldSimulate: B, timeout: Z): Project = {
     val rootDir = case_tool_evaluation_dir / path
     val aadlDir = rootDir / "aadl"
     val hamrDir = rootDir / "hamr"
@@ -365,11 +366,11 @@ object CaseToolAssesment4 extends App {
       assert(cands.size == 1, s"${aadlDir}: ${cands.size}")
       cands(0)
     }
-    var options: ISZ[Cli.HamrCodeGenOption] = ISZ()
+    var options: ISZ[Cli.SireumHamrCodegenOption] = ISZ()
     for(platform <- platforms) {
       platform match {
-        case Cli.HamrPlatform.SeL4_Only => halt("")
-        case Cli.HamrPlatform.SeL4_TB =>halt("")
+        case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => halt("")
+        case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB =>halt("")
         case _ =>
       }
 
@@ -386,7 +387,7 @@ object CaseToolAssesment4 extends App {
 
       val maxArraySize: Z = if(basePackageName == "pfc") 3 else 1
 
-      val o = Cli.HamrCodeGenOption(
+      val o = Cli.SireumHamrCodegenOption(
         help = "",
         args = ISZ(json.value),
         msgpack = F,
@@ -394,6 +395,7 @@ object CaseToolAssesment4 extends App {
         platform = platform,
 
         packageName = Some(basePackageName),
+        noProyekIve = F,
         noEmbedArt = F,
         devicesAsThreads = F,
         excludeComponentImpl = T,
@@ -418,11 +420,11 @@ object CaseToolAssesment4 extends App {
     return Project(basePackageName, rootDir, aadlDir, hamrDir, json, options, shouldSimulate, timeout)
   }
 
-  def gen(path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
+  def gen(path: String, basePackageName: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]): Project = {
     return genFull(path, basePackageName, platforms, T, defTimeout)
   }
 
-  def genVM(shouldSim: B, path: String, basePackageName: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
+  def genVM(shouldSim: B, path: String, basePackageName: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]): Project = {
     return genFull(path, basePackageName, platforms, shouldSim, vmTimeout)
   }
 }

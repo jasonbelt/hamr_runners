@@ -4,14 +4,15 @@ import org.sireum._
 import org.sireum.cli._
 
 object Util {
-  val o = Cli.HamrCodeGenOption(
+  val o = Cli.SireumHamrCodegenOption(
     help = "",
     args = ISZ(),
     msgpack = F,
     verbose = T,
-    platform = Cli.HamrPlatform.Linux,
+    platform = Cli.SireumHamrCodegenHamrPlatform.Linux,
     outputDir = None(),
     packageName = None(),
+    noProyekIve = F,
     noEmbedArt = F,
     devicesAsThreads = F,
     slangAuxCodeDirs = ISZ(),

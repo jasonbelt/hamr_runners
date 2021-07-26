@@ -3,7 +3,6 @@
 package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
-import org.sireum.Cli.HamrPlatform
 import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
@@ -13,7 +12,7 @@ object VPM extends App {
   @datatype class Project (simpleName: String,
                            modelDir: Os.Path,
                            slangFile: Os.Path,
-                           platforms: ISZ[Cli.HamrPlatform.Type],
+                           platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type],
                            shouldSimulate: B,
                            timeout: Z)
 
@@ -25,22 +24,22 @@ object VPM extends App {
   val defTimeout: Z = 15000
   val vmTimeout: Z = 90000
 
-  val linux: Cli.HamrPlatform.Type = Cli.HamrPlatform.Linux
-  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
-  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
-  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
+  val linux: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
+  val sel4: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
+  val sel4_tb: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_TB
+  val sel4_only: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_Only
 
   val vpm_dir: Os.Path = Os.home / "devel/case/case-ku/examples/ksu-proprietary/vpm"
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
-  def genFull(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type], shouldSimulate: B, timeout: Z): Project = {
+  def genFull(name: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type], shouldSimulate: B, timeout: Z): Project = {
     val modelDir = vpm_dir / name
     val simpleName = Os.path(name).name // get last dir name
     return Project(simpleName, modelDir, modelDir / ".slang" / json, platforms, shouldSimulate, timeout)
   }
 
-  def gen(name: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): Project = {
+  def gen(name: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]): Project = {
     return genFull(name, json, platforms, T, defTimeout)
   }
 
@@ -63,7 +62,7 @@ object VPM extends App {
     return project
   }
 
-  def generateRunScript(o: Cli.HamrCodeGenOption): Os.Path = {
+  def generateRunScript(o: Cli.SireumHamrCodegenOption): Os.Path = {
     o.aadlRootDir match {
       case Some(d) =>
         val aadlDir = Os.path(d)
@@ -74,31 +73,32 @@ object VPM extends App {
         val rOutputDir = aadlDir.relativize(oDir).value
         val rCamkesOutputDir = aadlDir.relativize(camkesDir).value
 
+        val bs = "\\"
         val sel4Options: Option[ST] =
-          if(o.platform == Cli.HamrPlatform.SeL4) {
-            Some(st"""--exclude-component-impl \
-                     |--bit-width ${o.bitWidth} \
-                     |--max-string-size ${o.maxStringSize} \
-                     |--max-array-size ${o.maxArraySize} \
-                     |--run-transpiler \""")
+          if(o.platform == Cli.SireumHamrCodegenHamrPlatform.SeL4) {
+            Some(st"""--exclude-component-impl ${bs}
+                     |--bit-width ${o.bitWidth} ${bs}
+                     |--max-string-size ${o.maxStringSize} ${bs}
+                     |--max-array-size ${o.maxArraySize} ${bs}
+                     |--run-transpiler ${bs}""")
           }
           else { None() }
 
         val eOptions: Option[ST] = if(o.experimentalOptions.nonEmpty)
-           Some(st"""--experimental-options \"${(o.experimentalOptions, ";")}\" \""")
+           Some(st"""--experimental-options \"${(o.experimentalOptions, ";")}\" ${bs}""")
         else None()
 
         val project = getSystemOrProject(aadlDir)
         val rProject = aadlDir.relativize(project)
 
         val platform: String = o.platform match {
-          case Cli.HamrPlatform.JVM => "JVM"
-          case Cli.HamrPlatform.Linux => "Linux"
-          case Cli.HamrPlatform.Cygwin => "Cygwin"
-          case Cli.HamrPlatform.MacOS => "MacOs"
-          case Cli.HamrPlatform.SeL4 => "seL4"
-          case Cli.HamrPlatform.SeL4_Only => "seL4_Only"
-          case Cli.HamrPlatform.SeL4_TB => "seL4_TB"
+          case Cli.SireumHamrCodegenHamrPlatform.JVM => "JVM"
+          case Cli.SireumHamrCodegenHamrPlatform.Linux => "Linux"
+          case Cli.SireumHamrCodegenHamrPlatform.Cygwin => "Cygwin"
+          case Cli.SireumHamrCodegenHamrPlatform.MacOS => "MacOs"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => "seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => "seL4_Only"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => "seL4_TB"
         }
 
         val s =
@@ -124,14 +124,14 @@ object VPM extends App {
               |  exit
               |fi
               |
-              |eval "$$OSIREUM hamr codegen \
-              |  --verbose \
-              |  --platform $platform \
-              |  --output-dir $$AADL_DIR/${rOutputDir.value} \
-              |  --package-name ${o.packageName.get} \
+              |eval "$$OSIREUM hamr codegen ${bs}
+              |  --verbose ${bs}
+              |  --platform $platform ${bs}
+              |  --output-dir $$AADL_DIR/${rOutputDir.value} ${bs}
+              |  --package-name ${o.packageName.get} ${bs}
               |  ${sel4Options}
-              |  --camkes-output-dir $$AADL_DIR/${rCamkesOutputDir.value} \
-              |  --aadl-root-dir $$AADL_DIR \
+              |  --camkes-output-dir $$AADL_DIR/${rCamkesOutputDir.value} ${bs}
+              |  --aadl-root-dir $$AADL_DIR ${bs}
               |  $eOptions
               |  $$AADL_DIR/${rProject.value}"
               |"""
@@ -159,7 +159,7 @@ object VPM extends App {
     val reporter = Reporter.create
 
     for (project <- tests) {
-      var reports: HashSMap[Cli.HamrPlatform.Type, Report] = HashSMap.empty
+      var reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report] = HashSMap.empty
 
       if(!project.modelDir.exists) {
         halt(s"${project.modelDir} does not exist");
@@ -171,18 +171,18 @@ object VPM extends App {
         println("***************************************")
 
         val outputDir: Os.Path = platform match {
-          case Cli.HamrPlatform.SeL4_TB => project.modelDir / "CAmkES_seL4_TB"
-          case Cli.HamrPlatform.SeL4_Only => project.modelDir / "CAmkES_seL4_Only"
-          case Cli.HamrPlatform.SeL4 => project.modelDir / "CAmkES_seL4"
-          case Cli.HamrPlatform.Linux => project.modelDir / "Linux"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => project.modelDir / "CAmkES_seL4_TB"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => project.modelDir / "CAmkES_seL4_Only"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => project.modelDir / "CAmkES_seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.Linux => project.modelDir / "Linux"
           case _ => halt("??")
         }
 
         val camkesOutputDir: Os.Path = platform match {
-          case Cli.HamrPlatform.SeL4_TB => outputDir
-          case Cli.HamrPlatform.SeL4_Only => outputDir
-          case Cli.HamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
-          case Cli.HamrPlatform.Linux => outputDir / ""
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => outputDir
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => outputDir
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => outputDir / "src/c/CAmkES_seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.Linux => outputDir / ""
           case _ => halt("??")
         }
 
@@ -190,7 +190,7 @@ object VPM extends App {
           experimentalOptions = experimentalOptions :+ ExperimentalOptions.USE_CASE_CONNECTORS
         }
 
-        val o = Cli.HamrCodeGenOption(
+        val o = Cli.SireumHamrCodegenOption(
           help = "",
           args = ISZ(project.slangFile.value),
           msgpack = F,
@@ -198,6 +198,7 @@ object VPM extends App {
           platform = platform,
 
           packageName = Some(project.simpleName),
+          noProyekIve = F,
           noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = T,
@@ -238,7 +239,7 @@ object VPM extends App {
           val gen = ReadmeGenerator(o, reporter)
 
           if(gen.build()) {
-            val timeout: Z = if(platform == Cli.HamrPlatform.SeL4) defTimeout else project.timeout
+            val timeout: Z = if(platform == Cli.SireumHamrCodegenHamrPlatform.SeL4) defTimeout else project.timeout
 
             val expectedOutput: ST =
               if(project.shouldSimulate) gen.simulate(timeout)
@@ -290,11 +291,11 @@ object VPM extends App {
   }
 
 
-  def isSel4(platform: HamrPlatform.Type): B = {
+  def isSel4(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {
     val ret: B = platform match {
-      case HamrPlatform.SeL4 => T
-      case HamrPlatform.SeL4_TB => T
-      case HamrPlatform.SeL4_Only => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4 => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => T
       case _ => F
     }
     return ret

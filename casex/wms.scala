@@ -3,7 +3,7 @@
 package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
-import org.sireum.Cli.HamrPlatform
+import org.sireum.Cli.SireumHamrCodegenHamrPlatform
 import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 import org.sireum.message.Reporter
@@ -18,7 +18,7 @@ import org.sireum.message.Reporter
 
                           rootOutputDir: Os.Path,
 
-                          platforms: ISZ[Cli.HamrPlatform.Type],
+                          platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type],
                           shouldSimulate: B,
                           timeout: Z)
 
@@ -29,11 +29,11 @@ object WMS extends App {
   val build: B = F
   val defTimeout: Z = 15000
 
-  val jvm: Cli.HamrPlatform.Type = Cli.HamrPlatform.JVM
-  val linux: Cli.HamrPlatform.Type = Cli.HamrPlatform.Linux
-  val sel4: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4
-  val sel4_tb: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_TB
-  val sel4_only: Cli.HamrPlatform.Type = Cli.HamrPlatform.SeL4_Only
+  val jvm: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.JVM
+  val linux: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
+  val sel4: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
+  val sel4_tb: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_TB
+  val sel4_only: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_Only
 
   val root_dir: Os.Path = Os.home / "devel" / "slang-embedded"
 
@@ -44,7 +44,7 @@ object WMS extends App {
               codegenDir: String,
               _basePackageName: String,
               json: String,
-              platforms: ISZ[Cli.HamrPlatform.Type], shouldSimulate: B, timeout: Z): Projecty = {
+              platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type], shouldSimulate: B, timeout: Z): Projecty = {
     val _projDir = root_dir / rootProjDirName
     val _aadlDir = _projDir / aadlDir
     val _rootOutDir = _projDir / codegenDir
@@ -67,7 +67,7 @@ object WMS extends App {
       timeout = timeout)
   }
 
-  def gen(rootProjDirName: String, aadlDir: String, codegenDir: String, basePackageName: String, json: String, platforms: ISZ[Cli.HamrPlatform.Type]): Projecty = {
+  def gen(rootProjDirName: String, aadlDir: String, codegenDir: String, basePackageName: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]): Projecty = {
     return genFull(rootProjDirName, aadlDir, codegenDir, basePackageName, json, platforms, T, defTimeout)
   }
 
@@ -80,7 +80,7 @@ object WMS extends App {
     val reporter = Reporter.create
 
     for (project <- projects) {
-      var reports: HashSMap[Cli.HamrPlatform.Type, Report] = HashSMap.empty
+      var reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report] = HashSMap.empty
 
       for (platform <- project.platforms) {
 
@@ -89,11 +89,11 @@ object WMS extends App {
         println("***************************************")
 
         val camkesOutputDir: Os.Path = platform match {
-          case Cli.HamrPlatform.SeL4 => project.rootOutputDir / "src" / "c" / "CAmkES_seL4"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => project.rootOutputDir / "src" / "c" / "CAmkES_seL4"
           case _ => Os.tempDir()
         }
 
-        val o = Cli.HamrCodeGenOption(
+        val o = Cli.SireumHamrCodegenOption(
           help = "",
           args = ISZ(project.slangFile.value),
           msgpack = F,
@@ -101,6 +101,7 @@ object WMS extends App {
           platform = platform,
 
           packageName = Some(project.basePackageName),
+          noProyekIve = F,
           noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = T,
@@ -177,11 +178,11 @@ object WMS extends App {
   }
 
 
-  def isSel4(platform: HamrPlatform.Type): B = {
+  def isSel4(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {
     val ret: B = platform match {
-      case HamrPlatform.SeL4 => T
-      case HamrPlatform.SeL4_TB => T
-      case HamrPlatform.SeL4_Only => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4 => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => T
       case _ => F
     }
     return ret

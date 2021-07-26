@@ -2,7 +2,6 @@
 
 package org.sireum.cli.hamr_runners.slang_embedded
 
-import org.sireum.Cli.{HamrCodeGenOption, HamrPlatform}
 import org.sireum._
 import org.sireum.cli.hamr_runners.{DotFormat, ReadmeGenerator, ReadmeTemplate, Report}
 import org.sireum.hamr.codegen.common.util.ExperimentalOptions
@@ -15,25 +14,25 @@ object Isolette2 extends App {
   val build: B = F
   val timeout: Z = 25000
 
-  val jvm: HamrPlatform.Type = HamrPlatform.JVM
-  val cygwin: HamrPlatform.Type = HamrPlatform.Cygwin
-  val linux: HamrPlatform.Type = HamrPlatform.Linux
-  val macos: HamrPlatform.Type = HamrPlatform.MacOS
-  val sel4: HamrPlatform.Type = HamrPlatform.SeL4
-  val sel4_tb: HamrPlatform.Type = HamrPlatform.SeL4_TB
-  val sel4_only: HamrPlatform.Type = HamrPlatform.SeL4_Only
+  val jvm: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.JVM
+  val cygwin: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Cygwin
+  val linux: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
+  val macos: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.MacOS
+  val sel4: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
+  val sel4_tb: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_TB
+  val sel4_only: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4_Only
 
   val evaluation_dir: Os.Path = Os.home / "devel/slang-embedded/isolette"
 
   var experimentalOptions: ISZ[String] = ISZ(ExperimentalOptions.GENERATE_DOT_GRAPHS)
 
-  def gen(name: String, json: String, platforms: ISZ[HamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[HamrPlatform.Type]) = {
+  def gen(name: String, json: String, platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]): (String, Os.Path, Os.Path, ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]) = {
     val modelDir = evaluation_dir / name
     val simpleName = Os.path(name).name // get last dir name
     return (simpleName, modelDir, modelDir / ".slang" / json, platforms)
   }
 
-  val tests: ISZ[(String, Os.Path, Os.Path, ISZ[HamrPlatform.Type])] = ISZ(
+  val tests: ISZ[(String, Os.Path, Os.Path, ISZ[Cli.SireumHamrCodegenHamrPlatform.Type])] = ISZ(
 
     gen("src/aadl", "Isolette_isolette_single_sensor_Instance.json",
       ISZ(jvm, linux, macos, cygwin, sel4)),
@@ -47,7 +46,7 @@ object Isolette2 extends App {
       val projectDir = project._2
       val slangFile = project._3
 
-      var reports: HashSMap[HamrPlatform.Type, Report] = HashSMap.empty
+      var reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report] = HashSMap.empty
 
       if(!projectDir.exists) {
         halt(s"${projectDir} does not exist");
@@ -64,7 +63,7 @@ object Isolette2 extends App {
 
         //outputDir.removeAll()
 
-        val o = HamrCodeGenOption(
+        val o = Cli.SireumHamrCodegenOption(
           help = "",
           args = ISZ(slangFile.value),
           msgpack = F,
@@ -72,6 +71,7 @@ object Isolette2 extends App {
           platform = platform,
 
           packageName = Some("isolette"),
+          noProyekIve = F,
           noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = F,
@@ -140,11 +140,11 @@ object Isolette2 extends App {
     }
   }
 
-  def isSel4(platform: HamrPlatform.Type): B = {
+  def isSel4(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {
     val ret: B = platform match {
-      case HamrPlatform.SeL4 => T
-      case HamrPlatform.SeL4_TB => T
-      case HamrPlatform.SeL4_Only => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4 => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => T
+      case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => T
       case _ => F
     }
     return ret

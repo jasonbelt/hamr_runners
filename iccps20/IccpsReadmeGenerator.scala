@@ -2,7 +2,7 @@
 package org.sireum.cli.hamr_runners.iccps20
 
 import org.sireum._
-import org.sireum.Cli.HamrPlatform
+import org.sireum.Cli.SireumHamrCodegenHamrPlatform
 import org.sireum.Os.Proc
 import org.sireum.cli.HAMR
 import org.sireum.hamr.act.util.PathUtil
@@ -16,7 +16,7 @@ import org.sireum.hamr.codegen.common.transformers.Transformers
 import org.sireum.hamr.codegen.common.types.TypeResolver
 import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
-@record class IccpsReadmeGenerator(o: Cli.HamrCodeGenOption,
+@record class IccpsReadmeGenerator(o: Cli.SireumHamrCodegenOption,
                                    project: Project,
                                    reporter: Reporter) {
 
@@ -144,14 +144,14 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     return st"${output.get}"
   }
 
-  def isJvm(platform: HamrPlatform.Type): B = { return platform == Cli.HamrPlatform.JVM }
+  def isJvm(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = { return platform == Cli.SireumHamrCodegenHamrPlatform.JVM }
 
-  def isNix(platform: HamrPlatform.Type): B = {
-    return platform == Cli.HamrPlatform.Linux || platform == Cli.HamrPlatform.MacOS || platform == Cli.HamrPlatform.Cygwin
+  def isNix(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {
+    return platform == Cli.SireumHamrCodegenHamrPlatform.Linux || platform == Cli.SireumHamrCodegenHamrPlatform.MacOS || platform == Cli.SireumHamrCodegenHamrPlatform.Cygwin
   }
 
-  def isCamkes(platform: HamrPlatform.Type): B = {
-    return platform == Cli.HamrPlatform.SeL4_TB || platform == Cli.HamrPlatform.SeL4 || platform == Cli.HamrPlatform.SeL4_Only
+  def isCamkes(platform: Cli.SireumHamrCodegenHamrPlatform.Type): B = {
+    return platform == Cli.SireumHamrCodegenHamrPlatform.SeL4_TB || platform == Cli.SireumHamrCodegenHamrPlatform.SeL4 || platform == Cli.SireumHamrCodegenHamrPlatform.SeL4_Only
   }
 
   def genRunInstructions(root: Os.Path): ST = {
@@ -437,7 +437,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
 object IccpsReadmeTemplate {
 
-  def generateDiagramsSection(projectRoot: Os.Path, reports: HashSMap[HamrPlatform.Type, Report]): Level = {
+  def generateDiagramsSection(projectRoot: Os.Path, reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report]): Level = {
 
     def toLevel(p: Os.Path, title: String) : Option[Level] = {
       val ret: Option[Level] =
@@ -486,7 +486,7 @@ object IccpsReadmeTemplate {
       subs = subLevels)
   }
 
-  def generateMetricsSection(reports: HashSMap[HamrPlatform.Type, Report]): Level = {
+  def generateMetricsSection(reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report]): Level = {
 
     val aadlMetrics = reports.values(0).aadlMetrics
 
@@ -512,7 +512,7 @@ object IccpsReadmeTemplate {
     )
   }
 
-  def generateExpectedOutputSection(reports: HashSMap[HamrPlatform.Type, Report]): Level = {
+  def generateExpectedOutputSection(reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report]): Level = {
     val subLevels: ISZ[Level] = reports.entries.map(e => {
       val platform = e._1
       val report = e._2
@@ -624,7 +624,7 @@ object IccpsReadmeTemplate {
   }
 
   def generateReport(project: Project,
-                     reports: HashSMap[Cli.HamrPlatform.Type, Report]): ST = {
+                     reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report]): ST = {
     val platformsDiagrams: Level = generateDiagramsSection(project.projectDir, reports)
 
     val platformMetrics: Level = generateMetricsSection(reports)
@@ -680,7 +680,7 @@ object IccpsReadmeGenerator {
     }
   }
 
-  def getCamkesSimulatePath(o: Cli.HamrCodeGenOption, symbolTable: SymbolTable): Os.Path = {
+  def getCamkesSimulatePath(o: Cli.SireumHamrCodegenOption, symbolTable: SymbolTable): Os.Path = {
     val camkesPath: Os.Path = IccpsReadmeGenerator.getCamkesDir(symbolTable)
     assert(camkesPath.exists, s"${camkesPath} doesn't exist")
 
@@ -739,7 +739,7 @@ object IccpsReadmeGenerator {
     return model
   }
 
-  def getSymbolTable(model: ir.Aadl, basePackageName: String, o: Cli.HamrCodeGenOption): SymbolTable = {
+  def getSymbolTable(model: ir.Aadl, basePackageName: String, o: Cli.SireumHamrCodegenOption): SymbolTable = {
     val reporter = Reporter.create
 
     var _model = model
@@ -766,7 +766,7 @@ object IccpsReadmeGenerator {
 }
 
 @sig trait Report{
-  def options: Cli.HamrCodeGenOption
+  def options: Cli.SireumHamrCodegenOption
   def timeout: Z
 
   def runInstructions: ST
@@ -778,7 +778,7 @@ object IccpsReadmeGenerator {
   def codeMetrics: ST
 }
 
-@datatype class NixReport (options: Cli.HamrCodeGenOption,
+@datatype class NixReport (options: Cli.SireumHamrCodegenOption,
                          timeout: Z,
 
                          runInstructions: ST,
@@ -789,7 +789,7 @@ object IccpsReadmeGenerator {
                          aadlMetrics: ST,
                          codeMetrics: ST) extends Report
 
-@datatype class JvmReport (options: Cli.HamrCodeGenOption,
+@datatype class JvmReport (options: Cli.SireumHamrCodegenOption,
                           timeout: Z,
 
                           runInstructions: ST,
@@ -800,7 +800,7 @@ object IccpsReadmeGenerator {
                           aadlMetrics: ST,
                           codeMetrics: ST) extends Report
 
-@datatype class CamkesReport (options: Cli.HamrCodeGenOption,
+@datatype class CamkesReport (options: Cli.SireumHamrCodegenOption,
                             timeout: Z,
 
                             runInstructions: ST,

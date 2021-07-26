@@ -2,7 +2,6 @@
 package org.sireum.cli.hamr_runners
 
 import org.sireum._
-import org.sireum.Cli.SireumHamrCodegenPlatform
 
 object QuickRunner extends App{
 

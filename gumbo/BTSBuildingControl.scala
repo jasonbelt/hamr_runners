@@ -5,11 +5,11 @@ import org.sireum.cli.hamr_runners.slang_embedded.Project
 import org.sireum.{Cli, F, ISZ, None, Option, Os, Some, T, cli}
 
 object BTSBuildingControl {
-  val JVM = Cli.HamrPlatform.JVM
-  val Linux = Cli.HamrPlatform.Linux
-  val MacOS = Cli.HamrPlatform.MacOS
-  val Cygwin = Cli.HamrPlatform.Cygwin
-  val SeL4 = Cli.HamrPlatform.SeL4
+  val JVM = Cli.SireumHamrCodegenHamrPlatform.JVM
+  val Linux = Cli.SireumHamrCodegenHamrPlatform.Linux
+  val MacOS = Cli.SireumHamrCodegenHamrPlatform.MacOS
+  val Cygwin = Cli.SireumHamrCodegenHamrPlatform.Cygwin
+  val SeL4 = Cli.SireumHamrCodegenHamrPlatform.SeL4
 
   val DEL_OUTPUT_DIR = T;
 
@@ -33,9 +33,9 @@ object BTSBuildingControl {
 
       for (platform <- project.platforms) {
         val camkesOutputDir: Option[Os.Path] = platform match {
-          case Cli.HamrPlatform.SeL4_TB => Some(cDir / "CAmkES_seL4_TB")
-          case Cli.HamrPlatform.SeL4_Only => Some(cDir / "CAmkES_seL4_Only")
-          case Cli.HamrPlatform.SeL4 => Some(cDir / "CAmkES_seL4")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => Some(cDir / "CAmkES_seL4_TB")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => Some(cDir / "CAmkES_seL4_Only")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => Some(cDir / "CAmkES_seL4")
           case _ => None()
         }
 

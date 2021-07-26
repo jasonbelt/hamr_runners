@@ -3,7 +3,6 @@
 package org.sireum.cli.hamr_runners.casex.tool_ass_4
 
 import org.sireum._
-import org.sireum.Cli.HamrPlatform
 import org.sireum.cli.HAMR
 import org.sireum.hamr.act.periodic.PeriodicUtil
 import org.sireum.hamr.act.util.PathUtil
@@ -14,7 +13,7 @@ import org.sireum.hamr.codegen.common.symbols.{AadlProcessor, AadlThread, Symbol
 import org.sireum.hamr.codegen.common.util.{CodeGenConfig, ModelUtil}
 import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
-@record class ReadmeGenerator_ta4(o: Cli.HamrCodeGenOption, reporter: Reporter) {
+@record class ReadmeGenerator_ta4(o: Cli.SireumHamrCodegenOption, reporter: Reporter) {
 
   val airFile: Os.Path = {
     val path = Os.path(o.args(0))
@@ -293,7 +292,7 @@ object ReadmeTemplate {
     return ret
   }
 
-  def generateArchitectureSection(value: HashSMap[Cli.HamrPlatform.Type, Report]): Level = {
+  def generateArchitectureSection(value: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report]): Level = {
     var content: ST = st""
     val cand = value.values.filter(p => p.aadlArchDiagram.nonEmpty)
     if(cand.nonEmpty) {
@@ -394,7 +393,7 @@ object ReadmeTemplate {
     return None()
   }
 
-  def generatePlatformSections(reports: HashSMap[HamrPlatform.Type, Report]): ISZ[Level] = {
+  def generatePlatformSections(reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report]): ISZ[Level] = {
     var subLevels: ISZ[Level] = ISZ()
     for(e <- reports.entries){
       val platform = e._1
@@ -424,7 +423,7 @@ object ReadmeTemplate {
             Some(st"${(content, "\n")}")
           }
 
-          val camkesStuff: Option[ST] = if(platform == Cli.HamrPlatform.SeL4) {
+          val camkesStuff: Option[ST] = if(platform == Cli.SireumHamrCodegenHamrPlatform.SeL4) {
             var content: ST = st"|seL4/CAmkES Output Directory|${rel(report.options.camkesOutputDir.get)}"
             Some(content)
           } else { None() }
@@ -498,7 +497,7 @@ object ReadmeTemplate {
           val suffix = s"${id}.c"
 
           platform match {
-            case Cli.HamrPlatform.Linux =>
+            case Cli.SireumHamrCodegenHamrPlatform.Linux =>
               val cdir = Os.path(report.options.slangOutputCDir.get) / "ext-c"
               val suffix = s"${id}.c"
               hackyFind(cdir, suffix) match {
@@ -506,7 +505,7 @@ object ReadmeTemplate {
                   locs = locs :+ createHyperLink(id, report.readmeDir.relativize(p).value)
                 case _ => halt(s" didn't find ${suffix} in ${cdir}")
               }
-            case Cli.HamrPlatform.SeL4 =>
+            case Cli.SireumHamrCodegenHamrPlatform.SeL4 =>
               val cdir = report.options.slangOutputCDir.get
               val camkesDir = report.options.camkesOutputDir.get
               val isVM = t.getParent(symtable).toVirtualMachine()
@@ -709,7 +708,7 @@ object ReadmeTemplate {
     return ret
   }
 
-  def generateReport(title: String, reports: HashSMap[Cli.HamrPlatform.Type, Report]): ST = {
+  def generateReport(title: String, reports: HashSMap[Cli.SireumHamrCodegenHamrPlatform.Type, Report]): ST = {
 
     val readmeExists: B = (reports.values(0).readmeDir / "readme.md").exists
 
@@ -761,7 +760,7 @@ object ReadmeGenerator {
     }
   }
 
-  def getCamkesSimulatePath(o: Cli.HamrCodeGenOption, symbolTable: SymbolTable): Os.Path = {
+  def getCamkesSimulatePath(o: Cli.SireumHamrCodegenOption, symbolTable: SymbolTable): Os.Path = {
     val camkesPath: Os.Path = ReadmeGenerator.getCamkesDir(symbolTable)
     assert(camkesPath.exists, s"${camkesPath} doesn't exist")
 
@@ -829,7 +828,7 @@ object ReadmeGenerator {
 
 @datatype class Report (readmeDir: Os.Path,
 
-                      options: Cli.HamrCodeGenOption,
+                      options: Cli.SireumHamrCodegenOption,
                       runHamrScript: Option[Os.Path],
                       timeout: Z,
 

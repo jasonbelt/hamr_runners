@@ -15,7 +15,7 @@ object CASEToolEval3 {
     ("simple_uav", "UAV_UAV_Impl_Instance.json")
   )
 
-  val platforms: ISZ[Cli.HamrPlatform.Type] = ISZ(Cli.HamrPlatform.SeL4_TB, Cli.HamrPlatform.SeL4_Only)
+  val platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type] = ISZ(Cli.SireumHamrCodegenHamrPlatform.SeL4_TB, Cli.SireumHamrCodegenHamrPlatform.SeL4_Only)
 
   def main(args: Array[Predef.String]): Unit = {
     for (project <- projectsDirs) {
@@ -28,8 +28,8 @@ object CASEToolEval3 {
 
       for (platform <- platforms) {
         val camkesOutputDir = platform match {
-          case Cli.HamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
-          case Cli.HamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => projectDir / "CAmkES_seL4_TB"
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => projectDir / "CAmkES_seL4_Only"
           case _ => throw new RuntimeException("??")
         }
 

@@ -7,17 +7,17 @@ import org.sireum.hamr.codegen.common.util.ExperimentalOptions
 object Gumbo {
 
   case class Project (basePackage: Option[String],
-                      platforms: ISZ[Cli.HamrPlatform.Type],
+                      platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type],
 
                       projectDir: Os.Path,
                       aadlDir: Option[String],
                       json: String)
 
-  val JVM = Cli.HamrPlatform.JVM
-  val Linux = Cli.HamrPlatform.Linux
-  val MacOS = Cli.HamrPlatform.MacOS
-  val Cygwin = Cli.HamrPlatform.Cygwin
-  val SeL4 = Cli.HamrPlatform.SeL4
+  val JVM = Cli.SireumHamrCodegenHamrPlatform.JVM
+  val Linux = Cli.SireumHamrCodegenHamrPlatform.Linux
+  val MacOS = Cli.SireumHamrCodegenHamrPlatform.MacOS
+  val Cygwin = Cli.SireumHamrCodegenHamrPlatform.Cygwin
+  val SeL4 = Cli.SireumHamrCodegenHamrPlatform.SeL4
 
   def main(args: Array[Predef.String]): Unit = {
 
@@ -46,9 +46,9 @@ object Gumbo {
 
       for (platform <- project.platforms) {
         val camkesOutputDir: Option[Os.Path] = platform match {
-          case Cli.HamrPlatform.SeL4_TB => Some(cDir / "CAmkES_seL4_TB")
-          case Cli.HamrPlatform.SeL4_Only => Some(cDir / "CAmkES_seL4_Only")
-          case Cli.HamrPlatform.SeL4 => Some(cDir / "CAmkES_seL4")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB => Some(cDir / "CAmkES_seL4_TB")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only => Some(cDir / "CAmkES_seL4_Only")
+          case Cli.SireumHamrCodegenHamrPlatform.SeL4 => Some(cDir / "CAmkES_seL4")
           case _ => None()
         }
 
