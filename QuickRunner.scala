@@ -6,15 +6,15 @@ import org.sireum._
 object QuickRunner extends App{
 
 
-  val buildingDir: Os.Path = Os.home / "x/building_control_gen_mixed--Linux/aadl"
-  val buildingJson: Os.Path = buildingDir / ".slang/BuildingControl_Bless_BuildingControlDemo_i_Instance.json"
+  val buildingDir: Os.Path = Os.home / "temp/x/building_control_gen_mixed--Linux/aadl"
+  val buildingJson: Os.Path = buildingDir / ".slang/BuildingControl_BuildingControlDemo_i_Instance.json"
 
 //Wrote: /home/vagrant/devel/gumbo/gumbo-models/building-control/building-control-bless-mixed/aadl/.slang/BuildingControl_Bless_BuildingControlDemo_i_Instance.json
   val voterDir: Os.Path = Os.home / "devel/gumbo/gumbo-models/voter/RedundantSensors_Bless"
   val voterJson: Os.Path = voterDir / ".slang/SensorSystem_redundant_sensors_impl_Instance.json"
 
-  val aadlDir: Os.Path = voterDir
-  val json: Os.Path = voterJson
+  val aadlDir: Os.Path = buildingDir
+  val json: Os.Path = buildingJson
   val outputDir: Os.Path = aadlDir.up / "hamr"
   val platform: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
 
@@ -25,11 +25,11 @@ object QuickRunner extends App{
     verbose = T,
     platform = platform,
 
-    packageName = Some("package_name_not_set"),
+    packageName = Some("packageName_not_set"),
     noProyekIve = F,
     noEmbedArt = F,
     devicesAsThreads = F,
-    excludeComponentImpl = T,
+    excludeComponentImpl = F,
 
     bitWidth = 32,
     maxStringSize = 256,
