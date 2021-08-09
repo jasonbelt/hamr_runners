@@ -16,7 +16,8 @@ object QuickRunner extends App{
   val aadlDir: Os.Path = buildingDir
   val json: Os.Path = buildingJson
   val outputDir: Os.Path = aadlDir.up / "hamr"
-  val platform: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
+  //val platform: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
+  val platform: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
 
   val o: Cli.SireumHamrCodegenOption = Cli.SireumHamrCodegenOption(
     help = "",
@@ -40,7 +41,7 @@ object QuickRunner extends App{
     slangOutputCDir = Some((outputDir / "c").value),
     outputDir = Some((outputDir / "slang").value),
 
-    camkesOutputDir = None(),
+    camkesOutputDir = Some((outputDir / "camkes").value),
     camkesAuxCodeDirs = ISZ(),
     aadlRootDir = Some(aadlDir.value),
 
