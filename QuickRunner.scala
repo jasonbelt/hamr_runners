@@ -5,6 +5,8 @@ import org.sireum._
 
 object QuickRunner extends App{
 
+  val clearFiles: B = T
+
 
   val buildingDir: Os.Path = Os.home / "temp/x/building_control_gen_mixed--Linux/aadl"
   val buildingJson: Os.Path = buildingDir / ".slang/BuildingControl_BuildingControlDemo_i_Instance.json"
@@ -15,44 +17,64 @@ object QuickRunner extends App{
 
   val aadlDir: Os.Path = buildingDir
   val json: Os.Path = buildingJson
-  val outputDir: Os.Path = aadlDir.up / "hamr"
-  //val platform: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.Linux
-  val platform: Cli.SireumHamrCodegenHamrPlatform.Type = Cli.SireumHamrCodegenHamrPlatform.SeL4
 
-  val o: Cli.SireumHamrCodegenOption = Cli.SireumHamrCodegenOption(
-    help = "",
-    args = ISZ(json.value),
-    msgpack = F,
-    verbose = T,
-    platform = platform,
+  val rootDir: Os.Path = aadlDir.up / "hamr"
+  val outputDir: Os.Path = rootDir / "slang"
+  val slangOutputCDir: Os.Path = rootDir / "c"
+  val camkesOutputDir: Os.Path = rootDir / "camkes"
 
-    packageName = Some("packageName_not_set"),
-    noProyekIve = F,
-    noEmbedArt = F,
-    devicesAsThreads = F,
-    excludeComponentImpl = F,
+  val platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type] =
+    ISZ(Cli.SireumHamrCodegenHamrPlatform.Linux, Cli.SireumHamrCodegenHamrPlatform.SeL4)
 
-    bitWidth = 32,
-    maxStringSize = 256,
-    maxArraySize = 1,
-    runTranspiler = F,
+  def o(platform: Cli.SireumHamrCodegenHamrPlatform.Type): Cli.SireumHamrCodegenOption = {
+    return Cli.SireumHamrCodegenOption(
+      help = "",
+      args = ISZ(json.value),
+      msgpack = F,
+      verbose = T,
+      platform = platform,
 
-    slangAuxCodeDirs = ISZ(),
-    slangOutputCDir = Some((outputDir / "c").value),
-    outputDir = Some((outputDir / "slang").value),
+      packageName = Some("packageName_not_set"),
+      noProyekIve = F,
+      noEmbedArt = F,
+      devicesAsThreads = F,
+      excludeComponentImpl = F,
 
-    camkesOutputDir = Some((outputDir / "camkes").value),
-    camkesAuxCodeDirs = ISZ(),
-    aadlRootDir = Some(aadlDir.value),
+      bitWidth = 32,
+      maxStringSize = 256,
+      maxArraySize = 1,
+      runTranspiler = F,
 
-    experimentalOptions = ISZ("PROCESS_BTS_NODES")
-  )
+      slangAuxCodeDirs = ISZ(),
+      slangOutputCDir = Some(slangOutputCDir.value),
+      outputDir = Some(outputDir.value),
+
+      camkesOutputDir = Some(camkesOutputDir.value),
+      camkesAuxCodeDirs = ISZ(),
+      aadlRootDir = Some(aadlDir.value),
+
+      experimentalOptions = ISZ("PROCESS_BTS_NODES")
+    )
+  }
 
   override def main(args: ISZ[String]): Z = {
-    val exitCode = org.sireum.cli.HAMR.codeGen(o)
+    if(clearFiles) {
+      ISZ(outputDir / "bin", outputDir / "src", outputDir / "build.sbt", outputDir / "build.sc", outputDir / "versions.properties").foreach(f => f.removeAll())
 
-    println(s"${aadlDir.name} completed with ${exitCode}")
+      slangOutputCDir.removeAll()
 
-    return exitCode
+      camkesOutputDir.removeAll()
+    }
+
+    for(p <- platforms) {
+      val exitCode = org.sireum.cli.HAMR.codeGen(o(p))
+      if(exitCode != 0) {
+        eprintln(s"Error while generating ${p} - ${exitCode}")
+      } else {
+        println(s"${aadlDir.name} ${p} completed with ${exitCode}")
+      }
+    }
+
+    return 0
   }
 }
