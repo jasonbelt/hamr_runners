@@ -8,7 +8,7 @@ object QuickRunner extends App{
   val clearFiles: B = T
 
 
-  val buildingDir: Os.Path = Os.home / "temp/x/building_control_gen_mixed--Linux/aadl"
+  val buildingDir: Os.Path = Os.home / "temp/x/building-control-art-scheduling/aadl"
   val buildingJson: Os.Path = buildingDir / ".slang/BuildingControl_BuildingControlDemo_i_Instance.json"
 
 //Wrote: /home/vagrant/devel/gumbo/gumbo-models/building-control/building-control-bless-mixed/aadl/.slang/BuildingControl_Bless_BuildingControlDemo_i_Instance.json
