@@ -5,18 +5,19 @@ import org.sireum._
 
 object QuickRunner extends App{
 
-  val clearFiles: B = T
+  val clearFiles: B = F
 
+  val isoletteDir: Os.Path = Os.home / "devel"/ "gumbo" / "isolette" / "aadl"
+  val isoletteJson: Os.Path = isoletteDir / ".slang" / "Isolette_isolette_single_sensor_Instance.json"
 
   val buildingDir: Os.Path = Os.home / "temp/x/building-control-art-scheduling/aadl"
   val buildingJson: Os.Path = buildingDir / ".slang/BuildingControl_BuildingControlDemo_i_Instance.json"
 
-//Wrote: /home/vagrant/devel/gumbo/gumbo-models/building-control/building-control-bless-mixed/aadl/.slang/BuildingControl_Bless_BuildingControlDemo_i_Instance.json
   val voterDir: Os.Path = Os.home / "devel/gumbo/gumbo-models/voter/RedundantSensors_Bless"
   val voterJson: Os.Path = voterDir / ".slang/SensorSystem_redundant_sensors_impl_Instance.json"
 
-  val aadlDir: Os.Path = buildingDir
-  val json: Os.Path = buildingJson
+  val aadlDir: Os.Path = isoletteDir
+  val json: Os.Path = isoletteJson
 
   val rootDir: Os.Path = aadlDir.up / "hamr"
   val outputDir: Os.Path = rootDir / "slang"
@@ -24,7 +25,7 @@ object QuickRunner extends App{
   val camkesOutputDir: Os.Path = rootDir / "camkes"
 
   val platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type] =
-    ISZ(Cli.SireumHamrCodegenHamrPlatform.Linux, Cli.SireumHamrCodegenHamrPlatform.SeL4)
+    ISZ(Cli.SireumHamrCodegenHamrPlatform.Linux)
 
   def o(platform: Cli.SireumHamrCodegenHamrPlatform.Type): Cli.SireumHamrCodegenOption = {
     return Cli.SireumHamrCodegenOption(
@@ -34,8 +35,8 @@ object QuickRunner extends App{
       verbose = T,
       platform = platform,
 
-      packageName = Some("packageName_not_set"),
-      noProyekIve = F,
+      packageName = Some("isolette"),
+      noProyekIve = T,
       noEmbedArt = F,
       devicesAsThreads = F,
       excludeComponentImpl = F,
@@ -75,6 +76,7 @@ object QuickRunner extends App{
       }
     }
 
+    proc"git checkout ${(outputDir / "src/main/bridge").string}".at(outputDir).console.runCheck()
     return 0
   }
 }
