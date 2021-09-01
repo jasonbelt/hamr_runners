@@ -334,7 +334,7 @@ object ReadmeTemplate {
 
           val compType: String =
             if(thread.isCakeMLComponent()) "CakeML"
-            else if(thread.getParent(st).toVirtualMachine()) "Virtual Machine"
+            else if(thread.getParent(st).toVirtualMachine(symbolTable)) "Virtual Machine"
             else "Native"
 
           val domain: Option[ST]= if(report.symbolTable.nonEmpty && thread.getParent(report.symbolTable.get).getDomain().nonEmpty) {
@@ -508,7 +508,7 @@ object ReadmeTemplate {
             case Cli.SireumHamrCodegenHamrPlatform.SeL4 =>
               val cdir = report.options.slangOutputCDir.get
               val camkesDir = report.options.camkesOutputDir.get
-              val isVM = t.getParent(symtable).toVirtualMachine()
+              val isVM = t.getParent(symtable).toVirtualMachine(symtable)
               if(isVM) {
                 val processId = t.getParent(symtable).identifier
                 val processSuffix = s"${processId}.c"

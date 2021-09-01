@@ -7,6 +7,10 @@ object QuickRunner extends App{
 
   val clearFiles: B = F
 
+  val hardened: Os.Path = Os.home / "devel/case/case-loonwerks/CASE_Simple_Example_V4/Hardened"
+  val hardenedJson: Os.Path = hardened / ".slang" / "MC_MissionComputer_Impl_Instance.json"
+
+
   val isoletteDir: Os.Path = Os.home / "devel"/ "gumbo" / "isolette" / "aadl"
   val isoletteJson: Os.Path = isoletteDir / ".slang" / "Isolette_isolette_single_sensor_Instance.json"
 
@@ -16,8 +20,8 @@ object QuickRunner extends App{
   val voterDir: Os.Path = Os.home / "devel/gumbo/gumbo-models/voter/RedundantSensors_Bless"
   val voterJson: Os.Path = voterDir / ".slang/SensorSystem_redundant_sensors_impl_Instance.json"
 
-  val aadlDir: Os.Path = isoletteDir
-  val json: Os.Path = isoletteJson
+  val aadlDir: Os.Path = hardened
+  val json: Os.Path = hardenedJson
 
   val rootDir: Os.Path = aadlDir.up / "hamr"
   val outputDir: Os.Path = rootDir / "slang"
