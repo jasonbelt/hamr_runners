@@ -329,7 +329,7 @@ object ReadmeTemplate {
         for(thread <- threads) {
           val name = thread.identifier
           val typ: String =
-            if(CommonUtil.isPeriodic(thread.component)) s"Periodic: ${thread.period.get} ms"
+            if(CommonUtil.isPeriodic(thread)) s"Periodic: ${thread.period.get} ms"
             else "Sporadic"
 
           val compType: String =
