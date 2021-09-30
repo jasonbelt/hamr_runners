@@ -57,7 +57,7 @@ val cli = Feature(
   localUpdateSite = Some(localUpdateSite),
   id = "org.sireum.aadl.osate.cli.feature.feature.group")
 
-val order = ISZ(base, hamr, cli, awas)
+val order = ISZ(base, hamr, cli)
 
 for(o <- order) {
   if (isInstalled(o.id, osateExe)) {
@@ -66,7 +66,7 @@ for(o <- order) {
   installPlugin(o, osateExe)
 }
 
-println(s"\n\nExecute the following to to launch OSATE :\n")
+println(s"\n\nExecute the following to launch OSATE :\n")
 println(s"${osateExe}&")
 
 
