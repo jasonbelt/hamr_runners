@@ -7,8 +7,8 @@ object QuickRunner extends App{
 
   val clearFiles: B = F
 
-  //val mult_thread_vm: Os.Path = Os.home / "CASE/Sireum/hamr/codegen/jvm/src/test/scala/models/CodeGenTest_Base/vm-with-multiple-threads/aadl"
-  //val mult_thread_vmJson: Os.Path = mult_thread_vm / ".slang/model_m_impl_Instance.json"
+  val mult_thread_vm: Os.Path = Os.home / "CASE/Sireum/hamr/codegen/jvm/src/test/scala/models/CodeGenTest_Base/vm-with-multiple-threads/aadl"
+  val mult_thread_vmJson: Os.Path = mult_thread_vm / ".slang/model_m_impl_Instance.json"
 
   val hardened: Os.Path = Os.home / "devel/case/case-loonwerks/CASE_Simple_Example_V4/Hardened"
   val hardenedJson: Os.Path = hardened / ".slang" / "MC_MissionComputer_Impl_Instance.json"
@@ -23,8 +23,8 @@ object QuickRunner extends App{
   val voterDir: Os.Path = Os.home / "devel/gumbo/gumbo-models/voter/RedundantSensors_Bless"
   val voterJson: Os.Path = voterDir / ".slang/SensorSystem_redundant_sensors_impl_Instance.json"
 
-  val aadlDir: Os.Path = isoletteDir
-  val json: Os.Path = isoletteJson
+  val aadlDir: Os.Path = mult_thread_vm
+  val json: Os.Path = mult_thread_vmJson
 
   val rootDir: Os.Path = aadlDir.up / "hamr"
   val outputDir: Os.Path = rootDir / "slang"
@@ -83,7 +83,7 @@ object QuickRunner extends App{
       }
     }
 
-    proc"git checkout ${(outputDir / "src/main/bridge").string}".at(outputDir).console.runCheck()
+    //proc"git checkout ${(outputDir / "src/main/bridge").string}".at(outputDir).console.runCheck()
     return 0
   }
 }
