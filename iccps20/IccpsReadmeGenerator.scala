@@ -240,11 +240,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
     var ports: Z = 0
     for(t <- threads) {
-      for(fe <- t.getFeatureEnds()){
-        if(CommonUtil.isPort(fe)) {
-          ports = ports + 1
-        }
-      }
+      ports = ports + t.getPorts().size
     }
 
     val ret: ST =

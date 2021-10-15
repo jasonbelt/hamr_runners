@@ -23,8 +23,8 @@ object QuickRunner extends App{
   val voterDir: Os.Path = Os.home / "devel/gumbo/gumbo-models/voter/RedundantSensors_Bless"
   val voterJson: Os.Path = voterDir / ".slang/SensorSystem_redundant_sensors_impl_Instance.json"
 
-  val aadlDir: Os.Path = mult_thread_vm
-  val json: Os.Path = mult_thread_vmJson
+  val aadlDir: Os.Path = isoletteDir
+  val json: Os.Path = isoletteJson
 
   val rootDir: Os.Path = aadlDir.up / "hamr"
   val outputDir: Os.Path = rootDir / "slang"

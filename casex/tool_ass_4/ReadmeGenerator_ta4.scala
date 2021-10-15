@@ -343,7 +343,7 @@ object ReadmeTemplate {
 
           val header: ST = {
             val pos: Option[Position] =
-              if(thread.ports.nonEmpty) thread.ports(0).feature.identifier.pos
+              if(thread.getPorts().nonEmpty) thread.getPorts()(0).feature.identifier.pos
               else(thread.component.identifier.pos)
             createHeader(name, pos, "thread", aadlDir, rootDir)
           }
