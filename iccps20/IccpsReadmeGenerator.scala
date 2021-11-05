@@ -740,13 +740,15 @@ object IccpsReadmeGenerator {
 
     var _model = model
 
-    val result = ir.Transformer(Transformers.MissingTypeRewriter(reporter)).transformAadl(Transformers.CTX(F), _model)
+    val result = ir.Transformer(Transformers.MissingTypeRewriter()).transformAadl(Transformers.CTX(F, ISZ()), _model)
     _model = if (result.resultOpt.nonEmpty) result.resultOpt.get else model
 
     val rawConnections: B = PropertyUtil.getUseRawConnection(_model.components(0).properties)
     val aadlTypes = TypeResolver.processDataTypes(_model, rawConnections, o.maxStringSize, o.bitWidth, basePackageName)
 
-    val s = SymbolResolver.resolve(_model, aadlTypes, HAMR.toCodeGenOptions(o), reporter)
+    val aadlMaps = SymbolResolver.buildAadlMaps(_model, reporter)
+
+    val s = SymbolResolver.resolve(_model, aadlTypes, aadlMaps, HAMR.toCodeGenOptions(o), reporter)
     if(reporter.hasError) {
       println("**********************************************")
       println("***  Messages from ICCPS Readme Gen")
