@@ -5,17 +5,17 @@ import org.sireum._
 object Runner {
   
   def main(args: Array[Predef.String]): Unit = {
-    val args: String = st"""slang
+    var args: String = st"""slang
                    |transpilers
                    |c
                    |--sourcepath
-                   |/home/sireum/devel/sel4/home/CASETeam-KU/examples/ksu-proprietary/producer-splatfilter-consumer_ARTseL4/pfc-project/src/main/art:/home/sireum/devel/sel4/home/CASETeam-KU/examples/ksu-proprietary/producer-splatfilter-consumer_ARTseL4/pfc-project/src/main/bridge:/home/sireum/devel/sel4/home/CASETeam-KU/examples/ksu-proprietary/producer-splatfilter-consumer_ARTseL4/pfc-project/src/main/component:/home/sireum/devel/sel4/home/CASETeam-KU/examples/ksu-proprietary/producer-splatfilter-consumer_ARTseL4/pfc-project/src/main/data:/home/sireum/devel/sel4/home/CASETeam-KU/examples/ksu-proprietary/producer-splatfilter-consumer_ARTseL4/pfc-project/src/main/architecture-isolated/pfc_project/PFC_Sys_Impl_Instance_proc_sw_producer:/home/sireum/devel/sel4/home/CASETeam-KU/examples/ksu-proprietary/producer-splatfilter-consumer_ARTseL4/pfc-project/src/main/sel4_nix_isolated/pfc_project/PFC_Sys_Impl_Instance_proc_sw_producer
+                   |/home/vagrant/devel/gumbo/isolette_mod/hamr/slang/src/common/data/main:/home/vagrant/devel/gumbo/isolette_mod/hamr/slang/src/common/library/main:/home/vagrant/devel/n
                    |--output-dir
-                   |/home/sireum/devel/sel4/home/CASETeam-KU/examples/ksu-proprietary/producer-splatfilter-consumer_ARTseL4/pfc-project/src/c/CAmkES_seL4/hamr
+                   |/home/vagrant/devel/gumbo/isolette_mod/hamr/slang/bin/../../c/nix
                    |--name
                    |main
                    |--apps
-                   |pfc_project.PFC_Sys_Impl_Instance_proc_sw_producer.PFC_Sys_Impl_Instance_proc_sw_producer
+                   |isolette.Manage_Regulator_Interface_impl_thermostat_regulate_temperature_manage_regulator_interface_App,isolette.Manage_Heat_Source_impl_thermostat_regulate_temperato
                    |--fingerprint
                    |3
                    |--bits
@@ -23,22 +23,23 @@ object Runner {
                    |--string-size
                    |256
                    |--sequence-size
-                   |12
+                   |57
                    |--sequence
-                   |MS[org.sireum.Z,art.Bridge]=3;MS[org.sireum.Z,org.sireum.MOption[art.Bridge]]=3;IS[org.sireum.Z,art.UPort]=2;IS[org.sireum.Z,art.UConnection]=2
+                   |IS[Z,art.Bridge]=9;MS[Z,Option[art.Bridge]]=9;IS[Z,art.UPort]=9;IS[Z,art.UConnection]=25
                    |--constants
-                   |art.Art.maxComponents=3;art.Art.maxPorts=8
+                   |art.Art.maxComponents=9;art.Art.maxPorts=57
                    |--forward
-                   |art.ArtNative=pfc_project.PFC_Sys_Impl_Instance_proc_sw_producer.PFC_Sys_Impl_Instance_proc_sw_producer
+                   |art.ArtNative=isolette.ArtNix,isolette.Platform=isolette.PlatformNix
                    |--stack-size
-                   |53248
+                   |217088
                    |--stable-type-id
                    |--exts
-                   |/home/sireum/devel/sel4/home/CASETeam-KU/examples/ksu-proprietary/producer-splatfilter-consumer_ARTseL4/pfc-project/src/c/ext-c/ext.c:/home/sireum/devel/sel4/home/CASETeam-KU/examples/ksu-proprietary/producer-splatfilter-consumer_ARTseL4/pfc-project/src/c/ext-c/ext.h
-                   |--lib-only
+                   |/home/vagrant/devel/gumbo/isolette_mod/hamr/slang/bin/../../c/ext-c:/home/vagrant/devel/gumbo/isolette_mod/hamr/slang/bin/../../c/etc
                    |--verbose
                    |""".render
-    
+
+    args = (Os.home / "devel/gumbo/isolette_mod/hamr/slang/transpiler_script").read
+
     val _args = ops.StringOps(args).split(c => c.value == '\n').map(m => m.native)
     
     org.sireum.Sireum.main(_args.elements.toArray)
