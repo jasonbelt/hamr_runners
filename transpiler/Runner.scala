@@ -38,10 +38,10 @@ object Runner {
                    |--verbose
                    |""".render
 
-    args = (Os.home / "devel/gumbo/isolette_mod/hamr/slang/transpiler_script").read
+    args = (Os.home / "devel/gumbo/isolette/hamr/slang/transpiler_script").read
 
     val _args = ops.StringOps(args).split(c => c.value == '\n').map(m => m.native)
-    
+    println(_args)
     org.sireum.Sireum.main(_args.elements.toArray)
   }
 }
