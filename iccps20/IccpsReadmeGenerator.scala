@@ -11,7 +11,7 @@ import org.sireum.hamr.codegen.common.{CommonUtil, StringUtil}
 import org.sireum.hamr.codegen.common.properties.PropertyUtil
 import org.sireum.hamr.ir
 import org.sireum.message.Reporter
-import org.sireum.hamr.codegen.common.symbols.{SymbolResolver, SymbolTable}
+import org.sireum.hamr.codegen.common.symbols.{SymbolResolver, SymbolTable, SymbolUtil}
 import org.sireum.hamr.codegen.common.transformers.Transformers
 import org.sireum.hamr.codegen.common.types.TypeResolver
 import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
@@ -746,7 +746,7 @@ object IccpsReadmeGenerator {
     val rawConnections: B = PropertyUtil.getUseRawConnection(_model.components(0).properties)
     val aadlTypes = TypeResolver.processDataTypes(_model, rawConnections, o.maxStringSize, o.bitWidth, basePackageName)
 
-    val aadlMaps = SymbolResolver.buildAadlMaps(_model, reporter)
+    val aadlMaps = SymbolUtil.buildAadlMaps(_model, reporter)
 
     val s = SymbolResolver.resolve(_model, aadlTypes, aadlMaps, HAMR.toCodeGenOptions(o), reporter)
     if(reporter.hasError) {
