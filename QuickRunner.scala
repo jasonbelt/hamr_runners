@@ -23,8 +23,12 @@ object QuickRunner extends App{
   val voterDir: Os.Path = Os.home / "devel/gumbo/gumbo-models/voter/RedundantSensors_Bless"
   val voterJson: Os.Path = voterDir / ".slang/SensorSystem_redundant_sensors_impl_Instance.json"
 
-  val aadlDir: Os.Path = mult_thread_vm
-  val json: Os.Path = mult_thread_vmJson
+  val tc_module: Os.Path = Os.home / "devel/aeic2002_tc_module/aadl"
+  val tc_moduleJson: Os.Path = tc_module / ".slang/TemperatureControl_TempControlSystem_i_Instance.json"
+
+
+  val aadlDir: Os.Path = tc_module
+  val json: Os.Path = tc_moduleJson
 
   val rootDir: Os.Path = aadlDir.up / "hamr"
   val outputDir: Os.Path = rootDir / "slang"
@@ -32,7 +36,7 @@ object QuickRunner extends App{
   val camkesOutputDir: Os.Path = rootDir / "camkes"
 
   val platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type] =
-    ISZ(Cli.SireumHamrCodegenHamrPlatform.SeL4)
+    ISZ(Cli.SireumHamrCodegenHamrPlatform.Linux, Cli.SireumHamrCodegenHamrPlatform.SeL4)
 
   def o(platform: Cli.SireumHamrCodegenHamrPlatform.Type): Cli.SireumHamrCodegenOption = {
     return Cli.SireumHamrCodegenOption(
@@ -42,7 +46,7 @@ object QuickRunner extends App{
       verbose = T,
       platform = platform,
 
-      packageName = Some("isolette"),
+      packageName = Some("t"),
       noProyekIve = T,
       noEmbedArt = F,
       devicesAsThreads = F,
