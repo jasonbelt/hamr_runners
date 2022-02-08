@@ -26,9 +26,9 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     path
   }
 
-  val model: ir.Aadl = IccpsReadmeGenerator.getModel(airFile, o.msgpack)
+  val model: ir.Aadl = TccoeReadmeGenerator.getModel(airFile, o.msgpack)
 
-  val symbolTable: SymbolTable = IccpsReadmeGenerator.getSymbolTable(model, o.packageName.get, o)
+  val symbolTable: SymbolTable = TccoeReadmeGenerator.getSymbolTable(model, o.packageName.get, o)
 
   val camkesOutputDir: Option[Os.Path] = if(o.camkesOutputDir.nonEmpty) Some(Os.path(o.camkesOutputDir.get)) else None()
   val slangOutputDir: Os.Path = Os.path(o.outputDir.get)
@@ -55,14 +55,14 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
   def buildLinux(): B = {
     var continue: B = T
-    val transpileScript: Os.Path = IccpsReadmeGenerator.getTranspileScript(slangOutputDir)
+    val transpileScript: Os.Path = TccoeReadmeGenerator.getTranspileScript(slangOutputDir)
     if(transpileScript.exists) {
-      continue = IccpsReadmeGenerator.run(ISZ(transpileScript.value), slangOutputDir, reporter)
+      continue = TccoeReadmeGenerator.run(ISZ(transpileScript.value), slangOutputDir, reporter)
     }
     if(continue) {
       val nixBuildScript = cOutputDir / "bin" / "compile.cmd"
       assert(nixBuildScript.exists)
-      continue = IccpsReadmeGenerator.run(ISZ(nixBuildScript.value), cOutputDir, reporter)
+      continue = TccoeReadmeGenerator.run(ISZ(nixBuildScript.value), cOutputDir, reporter)
     }
     return continue
   }
@@ -72,19 +72,19 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     assert(buildsbt.exists)
     assert(buildsbt.exists && buildsbt.isFile, s"${buildsbt}")
 
-    return IccpsReadmeGenerator.run(ISZ("sbt", "compile"), slangOutputDir, reporter)
+    return TccoeReadmeGenerator.run(ISZ("sbt", "compile"), slangOutputDir, reporter)
   }
 
   def buildCamkes(): B = {
 
-    val run_camkes: Os.Path = IccpsReadmeGenerator.getRunCamkesScript(camkesOutputDir.get)
+    val run_camkes: Os.Path = TccoeReadmeGenerator.getRunCamkesScript(camkesOutputDir.get)
 
     assert(run_camkes.exists, s"${run_camkes} not found")
 
     var continue: B = T
-    val transpileSel4: Os.Path = IccpsReadmeGenerator.getTranspileSel4Script(slangOutputDir)
+    val transpileSel4: Os.Path = TccoeReadmeGenerator.getTranspileSel4Script(slangOutputDir)
     if(transpileSel4.exists) {
-      continue = IccpsReadmeGenerator.run(ISZ(transpileSel4.value), slangOutputDir, reporter)
+      continue = TccoeReadmeGenerator.run(ISZ(transpileSel4.value), slangOutputDir, reporter)
     }
 
     if(continue) {
@@ -100,7 +100,13 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
         println(s"Removed $buildDir")
       }
 
-      continue = IccpsReadmeGenerator.run(args, camkesOutputDir.get, reporter)
+      val appsDir = Os.home / "CASE" / "camkes" / "projects" / "camkes"/ "apps" / "camkes"
+      if(appsDir.exists && appsDir.isSymLink) {
+        appsDir.remove()
+        println(s"Removed $appsDir")
+      }
+
+      continue = TccoeReadmeGenerator.run(args, camkesOutputDir.get, reporter)
     }
 
     return continue
@@ -128,14 +134,14 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     cprint(F, results.out)
     cprint(T, results.err)
 
-    val output = IccpsReadmeGenerator.parseOutput(results.out)
+    val output = TccoeReadmeGenerator.parseOutput(results.out)
     assert(output.nonEmpty, "Expected output missing")
 
     return st"${output.get}"
   }
 
   def simulateCamkes(timeout: Z): ST = {
-    val simulateScript: Os.Path = IccpsReadmeGenerator.getCamkesSimulatePath(o, symbolTable)
+    val simulateScript: Os.Path = TccoeReadmeGenerator.getCamkesSimulatePath(o, symbolTable)
     assert(simulateScript.exists, s"${simulateScript} does not exist")
 
     println(s"Simulating for ${timeout/1000} seconds")
@@ -146,9 +152,9 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     cprint(F, results.out)
     cprint(T, results.err)
 
-    IccpsReadmeGenerator.run(ISZ("pkill", "qemu"), simulateScript, reporter)
+    TccoeReadmeGenerator.run(ISZ("pkill", "qemu"), simulateScript, reporter)
 
-    val output = IccpsReadmeGenerator.parseOutput(results.out)
+    val output = TccoeReadmeGenerator.parseOutput(results.out)
     assert(output.nonEmpty, "Expected output missing")
 
     return st"${output.get}"
@@ -211,8 +217,8 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
   def genRunInstructionsCamkes(root: Os.Path): ST = {
 
-    val transpileSel4: Os.Path = IccpsReadmeGenerator.getTranspileSel4Script(slangOutputDir)
-    val runScript: Os.Path = IccpsReadmeGenerator.getRunCamkesScript(camkesOutputDir.get)
+    val transpileSel4: Os.Path = TccoeReadmeGenerator.getTranspileSel4Script(slangOutputDir)
+    val runScript: Os.Path = TccoeReadmeGenerator.getRunCamkesScript(camkesOutputDir.get)
     val cakeMlScript: Os.Path = transpileSel4.up / "compile-cakeml.sh"
     val caseArmVmSetupScript: Os.Path = runScript.up / Os.path(PathUtil.CAMKES_ARM_VM_SCRIPT_PATH).name
 
@@ -347,7 +353,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     assert(extDir.exists, extDir)
     assert(nixDir.exists, nixDir)
 
-    val dirs = ISZ(extDir, nixDir)
+    val dirs = ISZ(nixDir)
     val cloc = runCloc(dirs)
 
     val _dirsScanned = dirsScanned(dirs)
@@ -363,7 +369,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
           |
           |<u><b>Total LOC</b></u>
           |
-          |Total number of HAMR-generated (transpiled) and developer-written lines of code
+          |Total number of HAMR-generated and developer-written lines of code
           |${cloc}
           |
           |<u><b>User LOC</b></u>
@@ -377,16 +383,57 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   }
 
   def getCodeMetricsCamkes(): ST = {
-    return st"Not counting CAmkES/seL4 code.  Notable is that the developer did not have to write any additional LOC for this profile."
+    val extDir = cOutputDir / "ext-c"
+
+    assert(camkesDir.exists, camkesDir)
+
+    val dirs = ISZ(camkesDir)
+    val cloc = runCloc(dirs)
+
+    val _dirsScanned = dirsScanned(dirs)
+
+    val cCode: String =
+      if(o.excludeComponentImpl)
+        "The Slang-based component implementations were excluded by the transpiler so this represents the number of lines of C code needed to realize the component behaviors."
+      else "The Slang-based component implementations were included by the transpiler so this represents the number of lines of C that implement Slang extensions."
+
+    val userCloc: ST = processUserCloc(extDir)
+    val ret: ST =
+      st"""${_dirsScanned}
+          |
+          |<u><b>Total LOC</b></u>
+          |
+          |Total number of HAMR-generated and developer-written lines of code
+          |${cloc}
+          |
+          |<u><b>User LOC</b></u>
+          |
+          |The number of lines of code written by the developer.
+          |${cCode}
+          |"Log" are lines of code used for logging that
+          |likely would be excluded in a release build
+          |${userCloc}"""
+    return ret
   }
 
   def runCloc(dirs: ISZ[Os.Path]): ST = {
     //dirs.foreach(d => assert(d.exists && d.isDir, s"$d"))
 
+    val camkesClocDef = st"""CAmkES
+                            |    filter rm_comments_in_strings " /* */
+                            |    filter rm_comments_in_strings " //
+                            |    filter call_regexp_common C++
+                            |    extension camkes
+                            |    3rd_gen_scale 2.00
+                            |    end_of_line_continuation \\$$"""
+    val temp = Os.temp()
+    temp.writeOver(camkesClocDef.render)
+
     val args: ISZ[String] = ISZ[String](
       "cloc",
       "--md",
-      "--exclude-lang=make,CMake"
+      "--exclude-lang=make",
+      s"--read-lang-def=${temp.value}"
     ) ++ dirs.map((m: Os.Path) => m.value)
 
     val results = Os.proc(args).run()
@@ -398,9 +445,9 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   }
 
   def getCamkesArchDiagram(format: DotFormat.Type): Os.Path = {
-    val dot = IccpsReadmeGenerator.getCamkesSimulatePath(o, symbolTable).up / "graph.dot"
+    val dot = TccoeReadmeGenerator.getCamkesSimulatePath(o, symbolTable).up / "graph.dot"
     val outputPath = Os.path(o.aadlRootDir.get) / "diagrams" / s"CAmkES-arch-${o.platform.string}.${format.string}"
-    IccpsReadmeGenerator.renderDot(dot, outputPath, format, reporter)
+    TccoeReadmeGenerator.renderDot(dot, outputPath, format, reporter)
     assert(outputPath.exists, s"${outputPath} does not exist")
     return outputPath
   }
@@ -408,7 +455,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   def getHamrCamkesArchDiagram(format: DotFormat.Type): Os.Path = {
     val dot = Os.path(o.camkesOutputDir.get) / "graph.dot"
     val outputPath = Os.path(o.aadlRootDir.get) / "diagrams" / s"CAmkES-HAMR-arch-${o.platform.string}.${format.string}"
-    IccpsReadmeGenerator.renderDot(dot, outputPath, format, reporter)
+    TccoeReadmeGenerator.renderDot(dot, outputPath, format, reporter)
     assert(outputPath.exists, s"${outputPath} does not exist")
     return outputPath
   }
@@ -655,7 +702,7 @@ object IccpsReadmeTemplate {
   }
 }
 
-object IccpsReadmeGenerator {
+object TccoeReadmeGenerator {
   def run(args: ISZ[String], at: Os.Path, reporter: Reporter): B = {
     val results = Os.proc(args).at(at).console.run()
     if(!results.ok) {
@@ -690,7 +737,7 @@ object IccpsReadmeGenerator {
   }
 
   def getCamkesSimulatePath(o: Cli.SireumHamrCodegenOption, symbolTable: SymbolTable): Os.Path = {
-    val camkesPath: Os.Path = IccpsReadmeGenerator.getCamkesDir(symbolTable)
+    val camkesPath: Os.Path = TccoeReadmeGenerator.getCamkesDir(symbolTable)
     assert(camkesPath.exists, s"${camkesPath} doesn't exist")
 
     val camkesOutputDir = Os.path(o.camkesOutputDir.get)
