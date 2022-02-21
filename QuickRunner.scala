@@ -2,55 +2,83 @@
 package org.sireum.cli.hamr_runners
 
 import org.sireum._
+import Cli.SireumHamrCodegenHamrPlatform._
 
-object QuickRunner extends App{
+@datatype class Project (val aadlDir : Os.Path,
+                         val json: String,
+                         val packageName: Option[String],
+                         val platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]) {
+  def jsonLoc : Os.Path = { return aadlDir / ".slang" / json }
+}
+
+object QuickRunner extends App {
 
   val clearFiles: B = F
 
-  val mult_thread_vm: Os.Path = Os.home / "CASE/Sireum/hamr/codegen/jvm/src/test/scala/models/CodeGenTest_Base/vm-with-multiple-threads/aadl"
-  val mult_thread_vmJson: Os.Path = mult_thread_vm / ".slang/model_m_impl_Instance.json"
+  val mult_thread_vm: Project = Project(
+    aadlDir = Os.home / "CASE/Sireum/hamr/codegen/jvm/src/test/scala/models/CodeGenTest_Base/vm-with-multiple-threads/aadl",
+    json = "model_m_impl_Instance.json",
+    packageName = None(),
+    platforms = ISZ(SeL4))
 
-  val hardened: Os.Path = Os.home / "devel/case/case-loonwerks/CASE_Simple_Example_V4/Hardened"
-  val hardenedJson: Os.Path = hardened / ".slang" / "MC_MissionComputer_Impl_Instance.json"
+  val hardened: Project = Project (
+    aadlDir = Os.home / "devel/case/case-loonwerks/CASE_Simple_Example_V4/Hardened",
+    json = "MC_MissionComputer_Impl_Instance.json",
+    packageName = None(),
+    platforms = ISZ(JVM))
+
+  val isolette: Project = Project (
+    aadlDir = Os.home / "devel"/ "gumbo" / "isolette" / "aadl",
+    json = "Isolette_isolette_single_sensor_Instance.json",
+    packageName = Some("isolette"),
+    platforms = ISZ(SeL4))
+
+  val pingpong: Project = Project (
+    aadlDir = Os.home / "devel/camkes-vm/camkes-ping-pong/ping-pong/aadl",
+    json = "Ping_Pong_top_impl_Instance.json",
+    packageName = Some("slang"),
+    platforms = ISZ(SeL4))
 
 
-  val isoletteDir: Os.Path = Os.home / "devel"/ "gumbo" / "isolette" / "aadl"
-  val isoletteJson: Os.Path = isoletteDir / ".slang" / "Isolette_isolette_single_sensor_Instance.json"
+  val building: Project = Project(
+    aadlDir = Os.home / "temp/x/building-control-art-scheduling/aadl",
+    json = "BuildingControl_BuildingControlDemo_i_Instance.json",
+    packageName = None(),
+    platforms = ISZ(JVM))
 
-  val buildingDir: Os.Path = Os.home / "temp/x/building-control-art-scheduling/aadl"
-  val buildingJson: Os.Path = buildingDir / ".slang/BuildingControl_BuildingControlDemo_i_Instance.json"
+  val voter: Project = Project(
+    aadlDir = Os.home / "devel/gumbo/gumbo-models/voter/RedundantSensors_Bless",
+    json = "SensorSystem_redundant_sensors_impl_Instance.json",
+    packageName = None(),
+    platforms = ISZ(JVM))
 
-  val voterDir: Os.Path = Os.home / "devel/gumbo/gumbo-models/voter/RedundantSensors_Bless"
-  val voterJson: Os.Path = voterDir / ".slang/SensorSystem_redundant_sensors_impl_Instance.json"
+  val aeic2020_tc: Project = Project (
+    aadlDir = Os.home / "devel/aeic2002_tc_module/aadl",
+    json = "TemperatureControl_TempControlSystem_i_Instance.json",
+    packageName = None(),
+    platforms = ISZ(JVM))
 
-  val tc_module: Os.Path = Os.home / "devel/aeic2002_tc_module/aadl"
-  val tc_moduleJson: Os.Path = tc_module / ".slang/TemperatureControl_TempControlSystem_i_Instance.json"
+  val project: Project = pingpong
 
-
-  val aadlDir: Os.Path = tc_module
-  val json: Os.Path = tc_moduleJson
-
+  val aadlDir: Os.Path = project.aadlDir
   val rootDir: Os.Path = aadlDir.up / "hamr"
   val outputDir: Os.Path = rootDir / "slang"
   val slangOutputCDir: Os.Path = rootDir / "c"
   val camkesOutputDir: Os.Path = rootDir / "camkes"
 
-  val platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type] =
-    ISZ(Cli.SireumHamrCodegenHamrPlatform.Linux, Cli.SireumHamrCodegenHamrPlatform.SeL4)
-
   def o(platform: Cli.SireumHamrCodegenHamrPlatform.Type): Cli.SireumHamrCodegenOption = {
     return Cli.SireumHamrCodegenOption(
       help = "",
-      args = ISZ(json.value),
+      args = ISZ(project.jsonLoc.value),
       msgpack = F,
       verbose = T,
       platform = platform,
 
-      packageName = Some("t"),
+      packageName = project.packageName,
       noProyekIve = T,
       noEmbedArt = F,
       devicesAsThreads = F,
-      excludeComponentImpl = F,
+      excludeComponentImpl = T,
 
       bitWidth = 32,
       maxStringSize = 256,
@@ -63,13 +91,16 @@ object QuickRunner extends App{
 
       camkesOutputDir = Some(camkesOutputDir.value),
       camkesAuxCodeDirs = ISZ(),
-      aadlRootDir = Some(aadlDir.value),
+      aadlRootDir = Some(project.aadlDir.value),
 
       experimentalOptions = ISZ("PROCESS_BTS_NODES", "GENERATE_REFINEMENT_PROOF")
     )
   }
 
   override def main(args: ISZ[String]): Z = {
+    assert(project.aadlDir.exists)
+    assert(project.jsonLoc.exists)
+
     if(clearFiles) {
       ISZ(outputDir / "bin", outputDir / "src", outputDir / "build.sbt", outputDir / "build.sc", outputDir / "versions.properties").foreach(f => f.removeAll())
 
@@ -78,7 +109,7 @@ object QuickRunner extends App{
       camkesOutputDir.removeAll()
     }
 
-    for(p <- platforms) {
+    for(p <- project.platforms) {
       val exitCode = org.sireum.cli.HAMR.codeGen(o(p))
       if(exitCode != 0) {
         eprintln(s"Error while generating ${p} - ${exitCode}")
