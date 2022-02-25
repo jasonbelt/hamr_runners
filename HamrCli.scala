@@ -49,7 +49,7 @@ object HamrCli extends App {
           case _ => platform.name
         }
 
-        var projectArgs: ISZ[String] = ISZ(
+        var defaultProjectOptions: ISZ[String] = ISZ(
           "--output-dir", outputDir.value,
           "--output-c-dir", slangOutputCDir.value,
           "--camkes-output-dir", camkesOutputDir.value,
@@ -58,14 +58,19 @@ object HamrCli extends App {
         )
 
         if(project.packageName.nonEmpty) {
-          projectArgs = projectArgs :+ "--package-name" :+ project.packageName.get
+          defaultProjectOptions = defaultProjectOptions :+ "--package-name" :+ project.packageName.get
         }
 
         org.sireum.Sireum.run(ISZ[String]("hamr", "codegen") ++
-          projectArgs ++ project.options ++ defaultOptions :+ jsonLoc.value)
+          removeDuplicates(project.options, defaultProjectOptions ++ defaultOptions) :+ jsonLoc.value)
       }
     }
 
     return 0
+  }
+
+  def removeDuplicates(projectOptions: ISZ[String], defaultOptions: ISZ[String]): ISZ[String] = {
+    // TODO
+    return projectOptions ++ defaultOptions
   }
 }
