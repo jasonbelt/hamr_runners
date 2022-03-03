@@ -1,6 +1,6 @@
 // #Sireum
 
-package org.sireum.cli.hamr_runners.tccoe
+package org.sireum.cli.hamr_runners.hamr_case_examples.tool_ass_4
 
 import org.sireum._
 import org.sireum.cli.HAMR
@@ -205,7 +205,7 @@ import org.sireum.message.{Position, Reporter}
   }
 
   def getAadlArchDiagram(): Option[Os.Path] = {
-    val x = Os.path(o.aadlRootDir.get) / "diagrams" / "aadl-arch.svg"
+    val x = Os.path(o.aadlRootDir.get) / "diagrams" / "aadl-arch.png"
     if (x.exists) {
       return Some(x)
     } else {
@@ -761,14 +761,14 @@ object ReadmeGenerator {
 
   def getCamkesDir(symbolTable: SymbolTable): Os.Path = {
     val ret: String =
-      if(symbolTable.hasVM()) "camkes-arm-vm"
+      if(symbolTable.hasVM()) "camkes-vm-examples"
       else "camkes"
 
     return Os.home / "CASE" / ret
   }
 
   def getTranspileSel4Script(slangOutputDir: Os.Path): Os.Path = {
-    return slangOutputDir / "bin" / "transpile-sel4.sh"
+    return slangOutputDir / "bin" / "transpile-sel4.cmd"
   }
 
   def getRunCamkesScript(camkesOutputDir: Os.Path): Os.Path = {

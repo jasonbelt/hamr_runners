@@ -126,15 +126,6 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
     val runScript: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
     val cakeMlScript: Os.Path = transpileSel4.up / "compile-cakeml.sh"
-    val caseArmVmSetupScript: Os.Path = runScript.up / Os.path(PathUtil.CAMKES_ARM_VM_SCRIPT_PATH).name
-
-    val caseArmVmSetup: Option[ST] =
-      if (caseArmVmSetupScript.exists) {
-        Some(st"./${readmeDir.relativize(caseArmVmSetupScript)}")
-      }
-      else {
-        None()
-      }
 
     val cakeML: Option[ST] =
       if (cakeMlScript.exists) {
@@ -181,7 +172,6 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     val ret: ST =
       st"""${osireum}
           |```
-          |${caseArmVmSetup}
           |${cakeML}
           |${runCamkes}
           |```"""
