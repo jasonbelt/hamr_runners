@@ -1,13 +1,12 @@
 // #Sireum
 
-package org.sireum.cli.hamr_runners.hamr_case_examples.tool_ass_4
+package org.sireum.cli.hamr_runners.hamr_case_examples.tool_eval_4
 
 import org.sireum._
 import org.sireum.cli.HAMR
 import org.sireum.hamr.act.periodic.PeriodicUtil
-import org.sireum.hamr.act.templates.CakeMLTemplate
-import org.sireum.hamr.act.util.PathUtil
 import org.sireum.hamr.act.vm.VM_Template
+import org.sireum.hamr.codegen.common.properties.PropertyUtil
 import org.sireum.hamr.codegen.common.symbols.{AadlProcessor, AadlThread, SymbolTable}
 import org.sireum.hamr.codegen.common.util.{CodeGenConfig, ModelUtil}
 import org.sireum.hamr.codegen.common.{CommonUtil, StringUtil}
@@ -15,7 +14,7 @@ import org.sireum.hamr.ir
 import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 import org.sireum.message.{Position, Reporter}
 
-@record class ReadmeGenerator_ta4(o: Cli.SireumHamrCodegenOption, reporter: Reporter) {
+@record class ReadmeGenerator_te4(o: Cli.SireumHamrCodegenOption, reporter: Reporter) {
 
   val airFile: Os.Path = {
     val path = Os.path(o.args(0))
@@ -23,26 +22,26 @@ import org.sireum.message.{Position, Reporter}
     path
   }
 
-  val model: ir.Aadl = ReadmeGenerator.getModel(airFile, o.msgpack)
+  val model: ir.Aadl = ReadmeGenerator_te4.getModel(airFile, o.msgpack)
 
-  val symbolTable: SymbolTable = ReadmeGenerator.getSymbolTable(model, HAMR.toCodeGenOptions(o))
+  val symbolTable: SymbolTable = ReadmeGenerator_te4.getSymbolTable(model, HAMR.toCodeGenOptions(o))
 
   val camkesOutputDir: Os.Path = Os.path(o.camkesOutputDir.get)
   val slangOutputDir: Os.Path = Os.path(o.outputDir.get)
 
-  val OPT_CAKEML_ASSEMBLIES_PRESENT: String = s"-D${CakeMLTemplate.PREPROCESSOR_CAKEML_ASSEMBLIES_PRESENT}=ON"
+  val OPT_CAKEML_ASSEMBLIES_PRESENT: String = "-DCAKEML_ASSEMBLIES_PRESENT=ON"
   val OPT_BUILD_CROSSVM: String = s"-D${VM_Template.BUILD_CROSSVM}=ON"
 
   def build(): B = {
 
-    val run_camkes: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
+    val run_camkes: Os.Path = ReadmeGenerator_te4.getRunCamkesScript(camkesOutputDir)
 
     assert(run_camkes.exists, s"${run_camkes} not found")
 
     var continue: B = T
-    val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
+    val transpileSel4: Os.Path = ReadmeGenerator_te4.getTranspileSel4Script(slangOutputDir)
     if (transpileSel4.exists) {
-      continue = ReadmeGenerator.run(ISZ(transpileSel4.value), reporter)
+      continue = ReadmeGenerator_te4.run(ISZ(transpileSel4.value), reporter)
     }
 
     if (continue) {
@@ -52,19 +51,18 @@ import org.sireum.message.{Position, Reporter}
       if (symbolTable.hasCakeMLComponents()) {
         camkesOptions = camkesOptions :+ OPT_CAKEML_ASSEMBLIES_PRESENT
       }
-
       if (camkesOptions.nonEmpty) {
         args = args :+ "-o" :+ st"""${(camkesOptions, " ")}""".render
       }
 
-      continue = ReadmeGenerator.run(args, reporter)
+      continue = ReadmeGenerator_te4.run(args, reporter)
     }
 
     return continue
   }
 
   def simulate(timeout: Z): ST = {
-    val simulateScript: Os.Path = ReadmeGenerator.getCamkesSimulatePath(o, symbolTable)
+    val simulateScript: Os.Path = ReadmeGenerator_te4.getCamkesSimulatePath(o, symbolTable)
     assert(simulateScript.exists, s"${simulateScript} does not exist")
 
     println(s"Simulating for ${timeout / 1000} seconds")
@@ -75,9 +73,9 @@ import org.sireum.message.{Position, Reporter}
     cprint(F, results.out)
     cprint(T, results.err)
 
-    ReadmeGenerator.run(ISZ("pkill", "qemu"), reporter)
+    ReadmeGenerator_te4.run(ISZ("pkill", "qemu"), reporter)
 
-    val output = ReadmeGenerator.parseOutput(results.out)
+    val output = ReadmeGenerator_te4.parseOutput(results.out)
     assert(output.nonEmpty, "Expected output missing")
 
     return st"${output.get}"
@@ -123,8 +121,8 @@ import org.sireum.message.{Position, Reporter}
   def genRunInstructions(readmeDir: Os.Path,
                          osireumScript: Option[Os.Path]): ST = {
 
-    val transpileSel4: Os.Path = ReadmeGenerator.getTranspileSel4Script(slangOutputDir)
-    val runScript: Os.Path = ReadmeGenerator.getRunCamkesScript(camkesOutputDir)
+    val transpileSel4: Os.Path = ReadmeGenerator_te4.getTranspileSel4Script(slangOutputDir)
+    val runScript: Os.Path = ReadmeGenerator_te4.getRunCamkesScript(camkesOutputDir)
     val cakeMlScript: Os.Path = transpileSel4.up / "compile-cakeml.sh"
 
     val cakeML: Option[ST] =
@@ -136,8 +134,13 @@ import org.sireum.message.{Position, Reporter}
       }
 
     val transpile: Option[ST] =
-      if (transpileSel4.exists && osireumScript.isEmpty) {
-        Some(st"./${readmeDir.relativize(transpileSel4)}")
+      if (transpileSel4.exists) {
+        Some(st"""If you didn't configure HAMR's FMIDE plugin to run the transpiler automatically then run
+                 |```
+                 |./${readmeDir.relativize(transpileSel4)}
+                 |```
+                 |then
+                 |""")
       }
       else {
         None()
@@ -147,7 +150,6 @@ import org.sireum.message.{Position, Reporter}
     if (symbolTable.hasCakeMLComponents()) {
       camkesOptions = camkesOptions :+ OPT_CAKEML_ASSEMBLIES_PRESENT
     }
-
     val _camkesOptions: Option[ST] =
       if (camkesOptions.nonEmpty) Some(st"""-o "${(camkesOptions, ";")}" """)
       else None()
@@ -155,20 +157,8 @@ import org.sireum.message.{Position, Reporter}
     assert(runScript.exists, s"${runScript} not found")
     val runCamkes: ST = st"./${readmeDir.relativize(runScript)} ${_camkesOptions}-s"
 
-    //val osireum: Option[ST] =
-    //  if (osireumScript.nonEmpty) Some(st"./${readmeDir.relativize(osireumScript.get)}")
-    //  else None()
-
-    val osireum:ST =
-      st"""If you didn't configure HAMR's FMIDE plugin to run the transpiler automatically then run
-          |```
-          |./${readmeDir.relativize(transpileSel4)}
-          |```
-          |then
-          |"""
-
     val ret: ST =
-      st"""${osireum}
+      st"""${transpile}
           |```
           |${cakeML}
           |${runCamkes}
@@ -177,9 +167,9 @@ import org.sireum.message.{Position, Reporter}
   }
 
   def getCamkesArchDiagram(format: DotFormat.Type): Option[Os.Path] = {
-    val dot = ReadmeGenerator.getCamkesSimulatePath(o, symbolTable).up / "graph.dot"
+    val dot = ReadmeGenerator_te4.getCamkesSimulatePath(o, symbolTable).up / "graph.dot"
     val outputPath = Os.path(o.aadlRootDir.get) / "diagrams" / s"CAmkES-arch-${o.platform.string}.${format.string}"
-    ReadmeGenerator.renderDot(dot, outputPath, format, reporter)
+    ReadmeGenerator_te4.renderDot(dot, outputPath, format, reporter)
 
     if(outputPath.exists) {
       return Some(outputPath)
@@ -193,7 +183,7 @@ import org.sireum.message.{Position, Reporter}
     val dot = Os.path(o.camkesOutputDir.get) / "graph.dot"
     val outputPath = Os.path(o.aadlRootDir.get) / "diagrams" / s"CAmkES-HAMR-arch-${o.platform.string}.${format.string}"
     assert(dot.exists, s"${dot} does not exist")
-    ReadmeGenerator.renderDot(dot, outputPath, format, reporter)
+    ReadmeGenerator_te4.renderDot(dot, outputPath, format, reporter)
     if(outputPath.exists) {
       return Some(outputPath)
     } else {
@@ -240,7 +230,7 @@ import org.sireum.message.{Position, Reporter}
                              val tag: String,
                              content: ST) extends Level
 
-object ReadmeTemplate {
+object ReadmeTemplate_te4 {
 
   var existingReadmeContents: ops.StringOps = ops.StringOps("")
   var replaceExampleOutputSections: B = F
@@ -390,31 +380,55 @@ object ReadmeTemplate {
       var subs: ISZ[Level] = ISZ()
 
       val configuration: ST = {
-          def rel(o: String): ST = {
-            val f = Os.path(o)
-            assert(f.exists, f)
-            return st"""_&lt;example-dir&gt;_/${report.readmeDir.relativize(f).value}"""
+        def rel(o: String): ST = {
+          val f = Os.path(o)
+          assert(f.exists, f)
+          return st"""_&lt;example-dir&gt;_/${report.readmeDir.relativize(f).value}"""
+        }
+
+        val packageNameOption: Option[ST] =
+          if (report.options.packageName.nonEmpty) {
+            Some(st"| package-name | ${report.options.packageName.get} |")
           }
-          val packageNameOption: Option[ST] =
-            if(report.options.packageName.nonEmpty) { Some(st"| package-name | ${report.options.packageName.get} |")}
-            else { None() }
-
-          val sharedCStuff: Option[ST] = {
-            var content: ISZ[ST] = ISZ()
-            if(report.options.excludeComponentImpl) { content = content :+ st"|Exclude Slang Component Implementations|True/Checked|" }
-            content = content :+ st"|Bit Width|${report.options.bitWidth}|"
-            content = content :+ st"|Max Sequence Size|${report.options.maxArraySize}|"
-            content = content :+ st"|Max String Size|${report.options.maxStringSize}|"
-            content = content :+ st"|C Output Directory|${rel(report.options.slangOutputCDir.get)}|"
-            assert(report.options.slangAuxCodeDirs.isEmpty)
-
-            Some(st"${(content, "\n")}")
+          else {
+            None()
           }
 
-          val camkesStuff: Option[ST] = if(platform == Cli.SireumHamrCodegenHamrPlatform.SeL4) {
+        val slangStuff: Option[ST] = if (platform == Cli.SireumHamrCodegenHamrPlatform.SeL4) {
+          Some(
+            st"""Output Directory|${rel(report.options.outputDir.get)}|
+                |Base Package Name|${report.options.packageName.get}|""")
+        } else {
+          None()
+        }
+
+        val sharedCStuff: Option[ST] = if (platform == Cli.SireumHamrCodegenHamrPlatform.SeL4) {
+          var content: ISZ[ST] = ISZ()
+          if (report.options.excludeComponentImpl) {
+            content = content :+ st"|Exclude Slang Component Implementations|True/Checked|"
+          }
+          content = content :+ st"|Bit Width|${report.options.bitWidth}|"
+          content = content :+ st"|Max Sequence Size|${report.options.maxArraySize}|"
+          content = content :+ st"|Max String Size|${report.options.maxStringSize}|"
+          content = content :+ st"|C Output Directory|${rel(report.options.slangOutputCDir.get)}|"
+
+          assert(report.options.slangAuxCodeDirs.isEmpty)
+
+          Some(st"${(content, "\n")}")
+        } else {
+          None()
+        }
+
+        val camkesStuff: Option[ST] =
+          if(platform == Cli.SireumHamrCodegenHamrPlatform.SeL4 ||
+            platform == Cli.SireumHamrCodegenHamrPlatform.SeL4_TB ||
+            platform == Cli.SireumHamrCodegenHamrPlatform.SeL4_Only) {
             var content: ST = st"|seL4/CAmkES Output Directory|${rel(report.options.camkesOutputDir.get)}"
             Some(content)
-          } else { None() }
+          }
+          else {
+            None()
+          }
 
         val st = report.symbolTable.get
 
@@ -430,8 +444,7 @@ object ReadmeTemplate {
                |Option Name|Value |
                ||--|--|
                |Platform|${report.options.platform}|
-               |Output Directory|${rel(report.options.outputDir.get)}|
-               |Base Package Name|${report.options.packageName.get}|
+               |${slangStuff}
                |${sharedCStuff}
                |${camkesStuff}
                |
@@ -442,32 +455,28 @@ object ReadmeTemplate {
           if(report.runHamrScript.nonEmpty) {
 
             var cont = st""
-            val dialogcli = Os.home / "devel/case/case-loonwerks/TA5/tool-assessment-4/doc/dialog_cli.jpg"
-            assert(dialogcli.exists)
-            if(dialogcli.exists) {
-              val reportRel = report.readmeDir.relativize(report.runHamrScript.get)
-              val rel: Os.Path = report.readmeDir.relativize(dialogcli)
 
-              cont = st"""$cont
-                         |<details>
-                         |
-                         |<summary>Click for instructions on how to run HAMR Codegen via the command line</summary>
-                         |
-                         |The script [${reportRel}](${reportRel}) uses an experimental OSATE/FMIDE plugin we've developed that
-                         |allows you to run HAMR's OSATE/FMIDE plugin via the command line.  It has primarily been used/tested
-                         |when installed in OSATE (not FMIDE) and under Linux so may not work as expected in FMIDE or
-                         |under a different operating system. The script contains instructions on how to install the plugin.
-                         |
-                         |```
-                         |./$reportRel <path-to-FMIDE-executable>
-                         |```
-                         |
-                         |</details>"""
-              content =
-                st"""${content}
-                    |
-                    |${cont}"""
-            }
+            val reportRel = report.readmeDir.relativize(report.runHamrScript.get)
+
+            cont = st"""$cont
+                       |<details>
+                       |
+                       |<summary>Click for instructions on how to run HAMR Codegen via the command line</summary>
+                       |
+                       |The script [${reportRel}](${reportRel}) uses an experimental OSATE/FMIDE plugin we've developed that
+                       |allows you to run HAMR's OSATE/FMIDE plugin via the command line.  It has primarily been used/tested
+                       |when installed in OSATE (not FMIDE) and under Linux so may not work as expected in FMIDE or
+                       |under a different operating system. The script contains instructions on how to install the plugin.
+                       |
+                       |```
+                       |./$reportRel <path-to-FMIDE-executable>
+                       |```
+                       |
+                       |</details>"""
+            content =
+              st"""${content}
+                  |
+                  |${cont}"""
           }
           content
       }
@@ -485,14 +494,6 @@ object ReadmeTemplate {
           val suffix = s"${id}.c"
 
           platform match {
-            case Cli.SireumHamrCodegenHamrPlatform.Linux =>
-              val cdir = Os.path(report.options.slangOutputCDir.get) / "ext-c"
-              val suffix = s"${id}.c"
-              hackyFind(cdir, suffix) match {
-                case Some(p) =>
-                  locs = locs :+ createHyperLink(id, report.readmeDir.relativize(p).value)
-                case _ => halt(s" didn't find ${suffix} in ${cdir}")
-              }
             case Cli.SireumHamrCodegenHamrPlatform.SeL4 =>
               val cdir = report.options.slangOutputCDir.get
               val camkesDir = report.options.camkesOutputDir.get
@@ -514,7 +515,21 @@ object ReadmeTemplate {
                   case _ => halt(s" didn't find ${suffix} in $cdir")
                 }
               }
-            case _ => halt("NOOOO")
+            case Cli.SireumHamrCodegenHamrPlatform.SeL4_TB =>
+              val sourceText = PropertyUtil.getSourceText(t.component.properties)
+              assert(sourceText.size == 1, sourceText.size)
+
+              val loc = Os.path(report.options.aadlRootDir.get) / sourceText(0)
+              locs = locs :+ createHyperLink(id, report.readmeDir.relativize(loc).value)
+
+            case Cli.SireumHamrCodegenHamrPlatform.SeL4_Only =>
+              val sourceText = PropertyUtil.getSourceText(t.component.properties)
+              assert(sourceText.size == 1, sourceText.size)
+
+              val loc = Os.path(report.options.aadlRootDir.get) / sourceText(0)
+              locs = locs :+ createHyperLink(id, report.readmeDir.relativize(loc).value)
+
+            case x => halt(s"NOOOO $x")
           }
         }
 
@@ -654,6 +669,8 @@ object ReadmeTemplate {
           existingReadmeContents = ops.StringOps(newContent)
         } else {
           cprintln(T, s"didn't find end tag ${end}")
+          println(existingReadmeContents.s)
+          println()
         }
       } else {
         cprintln(T, s"Couldn't find tag ${start}")
@@ -720,7 +737,7 @@ object ReadmeTemplate {
   }
 }
 
-object ReadmeGenerator {
+object ReadmeGenerator_te4 {
   def run(args: ISZ[String], reporter: Reporter): B = {
     val results = Os.proc(args).console.runCheck()
     if(!results.ok) {
@@ -750,7 +767,7 @@ object ReadmeGenerator {
   }
 
   def getCamkesSimulatePath(o: Cli.SireumHamrCodegenOption, symbolTable: SymbolTable): Os.Path = {
-    val camkesPath: Os.Path = ReadmeGenerator.getCamkesDir(symbolTable)
+    val camkesPath: Os.Path = ReadmeGenerator_te4.getCamkesDir(symbolTable)
     assert(camkesPath.exists, s"${camkesPath} doesn't exist")
 
     val camkesOutputDir = Os.path(o.camkesOutputDir.get)
@@ -760,7 +777,7 @@ object ReadmeGenerator {
 
   def getCamkesDir(symbolTable: SymbolTable): Os.Path = {
     val ret: String =
-      if(symbolTable.hasVM()) "camkes-vm-examples"
+      if(symbolTable.hasVM()) "camkes-arm-vm"
       else "camkes"
 
     return Os.home / "CASE" / ret
