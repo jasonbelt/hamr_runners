@@ -459,7 +459,7 @@ object ReadmeTemplate {
                          |under a different operating system. The script contains instructions on how to install the plugin.
                          |
                          |```
-                         |./$reportRel
+                         |./$reportRel <path-to-FMIDE-executable>
                          |```
                          |
                          |</details>"""
