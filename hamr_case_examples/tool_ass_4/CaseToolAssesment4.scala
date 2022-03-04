@@ -78,23 +78,37 @@ object CaseToolAssesment4 extends App {
   )
 
   val vmProjects: ISZ[Project] = {
-    //val phase2: Project = {
-    //  val proj = gen("phase2", "hamr", ISZ(linux, sel4))
-    //  proj(options = proj.options.map(o => o(slangAuxCodeDirs = ISZ((proj.aadlDir / "c_libraries/CMASI").value, (proj.aadlDir / "c_libraries/hexdump").value, (proj.aadlDir / "c_libraries/dummy_serial_server").value))))
-    //}
 
     ISZ(
-      genVM (F,"vm/test_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4), ISZ()),
+      genVM (F,"vm/test_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4), ISZ(
+        "hamr/camkes/components/VM/apps/vmconsumer/vmconsumer.c",
+        "hamr/c/ext-c/consumer_t_i_consumer_consumer/consumer_t_i_consumer_consumer.c",
+        "hamr/c/ext-c/producer_t_i_producer_producer/producer_t_i_producer_producer.c")),
 
-      genVM (F,"vm/test_event_data_port_periodic_domains_VM/both_vm", "base", ISZ(sel4), ISZ()),
-      genVM (F,"vm/test_event_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4), ISZ()),
-      genVM (F,"vm/test_event_data_port_periodic_domains_VM/sender_vm", "base", ISZ(sel4), ISZ()),
+      genVM (F,"vm/test_event_data_port_periodic_domains_VM/both_vm", "base", ISZ(sel4), ISZ(
+        "hamr/camkes/components/VM/apps",
+        "hamr/c/ext-c/consumer_t_i_consumer_consumer/consumer_t_i_consumer_consumer.c",
+        "hamr/c/ext-c/producer_t_i_producer_producer/producer_t_i_producer_producer.c"
+      )),
+
+      genVM (F,"vm/test_event_data_port_periodic_domains_VM/receiver_vm", "base", ISZ(sel4), ISZ(
+        "hamr/c/ext-c/consumer_t_i_consumer_consumer/consumer_t_i_consumer_consumer.c",
+        "hamr/c/ext-c/producer_t_i_producer_producer/producer_t_i_producer_producer.c",
+        "hamr/camkes/components/VM/apps"
+      )),
+
+      genVM (F,"vm/test_event_data_port_periodic_domains_VM/sender_vm", "base", ISZ(linux, sel4), ISZ(
+        "hamr/c/ext-c/consumer_t_i_consumer_consumer/consumer_t_i_consumer_consumer.c",
+        "hamr/c/ext-c/producer_t_i_producer_producer/producer_t_i_producer_producer.c",
+        "hamr/camkes/components/VM/apps/vmproducer"
+      )),
     )
   }
 
-  val tests: ISZ[Project] = nonVmProjects
+  //val tests: ISZ[Project] = nonVmProjects
   //val tests: ISZ[Project] = nonVmProjects ++ vmProjects
   //val tests: ISZ[Project] = vmProjects
+  val tests: ISZ[Project] = ISZ()
 
 
   def run(): Unit = {
@@ -214,6 +228,9 @@ object CaseToolAssesment4 extends App {
     if(reporter.hasError) {
       eprintln(s"Reporter Errors:")
       reporter.printMessages()
+    } else {
+      val toc = Os.home / "CASE/Sireum/cli/jvm/src/main/scala/org/sireum/cli/hamr_runners/slash/toc/ghtoc/gh-toc.cmd"
+      proc"${toc.value} --start-at-level 2 ${case_tool_evaluation_dir.value}".console.runCheck()
     }
   }
 

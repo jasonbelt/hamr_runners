@@ -5,7 +5,9 @@ package org.sireum.cli.hamr_runners.hamr_case_examples.tool_ass_4
 import org.sireum._
 import org.sireum.cli.HAMR
 import org.sireum.hamr.act.periodic.PeriodicUtil
+import org.sireum.hamr.act.templates.CakeMLTemplate
 import org.sireum.hamr.act.util.PathUtil
+import org.sireum.hamr.act.vm.VM_Template
 import org.sireum.hamr.codegen.common.symbols.{AadlProcessor, AadlThread, SymbolTable}
 import org.sireum.hamr.codegen.common.util.{CodeGenConfig, ModelUtil}
 import org.sireum.hamr.codegen.common.{CommonUtil, StringUtil}
@@ -28,8 +30,8 @@ import org.sireum.message.{Position, Reporter}
   val camkesOutputDir: Os.Path = Os.path(o.camkesOutputDir.get)
   val slangOutputDir: Os.Path = Os.path(o.outputDir.get)
 
-  val OPT_CAKEML_ASSEMBLIES_PRESENT: String = "-DCAKEML_ASSEMBLIES_PRESENT=ON"
-  val OPT_USE_PRECONFIGURED_ROOTFS: String = "-DUSE_PRECONFIGURED_ROOTFS=ON"
+  val OPT_CAKEML_ASSEMBLIES_PRESENT: String = s"-D${CakeMLTemplate.PREPROCESSOR_CAKEML_ASSEMBLIES_PRESENT}=ON"
+  val OPT_BUILD_CROSSVM: String = s"-D${VM_Template.BUILD_CROSSVM}=ON"
 
   def build(): B = {
 
@@ -50,9 +52,7 @@ import org.sireum.message.{Position, Reporter}
       if (symbolTable.hasCakeMLComponents()) {
         camkesOptions = camkesOptions :+ OPT_CAKEML_ASSEMBLIES_PRESENT
       }
-      if (symbolTable.hasVM()) {
-        camkesOptions = camkesOptions :+ OPT_USE_PRECONFIGURED_ROOTFS
-      }
+
       if (camkesOptions.nonEmpty) {
         args = args :+ "-o" :+ st"""${(camkesOptions, " ")}""".render
       }
@@ -147,9 +147,7 @@ import org.sireum.message.{Position, Reporter}
     if (symbolTable.hasCakeMLComponents()) {
       camkesOptions = camkesOptions :+ OPT_CAKEML_ASSEMBLIES_PRESENT
     }
-    if (symbolTable.hasVM()) {
-      camkesOptions = camkesOptions :+ OPT_USE_PRECONFIGURED_ROOTFS
-    }
+
     val _camkesOptions: Option[ST] =
       if (camkesOptions.nonEmpty) Some(st"""-o "${(camkesOptions, ";")}" """)
       else None()
