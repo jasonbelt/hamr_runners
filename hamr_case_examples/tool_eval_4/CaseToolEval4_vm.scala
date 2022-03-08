@@ -46,29 +46,30 @@ object CaseToolEval4_vm extends App {
   }
 
   val nonVmProjects: ISZ[Project] = ISZ(
+    gen("simple_uav", "UAV_UAV_Impl_Instance.json", ISZ(sel4_tb, sel4_only)),
 
-    //gen("simple_uav", "UAV_UAV_Impl_Instance.json", ISZ(sel4_tb, sel4_only)),
-
-    //gen("test_data_port", "test_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
-    //gen("test_data_port_periodic", "test_data_port_periodic_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
-    //gen("test_data_port_periodic_fan_out", "test_data_port_periodic_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
-    //gen("test_event_data_port", "test_event_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
-    //gen("test_event_data_port_fan_out", "test_event_data_port_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
+    gen("test_data_port", "test_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
+    gen("test_data_port_periodic", "test_data_port_periodic_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
+    gen("test_data_port_periodic_fan_out", "test_data_port_periodic_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
+    gen("test_event_data_port", "test_event_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
+    gen("test_event_data_port_fan_out", "test_event_data_port_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
 
 
-    //gen("test_event_port", "test_event_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
+    gen("test_event_port", "test_event_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
 
-    //gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
+    gen("test_event_port_fan_out", "test_event_port_fan_out_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
     gen("test_data_port_periodic_domains", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4), ISZ(
       "hamr_seL4/c/ext-c/destination_thread_impl_destination_process_component_destination_thread_component/destination_thread_impl_destination_process_component_destination_thread_component.c",
       "hamr_seL4/c/ext-c/source_thread_impl_source_process_component_source_thread_component/source_thread_impl_source_process_component_source_thread_component.c"
     )),
-    /*
-    gen("test_event_data_port_periodic_domains", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
-
-    gen("test_event_port_periodic_domains", "test_event_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4)),
-
- */
+    gen("test_event_data_port_periodic_domains", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4), ISZ(
+      "hamr_seL4/c/ext-c/emitter_t_impl_src_process_src_thread/emitter_t_impl_src_process_src_thread.c",
+      "hamr_seL4/c/ext-c/consumer_t_impl_dst_process_dst_thread/consumer_t_impl_dst_process_dst_thread.c"
+    )),
+    gen("test_event_port_periodic_domains", "test_event_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_tb, sel4_only, sel4), ISZ(
+      "hamr_seL4/c/ext-c/consumer_t_impl_dst_process_dst_thread/consumer_t_impl_dst_process_dst_thread.c",
+      "hamr_seL4/c/ext-c/emitter_t_impl_src_process_src_thread/emitter_t_impl_src_process_src_thread.c"
+    )),
   )
 
   val vmProjects: ISZ[Project] = ISZ(
