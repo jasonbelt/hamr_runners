@@ -46,7 +46,7 @@ object CaseToolEval4_vm extends App {
   }
 
   val nonVmProjects: ISZ[Project] = ISZ(
-    gen("simple_uav", "UAV_UAV_Impl_Instance.json", ISZ(sel4_tb, sel4_only)),
+    gen("simple_uav", "UAV_UAV_Impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
 
     gen("test_data_port", "test_data_port_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
     gen("test_data_port_periodic", "test_data_port_periodic_top_impl_Instance.json", ISZ(sel4_tb, sel4_only), ISZ()),
@@ -74,27 +74,43 @@ object CaseToolEval4_vm extends App {
 
   val vmProjects: ISZ[Project] = ISZ(
     // VMs
-    //genFull("test_data_port_periodic_domains_VM/receiver_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
-    //genFull("test_data_port_periodic_domains_VM/sender_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
+    // DATA PORTS
+    //genFull("test_data_port_periodic_domains_VM/receiver_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
+    //  "hamr_seL4_Only/camkes/components/VM/apps/vmdst_process",
 
+    //  "hamr_seL4/camkes/components/VM/apps",
+    //  "hamr_seL4/c/ext-c/emitter_t_impl_src_process_src_thread/emitter_t_impl_src_process_src_thread.c"
+    //)),
+    //genFull("test_data_port_periodic_domains_VM/sender_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only),
+      // note seL4 is not supported as the sender being in a VM means the native receiver's data port will not be
+      // initialized when it enter's it's compute phase and therefore will crash with UNEXPECTED TYPE: 0
+    //  F, vmTimeout, ISZ(
+    //  "hamr_seL4_Only/camkes/components/VM/apps/vmsrc_process", // entire app directory
+    //)),
+    genFull("test_data_port_periodic_domains_VM/both_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
+
+    )),
+
+    // EVENT DATA PORTS
     //genFull("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
     //genFull("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
+
 
     // VMs with Kent's connector
     //genFull("test_event_data_port_periodic_domains_VMx/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only), T, vmTimeout),
 
 
     // VMs which can't use init trick
-    genFull("test_data_port_periodic_domains_VM/both_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout, ISZ()),
+    //genFull("test_data_port_periodic_domains_VM/both_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout, ISZ()),
     //TODO//genFull("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
 
     // VMs which can't use init trick -- using Kent's connector
     //TODO//genFull("test_event_data_port_periodic_domains_VMx/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only), T, vmTimeout)
   )
 
-  val tests: ISZ[Project] = nonVmProjects
+  //val tests: ISZ[Project] = nonVmProjects
   //val tests: ISZ[Project] = nonVmProjects ++ vmProjects
-  //val tests: ISZ[Project] = vmProjects
+  val tests: ISZ[Project] = vmProjects
 
   def isCamkesProject(platform: SireumHamrCodegenHamrPlatform.Type): Boolean = {
     val ret: B = platform match {
