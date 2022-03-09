@@ -75,26 +75,32 @@ object CaseToolEval4_vm extends App {
   val vmProjects: ISZ[Project] = ISZ(
     // VMs
     // DATA PORTS
-    //genFull("test_data_port_periodic_domains_VM/receiver_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
-    //  "hamr_seL4_Only/camkes/components/VM/apps/vmdst_process",
+    genFull("test_data_port_periodic_domains_VM/receiver_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
+      "hamr_seL4_Only/camkes/components/VM/apps/vmdst_process",
 
-    //  "hamr_seL4/camkes/components/VM/apps",
-    //  "hamr_seL4/c/ext-c/emitter_t_impl_src_process_src_thread/emitter_t_impl_src_process_src_thread.c"
-    //)),
-    //genFull("test_data_port_periodic_domains_VM/sender_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only),
+      "hamr_seL4/camkes/components/VM/apps",
+      "hamr_seL4/c/ext-c/emitter_t_impl_src_process_src_thread/emitter_t_impl_src_process_src_thread.c"
+    )),
+    genFull("test_data_port_periodic_domains_VM/sender_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only),
       // note seL4 is not supported as the sender being in a VM means the native receiver's data port will not be
       // initialized when it enter's it's compute phase and therefore will crash with UNEXPECTED TYPE: 0
-    //  F, vmTimeout, ISZ(
-    //  "hamr_seL4_Only/camkes/components/VM/apps/vmsrc_process", // entire app directory
-    //)),
+      F, vmTimeout, ISZ(
+      "hamr_seL4_Only/camkes/components/VM/apps/vmsrc_process", // entire app directory
+    )),
     genFull("test_data_port_periodic_domains_VM/both_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
-
+      "hamr_seL4_Only/camkes/components/VM/apps"
     )),
 
     // EVENT DATA PORTS
-    //genFull("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
-    //genFull("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), T, vmTimeout),
-
+    genFull("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
+      "hamr_seL4_Only/camkes/components/VM/apps/vmdst_process"
+    )),
+    genFull("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
+      "hamr_seL4_Only/camkes/components/VM/apps/vmsrc_process"
+    )),
+    genFull("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
+      "hamr_seL4_Only/camkes/components/VM/apps"
+    )),
 
     // VMs with Kent's connector
     //genFull("test_event_data_port_periodic_domains_VMx/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only), T, vmTimeout),
