@@ -87,19 +87,32 @@ object CaseToolEval4_vm extends App {
       F, vmTimeout, ISZ(
       "hamr_seL4_Only/camkes/components/VM/apps/vmsrc_process", // entire app directory
     )),
+
     genFull("test_data_port_periodic_domains_VM/both_vm", "test_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
-      "hamr_seL4_Only/camkes/components/VM/apps"
+      "hamr_seL4_Only/camkes/components/VM/apps",
+      "hamr_seL4/camkes/components/VM/apps"
     )),
+
 
     // EVENT DATA PORTS
     genFull("test_event_data_port_periodic_domains_VM/receiver_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
-      "hamr_seL4_Only/camkes/components/VM/apps/vmdst_process"
+      "hamr_seL4_Only/camkes/components/VM/apps/vmdst_process",
+
+      "hamr_seL4/c/ext-c/emitter_t_impl_src_process_src_thread/emitter_t_impl_src_process_src_thread.c",
+      "hamr_seL4/camkes/components/VM/apps/vmdst_process"
     )),
+
     genFull("test_event_data_port_periodic_domains_VM/sender_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
-      "hamr_seL4_Only/camkes/components/VM/apps/vmsrc_process"
+      "hamr_seL4_Only/camkes/components/VM/apps/vmsrc_process",
+
+      "hamr_seL4/c/ext-c/consumer_t_impl_dst_process_dst_thread/consumer_t_impl_dst_process_dst_thread.c",
+     "hamr_seL4/camkes/components/VM/apps/vmsrc_process",
     )),
+
     genFull("test_event_data_port_periodic_domains_VM/both_vm", "test_event_data_port_periodic_domains_top_impl_Instance.json", ISZ(sel4_only, sel4), F, vmTimeout, ISZ(
-      "hamr_seL4_Only/camkes/components/VM/apps"
+      "hamr_seL4_Only/camkes/components/VM/apps",
+
+      "hamr_seL4/camkes/components/VM/apps"
     )),
 
     // VMs with Kent's connector
