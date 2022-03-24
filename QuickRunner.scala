@@ -58,7 +58,14 @@ object QuickRunner extends App {
     packageName = None(),
     platforms = ISZ(JVM))
 
-  val project: Project = pingpong
+  val redundantSensors: Project = Project (
+    aadlDir = Os.home / "devel/sirfur/sirfur_models/redundant_sensors/aadl/",
+    json = "TestHarnessSystem_TestHarness_triplex_Instance.json",
+    packageName = Some("t"),
+    platforms = ISZ(JVM)
+  )
+
+  val project: Project = redundantSensors
 
   val aadlDir: Os.Path = project.aadlDir
   val rootDir: Os.Path = aadlDir.up / "hamr"
