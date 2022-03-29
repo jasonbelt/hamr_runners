@@ -5,6 +5,7 @@ import org.sireum._
 import Cli.SireumHamrCodegenHamrPlatform._
 
 @datatype class Project (val aadlDir : Os.Path,
+                         val outputDir: Option[Os.Path],
                          val json: String,
                          val packageName: Option[String],
                          val platforms: ISZ[Cli.SireumHamrCodegenHamrPlatform.Type]) {
@@ -17,24 +18,28 @@ object QuickRunner extends App {
 
   val mult_thread_vm: Project = Project(
     aadlDir = Os.home / "CASE/Sireum/hamr/codegen/jvm/src/test/scala/models/CodeGenTest_Base/vm-with-multiple-threads/aadl",
+    outputDir = None(),
     json = "model_m_impl_Instance.json",
     packageName = None(),
     platforms = ISZ(SeL4))
 
   val hardened: Project = Project (
     aadlDir = Os.home / "devel/case/case-loonwerks/CASE_Simple_Example_V4/Hardened",
+    outputDir = None(),
     json = "MC_MissionComputer_Impl_Instance.json",
     packageName = None(),
     platforms = ISZ(JVM))
 
   val isolette: Project = Project (
     aadlDir = Os.home / "devel"/ "gumbo" / "isolette" / "aadl",
+    outputDir = None(),
     json = "Isolette_isolette_single_sensor_Instance.json",
     packageName = Some("isolette"),
     platforms = ISZ(SeL4))
 
   val pingpong: Project = Project (
     aadlDir = Os.home / "devel/camkes-vm/camkes-ping-pong/ping-pong/aadl",
+    outputDir = None(),
     json = "Ping_Pong_top_impl_Instance.json",
     packageName = Some("slang"),
     platforms = ISZ(SeL4))
@@ -42,33 +47,45 @@ object QuickRunner extends App {
 
   val building: Project = Project(
     aadlDir = Os.home / "temp/x/building-control-art-scheduling/aadl",
+    outputDir = None(),
     json = "BuildingControl_BuildingControlDemo_i_Instance.json",
     packageName = None(),
     platforms = ISZ(JVM))
 
   val voter: Project = Project(
     aadlDir = Os.home / "devel/gumbo/gumbo-models/voter/RedundantSensors_Bless",
+    outputDir = None(),
     json = "SensorSystem_redundant_sensors_impl_Instance.json",
     packageName = None(),
     platforms = ISZ(JVM))
 
   val aeic2020_tc: Project = Project (
     aadlDir = Os.home / "devel/aeic2002_tc_module/aadl",
+    outputDir = None(),
     json = "TemperatureControl_TempControlSystem_i_Instance.json",
     packageName = None(),
     platforms = ISZ(JVM))
 
   val redundantSensors: Project = Project (
     aadlDir = Os.home / "devel/sirfur/sirfur_models/redundant_sensors/aadl/",
+    outputDir = None(),
     json = "TestHarnessSystem_TestHarness_triplex_Instance.json",
     packageName = Some("t"),
     platforms = ISZ(JVM)
   )
 
-  val project: Project = redundantSensors
+  val initialize_entrypoint: Project = Project (
+    aadlDir = Os.home / "devel/sireum/osate-plugin/org.sireum.aadl.osate.tests/projects/org/sireum/aadl/osate/tests/gumbo/initialize-entrypoint",
+    outputDir = Some(Os.home / "devel/sireum/osate-plugin/org.sireum.aadl.osate.tests/projects/org/sireum/aadl/osate/tests/gumbo/initialize-entrypoint/hamr"),
+    json = "Initialize_Entrypoint_s_impl_Instance.json",
+    packageName = Some("t"),
+    platforms = ISZ(JVM)
+  )
+
+  val project: Project = initialize_entrypoint
 
   val aadlDir: Os.Path = project.aadlDir
-  val rootDir: Os.Path = aadlDir.up / "hamr"
+  val rootDir: Os.Path = if(project.outputDir.nonEmpty) project.outputDir.get else aadlDir.up / "hamr"
   val outputDir: Os.Path = rootDir / "slang"
   val slangOutputCDir: Os.Path = rootDir / "c"
   val camkesOutputDir: Os.Path = rootDir / "camkes"
