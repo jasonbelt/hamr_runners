@@ -21,15 +21,25 @@ exit /B %errorlevel%
 
 import org.sireum._
 
+
+@datatype class Feature(name: String,
+                        id: String,
+                        updateSite: String,
+                        localUpdateSite: Option[String])
+
+
 val localUpdateSites: B = ops.ISZOps(Os.cliArgs).contains("local")
 
 val sireumHome = Os.path(Os.env("SIREUM_HOME").get)
 
-val osateLoc = Os.home / ".sireum" / "phantom" / "osate-2.9.2-vfinal" / "osate"
+val osateLoc = Os.home / ".sireum" / "phantom" / "osate-2.10.2-vfinal" / "osate"
 val fmideLoc = sireumHome / "bin" / "linux" / "fmide" / "fmide"
 
 val remoteUpdateSite = "https://raw.githubusercontent.com/sireum/osate-update-site/master"
 val localUpdateSite = "file:///home/vagrant/devel/sireum/osate-update-site"
+
+val remoteGumboUpdateSite = "https://raw.githubusercontent.com/sireum/aadl-gumbo-update-site/master"
+val localGumboUpdateSite = "file:///home/vagrant/devel/sireum/aadl-gumbo-update-site"
 
 val osateExe: Os.Path = if(ops.ISZOps(Os.cliArgs).contains("fmide")) fmideLoc else osateLoc
 
@@ -57,12 +67,30 @@ val cli = Feature(
   localUpdateSite = Some(localUpdateSite),
   id = "org.sireum.aadl.osate.cli.feature.feature.group")
 
-val order = ISZ(base, hamr, cli)
+val gumbo = Feature(
+  name = "gumbo",
+  updateSite = remoteGumboUpdateSite,
+  localUpdateSite = Some(localGumboUpdateSite),
+  id = "org.sireum.aadl.gumbo.feature.feature.group")
 
-for(o <- order) {
+val gumbo2air = Feature(
+  name = "gumbo2air",
+  updateSite = remoteGumboUpdateSite,
+  localUpdateSite = Some(localGumboUpdateSite),
+  id = "org.sireum.aadl.osate.gumbo2air.feature.feature.group")
+
+
+val order = ISZ(base, hamr, cli, gumbo, gumbo2air)
+
+for(o <- ops.ISZOps(order).reverse) {
   if (isInstalled(o.id, osateExe)) {
     uninstallPlugin(o, osateExe)
   }
+}
+
+gc(osateExe)
+
+for(o <- order) {
   installPlugin(o, osateExe)
 }
 
@@ -71,12 +99,10 @@ println(s"${osateExe}&")
 
 
 
-
-
-@datatype class Feature(name: String,
-                        id: String,
-                        updateSite: String,
-                        localUpdateSite: Option[String])
+def gc(_osateExe: Os.Path): Unit = {
+  println("Garbage collecting ...")
+  proc"${_osateExe.string} -nosplash -console -consoleLog -application org.eclipse.equinox.p2.garbagecollector.application -profile DefaultProfile".at(_osateExe.up).runCheck()
+}
 
 
 def isInstalled(featureId: String, _osateExe: Os.Path): B = {
