@@ -3,6 +3,7 @@ package org.sireum.cli.hamr_runners
 
 import org.sireum._
 import Cli.SireumHamrCodegenHamrPlatform._
+import org.sireum.message.Reporter
 
 @datatype class Project (val aadlDir : Os.Path,
                          val outputDir: Option[Os.Path],
@@ -103,6 +104,7 @@ object QuickRunner extends App {
       noEmbedArt = F,
       devicesAsThreads = F,
       excludeComponentImpl = T,
+      genSbtMill = F,
 
       bitWidth = 32,
       maxStringSize = 256,
@@ -134,7 +136,8 @@ object QuickRunner extends App {
     }
 
     for(p <- project.platforms) {
-      val exitCode = org.sireum.cli.HAMR.codeGen(o(p))
+      val reporter = Reporter.create
+      val exitCode = org.sireum.cli.HAMR.codeGen(o(p), reporter)
       if(exitCode != 0) {
         eprintln(s"Error while generating ${p} - ${exitCode}")
       } else {

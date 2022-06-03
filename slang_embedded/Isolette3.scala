@@ -214,6 +214,7 @@ object Isolette3 extends App {
           noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = F,
+          genSbtMill = T,
 
           bitWidth = 32,
           maxStringSize = 256,
@@ -240,7 +241,7 @@ object Isolette3 extends App {
           val _result = Os.procs(runHamrScript.canon.value).console.runCheck()
           _result.exitCode
         } else {
-          Z(org.sireum.cli.HAMR.codeGen(o).toInt)
+          Z(org.sireum.cli.HAMR.codeGen(o, reporter).toInt)
         }
 
         if(result != 0) {

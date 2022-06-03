@@ -2,6 +2,7 @@ package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
 import org.sireum.cli._
+import org.sireum.message.Reporter
 
 object CASEToolEval3 {
 
@@ -42,7 +43,8 @@ object CASEToolEval3 {
           aadlRootDir = Some(projectDir.value)
         )
 
-        cli.HAMR.codeGen(o)
+        val reporter = Reporter.create
+        cli.HAMR.codeGen(o, reporter)
       }
     }
   }

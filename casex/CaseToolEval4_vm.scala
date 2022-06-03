@@ -219,6 +219,7 @@ object CaseToolEval4_vm extends App {
           noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = T,
+          genSbtMill = T,
 
           bitWidth = 32,
           maxStringSize = 256,
@@ -245,7 +246,7 @@ object CaseToolEval4_vm extends App {
             val results = Os.procs(runHamrScript.canon.value).console.runCheck()
             results.exitCode
           }
-          else { Z(org.sireum.cli.HAMR.codeGen(o).toInt) }
+          else { Z(org.sireum.cli.HAMR.codeGen(o, reporter).toInt) }
 
         if(exitCode != 0) {
           halt(s"${project.simpleName} completed with ${exitCode}")

@@ -2,6 +2,7 @@ package org.sireum.cli.hamr_runners.slang_embedded
 
 import org.sireum._
 import org.sireum.cli.hamr_runners.Util
+import org.sireum.message.Reporter
 
 object Isolette {
 
@@ -31,7 +32,8 @@ object Isolette {
     val appsDir = Os.path("/home/sireum/devel/sel4/home/camkes-project/projects/camkes/apps")
     
     def run(o: Cli.SireumHamrCodegenOption): Int = {
-      val ret = cli.HAMR.codeGen(o)
+      val reporter = Reporter.create
+      val ret = cli.HAMR.codeGen(o, reporter)
       return ret.toInt
     }
         

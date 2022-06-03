@@ -2,6 +2,7 @@ package org.sireum.cli.hamr_runners.gumbo
 
 import org.sireum.cli.hamr_runners.Util
 import org.sireum.cli.hamr_runners.slang_embedded.Project
+import org.sireum.message.Reporter
 import org.sireum.{Cli, F, ISZ, None, Option, Os, Some, T, cli}
 
 object BTSBuildingControl {
@@ -77,7 +78,8 @@ object BTSBuildingControl {
           experimentalOptions = ISZ("PROCESS_BTS_NODES")
         )
 
-        cli.HAMR.codeGen(o)
+        val reporter = Reporter.create
+        cli.HAMR.codeGen(o, reporter)
       }
     }
   }

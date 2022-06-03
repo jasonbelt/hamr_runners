@@ -1,6 +1,7 @@
 package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
+import org.sireum.message.Reporter
 
 object CaseTool_Junaid {
 
@@ -74,7 +75,8 @@ object CaseTool_Junaid {
           aadlRootDir = Some(projectDir.value)
         )
 
-        cli.HAMR.codeGen(o)
+        val reporter = Reporter.create
+        cli.HAMR.codeGen(o, reporter)
 
         if(camkesOutputDir.nonEmpty) {
 

@@ -3,6 +3,7 @@ package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
 import org.sireum.cli.hamr_runners.DotFormat
+import org.sireum.message.Reporter
 
 object CASE_phase2_june extends App {
 
@@ -114,7 +115,8 @@ object CASE_phase2_june extends App {
           aadlRootDir = Some(project.aadlDir.value)
         )
 
-        cli.HAMR.codeGen(o)
+        val reporter = Reporter.create
+        cli.HAMR.codeGen(o, reporter)
 
 
         val _dot: Option[Os.Path] = camkesOutputDir.map(m => m / "graph.dot")

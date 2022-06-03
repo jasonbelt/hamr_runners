@@ -15,6 +15,8 @@ object Util {
     noProyekIve = F,
     noEmbedArt = F,
     devicesAsThreads = F,
+    genSbtMill = T,
+
     slangAuxCodeDirs = ISZ(),
     slangOutputCDir = None(),
     excludeComponentImpl = T,

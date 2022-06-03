@@ -75,6 +75,7 @@ object Isolette2 extends App {
           noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = F,
+          genSbtMill = T,
 
           bitWidth = 32,
           maxStringSize = 250,
@@ -92,7 +93,7 @@ object Isolette2 extends App {
           experimentalOptions = experimentalOptions
         )
 
-        org.sireum.cli.HAMR.codeGen(o)
+        org.sireum.cli.HAMR.codeGen(o, reporter)
 
         if(shouldReport && isSel4(platform)) {
           val gen = ReadmeGenerator(o, reporter)

@@ -2,6 +2,7 @@ package org.sireum.cli.hamr_runners.slang_embedded
 
 import org.sireum._
 import org.sireum.cli.hamr_runners.Util
+import org.sireum.message.Reporter
 
 case class Project (name: String,
                     json: String,
@@ -81,7 +82,8 @@ object BuildingControlRunner {
           aadlRootDir = Some(aadlDir.value),
         )
 
-        cli.HAMR.codeGen(o)
+        val reporter = Reporter.create
+        cli.HAMR.codeGen(o, reporter)
       }
     }
   }

@@ -3,6 +3,7 @@ package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
 import org.sireum.Cli.SireumHamrCodegenHamrPlatform
+import org.sireum.message.Reporter
 
 object QuickRunner extends App{
 
@@ -25,6 +26,7 @@ object QuickRunner extends App{
     noEmbedArt = F,
     devicesAsThreads = F,
     excludeComponentImpl = T,
+    genSbtMill = T,
 
     bitWidth = 32,
     maxStringSize = 256,
@@ -43,7 +45,8 @@ object QuickRunner extends App{
   )
 
   override def main(args: ISZ[String]): Z = {
-    val exitCode = org.sireum.cli.HAMR.codeGen(o)
+    val reporter = Reporter.create
+    val exitCode = org.sireum.cli.HAMR.codeGen(o, reporter)
 
     println(s"${aadlDir.name} completed with ${exitCode}")
 

@@ -1,6 +1,7 @@
 package org.sireum.cli.hamr_runners.casex
 
 import org.sireum._
+import org.sireum.message.Reporter
 
 object PFC_splat{
 
@@ -30,7 +31,8 @@ object PFC_splat{
     val appsDir = Os.path("/home/sireum/devel/sel4/home/camkes-project/projects/camkes/apps")
 
     def run(o: Cli.SireumHamrCodegenOption): Int = {
-      val ret = cli.HAMR.codeGen(o)
+      val reporter = Reporter.create
+      val ret = cli.HAMR.codeGen(o, reporter)
       return ret.toInt
     }
 

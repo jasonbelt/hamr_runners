@@ -315,6 +315,7 @@ object Tccoe22 extends App {
           noEmbedArt = F,
           devicesAsThreads = project.devicesAsThreads,
           excludeComponentImpl = project.excludeComponentImplementation,
+          genSbtMill = T,
 
           bitWidth = 32,
           maxStringSize = 256,
@@ -334,7 +335,7 @@ object Tccoe22 extends App {
 
         //removeResources(slangDir)
 
-        org.sireum.cli.HAMR.codeGen(o)
+        org.sireum.cli.HAMR.codeGen(o, reporter)
 
         if(shouldReport) {
           val gen = TccoeReadmeGenerator(o, project, reporter)

@@ -78,6 +78,7 @@ object Attestation_Gate extends App {
           noEmbedArt = F,
           devicesAsThreads = F,
           excludeComponentImpl = T,
+          genSbtMill = T,
 
           bitWidth = 32,
           maxStringSize = 256,
@@ -94,7 +95,7 @@ object Attestation_Gate extends App {
           experimentalOptions = ISZ()
         )
 
-        org.sireum.cli.HAMR.codeGen(o)
+        org.sireum.cli.HAMR.codeGen(o, reporter)
 
         if(shouldReport) {
 
