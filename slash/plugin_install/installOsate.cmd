@@ -32,7 +32,7 @@ val localUpdateSites: B = ops.ISZOps(Os.cliArgs).contains("local")
 
 val sireumHome = Os.path(Os.env("SIREUM_HOME").get)
 
-val osateLoc = Os.home / ".sireum" / "phantom" / "osate-2.10.2-vfinal" / "osate"
+val osateLoc = Os.home / ".sireum" / "phantom" / "osate-2.11.0-vfinal" / "osate"
 val fmideLoc = sireumHome / "bin" / "linux" / "fmide" / "fmide"
 
 val remoteUpdateSite = "https://raw.githubusercontent.com/sireum/osate-update-site/master"
@@ -80,7 +80,8 @@ val gumbo2air = Feature(
   id = "org.sireum.aadl.osate.gumbo2air.feature.feature.group")
 
 
-val order = ISZ(base, hamr, cli, gumbo, gumbo2air)
+val order = ISZ(base, hamr, awas, cli, gumbo, gumbo2air)
+//val order = ISZ(gumbo, gumbo2air)
 
 for(o <- ops.ISZOps(order).reverse) {
   if (isInstalled(o.id, osateExe)) {
