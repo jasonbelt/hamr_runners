@@ -21,6 +21,14 @@ object TempSensor_GUMBO_Library {
 
   @strictpure def buildTemp(degrees: BaseTypes.Float_32): Temperature_i =
     apack.Temperature_i(degrees)
+
+  @pure def buildTempy(degrees: F32): Temperature_i = {
+    Contract(
+      Requires(degrees > 0f),
+      Ensures(Res[Temperature_i].degrees == degrees)
+    )
+    return Temperature_i(degrees)
+  }
 }
 
 object TempSensor {
@@ -41,6 +49,7 @@ object TempSensor {
 
       Ensures(
         value == TempSensor_GUMBO_Library.buildTemp(f32"72.0"),
+        value == TempSensor_GUMBO_Library.buildTempy(f32"72.0"),
         currentTemp.degrees >= minTempDegrees,
         currentTemp.degrees >= TempSensor_GUMBO_Library.gminTempDegrees,
         currentTemp.degrees <= TempSensor_GUMBO_Library.gmaxTempDegrees,
