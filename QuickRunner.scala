@@ -83,7 +83,14 @@ object QuickRunner extends App {
     platforms = ISZ(JVM)
   )
 
-  val project: Project = initialize_entrypoint
+  val rts: Project = Project(
+    aadlDir = Os.home / "devel/ksu-galois-collab/hardens-aadl-hamr/aadl-seL4",
+    outputDir = Some(Os.home / "devel/ksu-galois-collab/hardens-aadl-hamr/hamr-sel4"),
+    json = "RTS_RTS_i_Instance.json",
+    packageName = Some("RTS"),
+    platforms = ISZ(JVM)
+  )
+  val project: Project = rts
 
   val aadlDir: Os.Path = project.aadlDir
   val rootDir: Os.Path = if(project.outputDir.nonEmpty) project.outputDir.get else aadlDir.up / "hamr"

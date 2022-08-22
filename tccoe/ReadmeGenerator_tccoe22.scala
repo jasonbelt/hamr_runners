@@ -274,8 +274,8 @@ object ReadmeTemplate {
   }
 
   def sortThreads(threads: ISZ[AadlThread], symbolTable: SymbolTable): ISZ[AadlThread] = {
-    val ret: ISZ[AadlThread] = if(ops.ISZOps(threads()).forall(t => t.getParent(symbolTable).getDomain().nonEmpty)) {
-      ops.ISZOps(threads()).sortWith((a,b) => a.getParent(symbolTable).getDomain().get < b.getParent(symbolTable).getDomain().get)
+    val ret: ISZ[AadlThread] = if(ops.ISZOps(threads()).forall(t => t.getParent(symbolTable).getDomain(symbolTable).nonEmpty)) {
+      ops.ISZOps(threads()).sortWith((a,b) => a.getParent(symbolTable).getDomain(symbolTable).get < b.getParent(symbolTable).getDomain(symbolTable).get)
     } else {
       threads
     }
@@ -327,8 +327,8 @@ object ReadmeTemplate {
             else if(thread.getParent(st).toVirtualMachine(symbolTable)) "Virtual Machine"
             else "Native"
 
-          val domain: Option[ST]= if(report.symbolTable.nonEmpty && thread.getParent(report.symbolTable.get).getDomain().nonEmpty) {
-            Some(st"""|Domain: ${thread.getParent(report.symbolTable.get).getDomain().get}|""")
+          val domain: Option[ST]= if(report.symbolTable.nonEmpty && thread.getParent(report.symbolTable.get).getDomain(symbolTable).nonEmpty) {
+            Some(st"""|Domain: ${thread.getParent(report.symbolTable.get).getDomain(symbolTable).get}|""")
           } else { None() }
 
           val header: ST = {
