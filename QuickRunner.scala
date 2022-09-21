@@ -76,6 +76,7 @@ object QuickRunner extends App {
   )
 
   val initialize_entrypoint: Project = Project (
+
     aadlDir = Os.home / "devel/sireum/osate-plugin/org.sireum.aadl.osate.tests/projects/org/sireum/aadl/osate/tests/gumbo/initialize-entrypoint",
     outputDir = Some(Os.home / "devel/sireum/osate-plugin/org.sireum.aadl.osate.tests/projects/org/sireum/aadl/osate/tests/gumbo/initialize-entrypoint/hamr"),
     json = "Initialize_Entrypoint_s_impl_Instance.json",
@@ -84,10 +85,10 @@ object QuickRunner extends App {
   )
 
   val rts: Project = Project(
-    aadlDir = Os.home / "devel/ksu-galois-collab/hardens-aadl-hamr/aadl-seL4",
-    outputDir = Some(Os.home / "devel/ksu-galois-collab/hardens-aadl-hamr/hamr-sel4"),
-    json = "RTS_RTS_i_Instance.json",
-    packageName = Some("RTS"),
+    aadlDir = Os.home / "temp/building_control_gen_mixed",
+    outputDir = Some(Os.home / "temp/building_control_gen_mixed/slang"),
+    json = "BuildingControl_BuildingControlDemo_i_Instance.json",
+    packageName = Some("bless"),
     platforms = ISZ(JVM)
   )
   val project: Project = rts
