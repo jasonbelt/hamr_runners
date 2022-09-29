@@ -84,11 +84,13 @@ object QuickRunner extends App {
     platforms = ISZ(JVM)
   )
 
+  // /Users/belt/devel/ksu-galois-collab/hardens-aadl-hamr/aadl/.slang/RTS_RTS_i_Instance.json
+
   val rts: Project = Project(
-    aadlDir = Os.home / "temp/building_control_gen_mixed",
-    outputDir = Some(Os.home / "temp/building_control_gen_mixed/slang"),
-    json = "BuildingControl_BuildingControlDemo_i_Instance.json",
-    packageName = Some("bless"),
+    aadlDir = Os.home / "devel/ksu-galois-collab/hardens-aadl-hamr/aadl",
+    outputDir = Some(Os.home / "devel/ksu-galois-collab/hardens-aadl-hamr/hamr"),
+    json = "RTS_RTS_i_Instance.json",
+    packageName = Some("RTS"),
     platforms = ISZ(JVM)
   )
   val project: Project = rts
@@ -111,7 +113,7 @@ object QuickRunner extends App {
       noProyekIve = T,
       noEmbedArt = F,
       devicesAsThreads = F,
-      excludeComponentImpl = T,
+      excludeComponentImpl = F,
       genSbtMill = F,
 
       bitWidth = 32,
