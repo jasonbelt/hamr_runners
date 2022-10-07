@@ -93,7 +93,17 @@ object QuickRunner extends App {
     packageName = Some("RTS"),
     platforms = ISZ(JVM)
   )
-  val project: Project = rts
+
+  ////Users/belt/
+  val gage_isolette: Project = Project(
+    aadlDir = Os.home / "devel/gage-misc/Isolette-gage/aadl",
+    outputDir = Some(Os.home / "devel/gage-misc/Isolette-gage/hamr"),
+    json = "Isolette_isolette_single_sensor_Instance.json",
+    packageName = Some("isolette"),
+    platforms = ISZ(JVM)
+  )
+
+  val project: Project = gage_isolette
 
   val aadlDir: Os.Path = project.aadlDir
   val rootDir: Os.Path = if(project.outputDir.nonEmpty) project.outputDir.get else aadlDir.up / "hamr"
