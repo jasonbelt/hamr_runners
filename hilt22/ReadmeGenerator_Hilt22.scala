@@ -834,7 +834,7 @@ object ReadmeTemplate {
                       |
                       |${level2ST(archSection, 2, readmeExists)}
                       |
-                      |${(platformSections.map(st => level2ST(st, 2, readmeExists)), "\n")}"""
+                      |${(subPlatformSections.map(st => level2ST(st, 2, readmeExists)), "\n")}"""
 
     return ret
   }
