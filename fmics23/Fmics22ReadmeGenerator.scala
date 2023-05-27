@@ -1,5 +1,5 @@
 // #Sireum
-package org.sireum.cli.hamr_runners.iccps20
+package org.sireum.cli.hamr_runners.fmics23
 
 import org.sireum._
 import org.sireum.Cli.SireumHamrCodegenHamrPlatform
@@ -30,10 +30,8 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
 
   val symbolTable: SymbolTable = TccoeReadmeGenerator.getSymbolTable(model, o.packageName.get, o)
 
-  val camkesOutputDir: Option[Os.Path] = if(o.camkesOutputDir.nonEmpty) Some(Os.path(o.camkesOutputDir.get)) else None()
   val slangOutputDir: Os.Path = Os.path(o.outputDir.get)
   val cOutputDir: Os.Path = Os.path(o.slangOutputCDir.get)
-  val camkesDir: Os.Path = Os.path(o.camkesOutputDir.get)
 
   val OPT_CAKEML_ASSEMBLIES_PRESENT: String = "-DCAKEML_ASSEMBLIES_PRESENT=ON"
 
@@ -41,9 +39,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     if(!shouldRebuild) {
       return T
     }  else {
-      if (isCamkes(o.platform)) {
-        return buildCamkes()
-      } else if (isJvm(o.platform)) {
+      if (isJvm(o.platform)) {
         buildJVM()
       } else if (isNix(o.platform)) {
         buildLinux()
@@ -68,69 +64,27 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   }
 
   def buildJVM(): B = {
-    val buildsbt: Os.Path = slangOutputDir / "build.sbt"
-    assert(buildsbt.exists)
-    assert(buildsbt.exists && buildsbt.isFile, s"${buildsbt}")
-
-    return TccoeReadmeGenerator.run(ISZ("sbt", "compile"), slangOutputDir, reporter)
+    return TccoeReadmeGenerator.run(ISZ("sireum", "proyek", "compile", slangOutputDir.value), slangOutputDir, reporter)
   }
 
-  def buildCamkes(): B = {
 
-    val run_camkes: Os.Path = TccoeReadmeGenerator.getRunCamkesScript(camkesOutputDir.get)
-
-    assert(run_camkes.exists, s"${run_camkes} not found")
-
-    var continue: B = T
-    val transpileSel4: Os.Path = TccoeReadmeGenerator.getTranspileSel4Script(slangOutputDir)
-    if(transpileSel4.exists) {
-      continue = TccoeReadmeGenerator.run(ISZ(transpileSel4.value), slangOutputDir, reporter)
-    }
-
-    if(continue) {
-      var args: ISZ[String] = ISZ(run_camkes.value, "-n")
-
-      if (symbolTable.hasCakeMLComponents()) {
-        args = args :+ "-o" :+ OPT_CAKEML_ASSEMBLIES_PRESENT
-      }
-
-      val buildDir = Os.home / "CASE" / "camkes" / "build_camkes"
-      if(buildDir.exists){
-        buildDir.removeAll()
-        println(s"Removed $buildDir")
-      }
-
-      val appsDir = Os.home / "CASE" / "camkes" / "projects" / "camkes"/ "apps" / "camkes"
-      if(appsDir.exists && appsDir.isSymLink) {
-        appsDir.remove()
-        println(s"Removed $appsDir")
-      }
-
-      continue = TccoeReadmeGenerator.run(args, camkesOutputDir.get, reporter)
-    }
-
-    return continue
-  }
-
-  def simulate(timeout: Z): ST = {
+  def simulate(packageName: String, timeout: Z): ST = {
     if(isCamkes(o.platform)) {
       return simulateCamkes(timeout)
     } else if(isJvm(o.platform)) {
-      return simulateJVM(timeout)
+      return simulateJVM(packageName, timeout)
     } else {
       halt(s"${o.platform}")
     }
   }
 
-  def simulateJVM(timeout: Z): ST = {
-    val buildsbt = slangOutputDir / "build.sbt"
-    assert(buildsbt.exists && buildsbt.isFile)
+  def simulateJVM(packageName: String, timeout: Z): ST = {
 
     println(s"Simulating for ${timeout/1000} seconds")
 
-    val p = Os.proc(ISZ("sbt", "run")).at(slangOutputDir).timeout(timeout).input("hi")
+    val p = Os.proc(ISZ("sireum", "proyek", "run", ".", s"${packageName}.Demo")).at(slangOutputDir).timeout(timeout)
 
-    val results = p.at(buildsbt.up).run()
+    val results = p.run()
     cprint(F, results.out)
     cprint(T, results.err)
 
@@ -176,20 +130,15 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     }
     else if(isNix(o.platform)) {
       return genRunInstructionsNix(root)
-    }
-    else if(isCamkes(o.platform)) {
-      return genRunInstructionsCamkes(root)
     } else {
       halt(s"${o.platform}")
     }
   }
 
   def genRunInstructionsJVM(root: Os.Path): ST = {
-    val buildsbt = slangOutputDir / "build.sbt"
-    assert(buildsbt.exists, s"${buildsbt}")
-    val rpath = root.relativize(buildsbt.up)
-    return st"""cd $rpath
-               |sbt run"""
+
+    val rpath = root.relativize(slangOutputDir)
+    return st"""sireum proyek run $rpath ${project.basePackageName}.Demo"""
   }
 
   def genRunInstructionsNix(root: Os.Path): ST = {
@@ -215,33 +164,6 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     return ret
   }
 
-  def genRunInstructionsCamkes(root: Os.Path): ST = {
-
-    val transpileSel4: Os.Path = TccoeReadmeGenerator.getTranspileSel4Script(slangOutputDir)
-    val runScript: Os.Path = TccoeReadmeGenerator.getRunCamkesScript(camkesOutputDir.get)
-    val cakeMlScript: Os.Path = transpileSel4.up / "compile-cakeml.sh"
-
-    val cakeML: Option[ST] =
-      if(cakeMlScript.exists) { Some(st"${root.relativize(cakeMlScript)}") }
-      else { None() }
-
-    val transpile: Option[ST] =
-      if(transpileSel4.exists) { Some(st"${root.relativize(transpileSel4)}") }
-      else { None() }
-
-    var options: ISZ[String] = ISZ("-s")
-    if(symbolTable.hasCakeMLComponents()) {
-      options = options :+ "-o" :+ OPT_CAKEML_ASSEMBLIES_PRESENT
-    }
-
-    assert(runScript.exists, s"${runScript} not found")
-    val runCamkes: ST = st"${root.relativize(runScript)} ${(options, " ")}"
-
-    val ret: ST = st"""${cakeML}
-                      |${transpile}
-                      |${runCamkes}"""
-    return ret
-  }
 
   def getAadlMetrics(): ST = {
     val threads = symbolTable.getThreads()
@@ -269,8 +191,6 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
         getCodeMetricsJVM()
       } else if (isNix(o.platform)) {
         getCodeMetricsNix()
-      } else if (isCamkes(o.platform)) {
-        getCodeMetricsCamkes()
       } else {
         halt("??")
       }
@@ -310,7 +230,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
   def dirsScanned(dirs: ISZ[Os.Path]): ST = {
     val rdirs = dirs.map((m: Os.Path) => project.projectDir.relativize(m)).map((m: Os.Path) => st"- [${m}]($m)")
 
-    val _dirs: ST = st"""Directories Scanned Using [https://github.com/AlDanial/cloc](https://github.com/AlDanial/cloc) v1.88:
+    val _dirs: ST = st"""Directories Scanned Using [https://github.com/AlDanial/cloc](https://github.com/AlDanial/cloc) v1.94:
                         |${(rdirs, "\n")}"""
     return _dirs
   }
@@ -376,40 +296,6 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
     return ret
   }
 
-  def getCodeMetricsCamkes(): ST = {
-    val extDir = cOutputDir / "ext-c"
-
-    assert(camkesDir.exists, camkesDir)
-
-    val dirs = ISZ(camkesDir)
-    val cloc = runCloc(dirs)
-
-    val _dirsScanned = dirsScanned(dirs)
-
-    val cCode: String =
-      if(o.excludeComponentImpl)
-        "The Slang-based component implementations were excluded by the transpiler so this represents the number of lines of C code needed to realize the component behaviors."
-      else "The Slang-based component implementations were included by the transpiler so this represents the number of lines of C that implement Slang extensions."
-
-    val userCloc: ST = processUserCloc(extDir)
-    val ret: ST =
-      st"""${_dirsScanned}
-          |
-          |<u><b>Total LOC</b></u>
-          |
-          |Total number of HAMR-generated and developer-written lines of code
-          |${cloc}
-          |
-          |<u><b>User LOC</b></u>
-          |
-          |The number of lines of code written by the developer.
-          |${cCode}
-          |"Log" are lines of code used for logging that
-          |likely would be excluded in a release build
-          |${userCloc}"""
-    return ret
-  }
-
   def runCloc(dirs: ISZ[Os.Path]): ST = {
     //dirs.foreach(d => assert(d.exists && d.isDir, s"$d"))
 
@@ -430,7 +316,7 @@ import org.sireum.hamr.ir.{JSON => irJSON, MsgPack => irMsgPack}
       s"--read-lang-def=${temp.value}"
     ) ++ dirs.map((m: Os.Path) => m.value)
 
-    val results = Os.proc(args).run()
+    val results = Os.proc(args).runCheck()
     val s = results.out.native
 
     val ret = s.split("\n".native).drop(3.toInt).mkString("\n".native)
