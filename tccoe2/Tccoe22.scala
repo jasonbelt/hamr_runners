@@ -309,7 +309,7 @@ object Tccoe22 extends App {
           msgpack = F,
           verbose = T,
           platform = platform,
-
+          runtimeMonitoring = F,
           packageName = Some(project.basePackageName),
           noProyekIve = F,
           noEmbedArt = F,

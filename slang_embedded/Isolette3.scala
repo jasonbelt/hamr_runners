@@ -208,7 +208,7 @@ object Isolette3 extends App {
           msgpack = F,
           verbose = T,
           platform = platform,
-
+          runtimeMonitoring = F,
           packageName = Some("isolette"),
           noProyekIve = F,
           noEmbedArt = F,

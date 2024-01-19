@@ -8,6 +8,7 @@ object Util {
     args = ISZ(),
     msgpack = F,
     verbose = T,
+    runtimeMonitoring = F,
     platform = Cli.SireumHamrCodegenHamrPlatform.Linux,
     outputDir = None(),
     packageName = None(),

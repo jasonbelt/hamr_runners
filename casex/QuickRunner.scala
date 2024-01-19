@@ -20,7 +20,7 @@ object QuickRunner extends App{
     msgpack = F,
     verbose = T,
     platform = platform,
-
+    runtimeMonitoring = F,
     packageName = Some("base"),
     noProyekIve = F,
     noEmbedArt = F,

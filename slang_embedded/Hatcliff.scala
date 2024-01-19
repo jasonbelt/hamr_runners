@@ -81,7 +81,7 @@ object Hatcliff extends App {
           msgpack = F,
           verbose = T,
           platform = platform,
-
+          runtimeMonitoring = F,
           packageName = Some(project._1),
           noProyekIve = F,
           noEmbedArt = F,

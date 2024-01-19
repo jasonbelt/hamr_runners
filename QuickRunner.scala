@@ -128,6 +128,7 @@ object QuickRunner extends App {
       verbose = T,
       platform = platform,
 
+      runtimeMonitoring = F,
       packageName = project.packageName,
       noProyekIve = T,
       noEmbedArt = F,
